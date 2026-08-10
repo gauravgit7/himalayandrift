@@ -11,7 +11,6 @@ import { ImageUpload }            from "@/components/ui/ImageUpload";
 import { cn }                     from "@/utils/cn";
 import { submitMemberCard }       from "@/lib/supabase/actions";
 import { BLOOD_GROUPS, CHAPTER_NAMES, ROUTES } from "@/lib/constants";
-import type { MemberCommunity }   from "@/types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -49,14 +48,13 @@ interface FormState {
   bloodGroup:      string;
   emergencyPhone:  string;
   licenseNumber:   string;
-  community:       MemberCommunity | "";
   chapter:         string;
   consentAccepted: boolean;
 }
 
 const INITIAL: FormState = {
   photoUrl: "", fullName: "", dateOfBirth: "", bloodGroup: "",
-  emergencyPhone: "", licenseNumber: "", community: "", chapter: "",
+  emergencyPhone: "", licenseNumber: "", chapter: "",
   consentAccepted: false,
 };
 
@@ -78,7 +76,6 @@ export function ApplicationForm() {
     if (!form.bloodGroup)      e.bloodGroup      = "Blood group is required";
     if (!form.emergencyPhone.trim()) e.emergencyPhone = "Emergency contact is required";
     if (!form.licenseNumber.trim())  e.licenseNumber  = "License number is required";
-    if (!form.community)       e.community       = "Select your community";
     if (!form.chapter)         e.chapter         = "Select your chapter";
     if (!form.consentAccepted) e.consentAccepted = "You must accept the terms to apply";
     setErrors(e);
@@ -97,7 +94,6 @@ export function ApplicationForm() {
       bloodGroup:      form.bloodGroup,
       emergencyPhone:  form.emergencyPhone,
       licenseNumber:   form.licenseNumber,
-      community:       form.community as MemberCommunity,
       chapter:         form.chapter,
       consentAccepted: form.consentAccepted,
     });
@@ -201,34 +197,6 @@ export function ApplicationForm() {
           Stored securely for verification — not shown on your card.
         </p>
         <FieldError msg={errors.licenseNumber} />
-      </div>
-
-      {/* Community */}
-      <div>
-        <FieldLabel required>Community</FieldLabel>
-        <div className="grid grid-cols-2 gap-3">
-          {(["AOG", "CULT"] as MemberCommunity[]).map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => set("community", c)}
-              className={cn(
-                "flex flex-col items-center gap-1 p-4 rounded-xl border text-sm font-semibold transition-all",
-                form.community === c
-                  ? c === "AOG"
-                    ? "border-tvs-red-600 bg-tvs-red-950/40 text-tvs-red-300"
-                    : "border-tvs-steel-500 bg-tvs-steel-900/40 text-tvs-steel-300"
-                  : "border-tvs-charcoal-700 text-tvs-charcoal-400 hover:border-tvs-charcoal-500 hover:text-tvs-charcoal-200",
-              )}
-            >
-              <span className="text-xs font-black tracking-widest">{c}</span>
-              <span className="text-[10px] font-normal opacity-70">
-                {c === "AOG" ? "Apache Owners Group" : "CULT Riders"}
-              </span>
-            </button>
-          ))}
-        </div>
-        <FieldError msg={errors.community} />
       </div>
 
       {/* Chapter */}

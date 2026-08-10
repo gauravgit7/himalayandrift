@@ -1,15 +1,14 @@
 {
-  "name": "tvs-calendar",
+  "name": "himalayan-drift",
   "version": "1.0.0",
-  "description": "TVS Nepal Ride Operations Platform - annual ride planning and management system",
+  "description": "Himalayan Drift - ride planning and operations platform for the Himalayan Drift riding community",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit",
-    "seed": "tsx scripts/seed.ts"
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",

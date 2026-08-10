@@ -17,7 +17,6 @@ import {
 } from "@/utils/date";
 import { differenceInDays } from "date-fns";
 import { ROUTES } from "@/lib/constants";
-import { CommunityBadge } from "@/components/shared/CommunityBadge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { Ride, BrandLogos } from "@/types";
 
@@ -100,7 +99,6 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
           {/* Top badges */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
-              <CommunityBadge community={ride.community} size="sm" brandLogos={brandLogos} />
               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-900/50 text-yellow-400 border border-yellow-700/40">
                 ★ MARQUEE
               </span>
@@ -266,10 +264,10 @@ export function MarqueeHighlight({ rides, brandLogos }: MarqueeHighlightProps) {
               </span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-tvs-charcoal-50">
-              2026 Marquee Rides
+              Marquee Rides
             </h2>
             <p className="mt-1.5 text-sm text-tvs-charcoal-400 max-w-md">
-              Two AOG × CULT flagship expeditions - the highest-tier rides of the year.
+              Our flagship expeditions - the highest-tier rides of the year.
             </p>
           </div>
           <span className="shrink-0 text-4xl font-black text-violet-900/40 select-none hidden sm:block">

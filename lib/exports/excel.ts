@@ -2,8 +2,8 @@
 // Excel Export Builder - Phase 8
 // Generates a branded .xlsx workbook with 3 sheets:
 //   1. All Rides  - full operational table, auto-filter, frozen header
-//   2. Monthly Summary - rides × community × type by month + totals row
-//   3. Chapter Summary - rides × community × type per chapter
+//   2. Monthly Summary - rides × type by month + totals row
+//   3. Chapter Summary - rides × type per chapter
 // =============================================================================
 
 import ExcelJS from "exceljs";
@@ -26,10 +26,11 @@ const C = {
   lighterGray:(): ArgbColor => ({ argb: "FFFAFAF9" }),
 } as const;
 
-const COMMUNITY_COLORS: Record<string, string> = {
-  AOG:      "FFDC2626",
-  CULT:     "FF2563EB",
-  AOGxCULT: "FF7C3AED",
+const RIDE_TYPE_COLORS: Record<string, string> = {
+  day:       "FF57534E",
+  overnight: "FF2563EB",
+  multiday:  "FFD97706",
+  marquee:   "FF7C3AED",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -100,7 +101,6 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
     { header: "Date",          key: "date",          width: 22 },
     { header: "Title",         key: "title",         width: 36 },
     { header: "Type",          key: "type",          width: 12 },
-    { header: "Community",     key: "community",     width: 13 },
     { header: "Chapter",       key: "chapter",       width: 12 },
     { header: "Status",        key: "status",        width: 12 },
     { header: "Priority",      key: "priority",      width: 10 },
@@ -118,7 +118,6 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
       date:         formatRideDateRange(ride.startDate, ride.endDate),
       title:        ride.title,
       type:         cap(ride.rideType),
-      community:    ride.community,
       chapter:      ride.chapter,
       status:       cap(ride.status),
       priority:     cap(ride.priority),
@@ -137,11 +136,11 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
       cell.alignment = { vertical: "middle" };
     });
 
-    // Community - colored bold
-    const comColor = COMMUNITY_COLORS[ride.community];
-    if (comColor) {
-      row.getCell("community").font = {
-        bold: true, color: { argb: comColor }, size: 9.5, name: "Calibri",
+    // Ride type - colored bold
+    const typeColor = RIDE_TYPE_COLORS[ride.rideType];
+    if (typeColor) {
+      row.getCell("type").font = {
+        bold: true, color: { argb: typeColor }, size: 9.5, name: "Calibri",
       };
     }
 
@@ -176,11 +175,9 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
 
   ws2.columns = [
     { header: "Month",     key: "month",    width: 14 },
-    { header: "AOG",       key: "aog",      width:  9 },
-    { header: "CULT",      key: "cult",     width:  9 },
-    { header: "AOGxCULT",  key: "mixed",    width: 13 },
-    { header: "Chapter",   key: "chapter",  width: 11 },
+    { header: "Day",       key: "day",      width:  9 },
     { header: "Overnight", key: "overnight",width: 12 },
+    { header: "Multi-Day", key: "multiday", width: 12 },
     { header: "Marquee",   key: "marquee",  width: 11 },
     { header: "Total",     key: "total",    width:  9 },
   ];
@@ -193,11 +190,9 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
 
     const row = ws2.addRow({
       month:    monthName,
-      aog:      mr.filter((r) => r.community === "AOG").length,
-      cult:     mr.filter((r) => r.community === "CULT").length,
-      mixed:    mr.filter((r) => r.community === "AOGxCULT").length,
-      chapter:  mr.filter((r) => r.rideType === "chapter").length,
+      day:      mr.filter((r) => r.rideType === "day").length,
       overnight:mr.filter((r) => r.rideType === "overnight").length,
+      multiday: mr.filter((r) => r.rideType === "multiday").length,
       marquee:  mr.filter((r) => r.rideType === "marquee").length,
       total:    mr.length,
     });
@@ -223,11 +218,9 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
   // Totals row
   const totRow2 = ws2.addRow({
     month:    "TOTAL",
-    aog:      rides.filter((r) => r.community === "AOG").length,
-    cult:     rides.filter((r) => r.community === "CULT").length,
-    mixed:    rides.filter((r) => r.community === "AOGxCULT").length,
-    chapter:  rides.filter((r) => r.rideType === "chapter").length,
+    day:      rides.filter((r) => r.rideType === "day").length,
     overnight:rides.filter((r) => r.rideType === "overnight").length,
+    multiday: rides.filter((r) => r.rideType === "multiday").length,
     marquee:  rides.filter((r) => r.rideType === "marquee").length,
     total:    rides.length,
   });
@@ -247,10 +240,9 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
     { header: "Chapter",   key: "chapter",   width: 14 },
     { header: "Region",    key: "region",    width: 26 },
     { header: "Priority",  key: "priority",  width: 11 },
-    { header: "AOG",       key: "aog",       width:  9 },
-    { header: "CULT",      key: "cult",      width:  9 },
-    { header: "AOGxCULT",  key: "mixed",     width: 13 },
+    { header: "Day",       key: "day",       width:  9 },
     { header: "Overnight", key: "overnight", width: 12 },
+    { header: "Multi-Day", key: "multiday",  width: 12 },
     { header: "Marquee",   key: "marquee",   width: 11 },
     { header: "Total",     key: "total",     width:  9 },
   ];
@@ -264,10 +256,9 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
       chapter:   ch.name,
       region:    ch.region,
       priority:  ch.isPriority ? "Priority" : "Standard",
-      aog:       cr.filter((r) => r.community === "AOG").length,
-      cult:      cr.filter((r) => r.community === "CULT").length,
-      mixed:     cr.filter((r) => r.community === "AOGxCULT").length,
+      day:       cr.filter((r) => r.rideType === "day").length,
       overnight: cr.filter((r) => r.rideType === "overnight").length,
+      multiday:  cr.filter((r) => r.rideType === "multiday").length,
       marquee:   cr.filter((r) => r.rideType === "marquee").length,
       total:     cr.length,
     });
@@ -296,10 +287,9 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
     chapter:   "ALL CHAPTERS",
     region:    "",
     priority:  "",
-    aog:       rides.filter((r) => r.community === "AOG").length,
-    cult:      rides.filter((r) => r.community === "CULT").length,
-    mixed:     rides.filter((r) => r.community === "AOGxCULT").length,
+    day:       rides.filter((r) => r.rideType === "day").length,
     overnight: rides.filter((r) => r.rideType === "overnight").length,
+    multiday:  rides.filter((r) => r.rideType === "multiday").length,
     marquee:   rides.filter((r) => r.rideType === "marquee").length,
     total:     rides.length,
   });

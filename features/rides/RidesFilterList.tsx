@@ -14,31 +14,20 @@ import { AnimateIn }             from "@/components/shared/AnimateIn";
 import { useDateMode }           from "@/hooks/useDateMode";
 import { cn }                    from "@/utils/cn";
 import { rideIsUpcoming }        from "@/utils/date";
-import { ROUTES }                from "@/lib/constants";
-import type { Ride, Community, RideType, BrandLogos } from "@/types";
+import { ROUTES, RIDE_TYPES }    from "@/lib/constants";
+import type { Ride, RideType, BrandLogos } from "@/types";
 
 interface RidesFilterListProps {
   allRides:    Ride[];
   brandLogos?: BrandLogos | null;
 }
 
-type CommunityFilter = Community | "all";
 type TypeFilter      = RideType  | "all";
 type StatusFilter    = "upcoming" | "completed" | "all";
 
-const COMMUNITY_OPTS: { value: CommunityFilter; label: string }[] = [
-  { value: "all",      label: "All" },
-  { value: "AOG",      label: "AOG" },
-  { value: "CULT",     label: "CULT" },
-  { value: "AOGxCULT", label: "AOG × CULT" },
-];
-
 const TYPE_OPTS: { value: TypeFilter; label: string }[] = [
-  { value: "all",       label: "All types" },
-  { value: "chapter",   label: "Chapter" },
-  { value: "overnight", label: "Overnight" },
-  { value: "marquee",   label: "Marquee" },
-  { value: "cult",      label: "CULT" },
+  { value: "all", label: "All types" },
+  ...RIDE_TYPES.map((t) => ({ value: t.value as TypeFilter, label: t.label })),
 ];
 
 const STATUS_OPTS: { value: StatusFilter; label: string }[] = [
@@ -73,15 +62,13 @@ function FilterChip<T extends string>({
 export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) {
   const { mode: dateMode, toggle: toggleDateMode } = useDateMode();
   const [search,    setSearch]    = useState("");
-  const [community, setCommunity] = useState<CommunityFilter>("all");
   const [type,      setType]      = useState<TypeFilter>("all");
   const [status,    setStatus]    = useState<StatusFilter>("all");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return allRides.filter((r) => {
-      if (community !== "all" && r.community !== community) return false;
-      if (type      !== "all" && r.rideType  !== type)      return false;
+      if (type !== "all" && r.rideType !== type) return false;
       if (status === "upcoming"  && !rideIsUpcoming(r.startDate)) return false;
       if (status === "completed" && r.status !== "completed")     return false;
       if (q && !r.title.toLowerCase().includes(q) &&
@@ -89,7 +76,7 @@ export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) 
                !(r.shortDescription ?? "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [allRides, search, community, type, status]);
+  }, [allRides, search, type, status]);
 
   const upcoming   = allRides.filter((r) => rideIsUpcoming(r.startDate)).length;
   const completed  = allRides.filter((r) => r.status === "completed").length;
@@ -146,10 +133,6 @@ export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) 
 
         <div className="flex flex-wrap gap-y-2 gap-x-4">
           <div>
-            <p className="text-[10px] text-tvs-charcoal-600 mb-1.5 uppercase tracking-wide">Community</p>
-            <FilterChip options={COMMUNITY_OPTS} value={community} onChange={setCommunity} />
-          </div>
-          <div>
             <p className="text-[10px] text-tvs-charcoal-600 mb-1.5 uppercase tracking-wide">Type</p>
             <FilterChip options={TYPE_OPTS} value={type} onChange={setType} />
           </div>
@@ -167,9 +150,9 @@ export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) 
             ? `${filtered.length} rides`
             : `${filtered.length} of ${allRides.length} rides`}
         </p>
-        {(search || community !== "all" || type !== "all" || status !== "all") && (
+        {(search || type !== "all" || status !== "all") && (
           <button
-            onClick={() => { setSearch(""); setCommunity("all"); setType("all"); setStatus("all"); }}
+            onClick={() => { setSearch(""); setType("all"); setStatus("all"); }}
             className="text-xs text-tvs-red-400 hover:text-tvs-red-300 transition-colors"
           >
             Clear filters
@@ -183,7 +166,7 @@ export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) 
           <p className="text-2xl">🏍️</p>
           <p>No rides match your filters.</p>
           <button
-            onClick={() => { setSearch(""); setCommunity("all"); setType("all"); setStatus("all"); }}
+            onClick={() => { setSearch(""); setType("all"); setStatus("all"); }}
             className="text-tvs-red-400 hover:text-tvs-red-300 text-xs underline underline-offset-2 transition-colors"
           >
             Clear all filters

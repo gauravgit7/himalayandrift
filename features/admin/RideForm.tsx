@@ -12,11 +12,11 @@ import { ImageUpload }  from "@/components/ui/ImageUpload";
 import { RouteBuilder } from "@/features/admin/RouteBuilder";
 import { cn }          from "@/utils/cn";
 import {
-  ROUTES, COMMUNITIES, CHAPTERS, RIDE_TYPES, RIDE_STATUSES, RIDE_PRIORITIES,
+  ROUTES, CHAPTERS, RIDE_TYPES, RIDE_STATUSES, RIDE_PRIORITIES,
 } from "@/lib/constants";
 import { saveRide }  from "@/lib/supabase/actions";
 import type {
-  Ride, Community, RideType, RideStatus, RidePriority, ChapterName, Marshal, RouteData,
+  Ride, RideType, RideStatus, RidePriority, ChapterName, Marshal, RouteData,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -34,7 +34,6 @@ interface RideFormProps {
 
 interface FormState {
   title:            string;
-  community:        Community;
   rideType:         RideType;
   chapter:          ChapterName;
   startDate:        string;
@@ -57,13 +56,12 @@ interface FormState {
 function toFormState(data?: Partial<Ride>): FormState {
   return {
     title:            data?.title            ?? "",
-    community:        data?.community        ?? "AOG",
-    rideType:         data?.rideType         ?? "chapter",
+    rideType:         data?.rideType         ?? "day",
     chapter:          data?.chapter          ?? "Bagmati",
     startDate:        data?.startDate        ?? "",
     endDate:          data?.endDate          ?? "",
     status:           data?.status           ?? "planned",
-    priority:         data?.priority         ?? "chapter",
+    priority:         data?.priority         ?? "standard",
     shortDescription: data?.shortDescription ?? "",
     description:      data?.description      ?? "",
     expectedRiders:   data?.expectedRiders   ? String(data.expectedRiders) : "",
@@ -159,7 +157,6 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
     const { error } = await saveRide(
       {
         title:            form.title,
-        community:        form.community,
         rideType:         form.rideType,
         chapter:          form.chapter,
         startDate:        form.startDate,
@@ -222,20 +219,6 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               {errors.title && <ErrorMsg msg={errors.title} />}
             </FieldGroup>
           </div>
-
-          <FieldGroup label="Community" required>
-            <select
-              value={form.community}
-              onChange={(e) => set("community", e.target.value as Community)}
-              className={selectClass}
-            >
-              {COMMUNITIES.map((c) => (
-                <option key={c.value} value={c.value} className="bg-tvs-charcoal-900">
-                  {c.value === "AOGxCULT" ? "AOG × CULT" : c.value}
-                </option>
-              ))}
-            </select>
-          </FieldGroup>
 
           <FieldGroup label="Ride Type" required>
             <select

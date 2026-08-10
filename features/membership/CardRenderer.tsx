@@ -1,7 +1,7 @@
 // =============================================================================
 // CardRenderer — Digital membership ID card
 // Renders front + back in the TVS Nepal dark design language.
-// AOG = red accents  |  CULT = blue accents
+// Single brand palette across front and back
 // mode "screen" = side-by-side preview
 // mode "print"  = full-screen dark A4 layout for window.print()
 // =============================================================================
@@ -12,6 +12,7 @@ import { useEffect, useState }         from "react";
 import { QRCodeCanvas }                from "qrcode.react";
 import { Heart, Phone, Star, ShieldCheck, Calendar, ScanLine } from "lucide-react";
 import { cn }                          from "@/utils/cn";
+import { APP_META }                    from "@/lib/constants";
 import type { MemberCard, CardSettings, BrandLogos } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -32,19 +33,16 @@ function fmtMonth(iso: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Community-specific theme tokens
+// Card theme tokens - single community, single palette
 // ---------------------------------------------------------------------------
 
-function theme(community: "AOG" | "CULT") {
-  const isAOG = community === "AOG";
-  return {
-    accent:     isAOG ? "#dc2626" : "#2563eb",
-    accentDark: isAOG ? "#7f1d1d" : "#1e3270",
-    accentMid:  isAOG ? "#991b1b" : "#1e40af",
-    accentFade: isAOG ? "rgba(220,38,38,0.15)" : "rgba(37,99,235,0.15)",
-    stripe:     "#1e3a8a",
-  };
-}
+const t = {
+  accent:     "#dc2626",
+  accentDark: "#7f1d1d",
+  accentMid:  "#991b1b",
+  accentFade: "rgba(220,38,38,0.15)",
+  stripe:     "#1e3a8a",
+} as const;
 
 // ---------------------------------------------------------------------------
 // FRONT
@@ -56,11 +54,6 @@ function CardFront({
   card: MemberCard; settings: CardSettings;
   brandLogos?: BrandLogos | null; origin: string;
 }) {
-  const t = theme(card.community);
-  const communityLogoUrl = card.community === "AOG"
-    ? brandLogos?.aogLogoUrl
-    : brandLogos?.cultLogoUrl;
-
   const qrUrl = card.cardNumber
     ? `${origin}/validate/${card.cardNumber}`
     : `${origin}/membership`;
@@ -99,24 +92,19 @@ function CardFront({
       {/* ── Main content (padded past vertical strip) ── */}
       <div className="flex flex-col flex-1 pl-[22px] pr-4 pt-4 relative z-10">
 
-        {/* Top logos */}
+        {/* Top logo */}
         <div className="flex items-center justify-between mb-2">
-          {brandLogos?.tvsNepalLogoUrl ? (
+          {brandLogos?.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={brandLogos.tvsNepalLogoUrl} alt="TVS Nepal" className="h-4 w-auto object-contain" />
+            <img src={brandLogos.logoUrl} alt={APP_META.name} className="h-6 w-auto object-contain" />
           ) : (
             <span className="text-sm font-black text-white tracking-tight">
-              TVS <span style={{ color: t.accent }}>NEPAL</span>
+              HIMALAYAN <span style={{ color: t.accent }}>DRIFT</span>
             </span>
           )}
-          {communityLogoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={communityLogoUrl} alt={card.community} className="h-6 w-auto object-contain" />
-          ) : (
-            <span className="text-xs font-bold text-white border border-white/20 px-2 py-0.5 rounded">
-              {card.community}
-            </span>
-          )}
+          <span className="text-xs font-bold text-white border border-white/20 px-2 py-0.5 rounded">
+            {APP_META.shortName}
+          </span>
         </div>
 
         {/* Circular photo */}
@@ -187,8 +175,8 @@ function CardFront({
               bgColor="#ffffff"
               fgColor="#0b0f1e"
               level="H"
-              imageSettings={communityLogoUrl ? {
-                src: communityLogoUrl,
+              imageSettings={brandLogos?.logoUrl ? {
+                src: brandLogos.logoUrl,
                 height: 18,
                 width: 18,
                 excavate: true,
@@ -220,11 +208,6 @@ function CardBack({
 }: {
   card: MemberCard; settings: CardSettings; brandLogos?: BrandLogos | null;
 }) {
-  const t = theme(card.community);
-  const communityLogoUrl = card.community === "AOG"
-    ? brandLogos?.aogLogoUrl
-    : brandLogos?.cultLogoUrl;
-
   return (
     <div
       className="relative w-[300px] h-[472px] rounded-2xl overflow-hidden flex flex-col select-none"
@@ -246,11 +229,11 @@ function CardBack({
         <div style={{ width: 6, background: t.stripe }} />
       </div>
 
-      {/* ── Community logo watermark ── */}
-      {communityLogoUrl && (
+      {/* ── Brand logo watermark ── */}
+      {brandLogos?.logoUrl && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={communityLogoUrl} alt="" className="w-48 h-auto object-contain opacity-[0.055]" />
+          <img src={brandLogos.logoUrl} alt="" className="w-48 h-auto object-contain opacity-[0.055]" />
         </div>
       )}
 

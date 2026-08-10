@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient }       from "@/lib/supabase/server";
+import { APP_META }           from "@/lib/constants";
 
 // Revalidate the manifest every hour so name/icon changes propagate quickly
 export const revalidate = 3600;
@@ -43,7 +44,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   return {
     name:             appName,
     short_name:       shortName,
-    description:      "Annual ride planning and operations platform for AOG & CULT communities",
+    description:      APP_META.description,
     start_url:        "/home",
     display:          "standalone",
     background_color: "#0a0a0b",

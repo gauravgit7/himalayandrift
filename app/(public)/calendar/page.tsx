@@ -15,7 +15,7 @@ import { CalendarShell }           from "@/features/calendar/CalendarShell";
 
 export const metadata: Metadata = {
   title:       `${DEFAULT_CALENDAR_YEAR} Ride Calendar | ${APP_META.shortName}`,
-  description: `Full annual ride calendar for TVS Nepal - AOG & CULT · 9 chapters · ${DEFAULT_CALENDAR_YEAR} season.`,
+  description: `Full annual ride calendar for ${APP_META.name} · ${DEFAULT_CALENDAR_YEAR} season.`,
 };
 
 export default async function CalendarPage() {

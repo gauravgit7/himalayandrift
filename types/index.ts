@@ -6,13 +6,11 @@
 // Enumerations (string unions for type safety + Supabase compatibility)
 // ---------------------------------------------------------------------------
 
-export type Community = "AOG" | "CULT" | "AOGxCULT";
-
 export type RideType =
-  | "chapter"      // Regular chapter rides (breakfast, recreational)
+  | "day"          // Single-day rides
   | "overnight"    // 2D1N rides
-  | "marquee"      // Flagship 4–6 day rides
-  | "cult";        // CULT lifestyle/travel rides
+  | "multiday"     // 3+ day rides
+  | "marquee";     // Flagship rides
 
 export type RideStatus =
   | "planned"
@@ -22,7 +20,7 @@ export type RideStatus =
   | "cancelled"
   | "completed";
 
-export type RidePriority = "local" | "chapter" | "national" | "marquee";
+export type RidePriority = "standard" | "signature" | "marquee";
 
 export type ChapterName =
   | "Bagmati"
@@ -108,7 +106,6 @@ export interface Ride {
   id: string;
   title: string;
   slug: string;
-  community: Community;
   rideType: RideType;
   chapter: ChapterName;
   startDate: string;        // ISO date string "YYYY-MM-DD"
@@ -197,9 +194,8 @@ export interface HeroBannerContent {
 }
 
 export interface BrandLogos {
-  tvsNepalLogoUrl: string | null;
-  aogLogoUrl:      string | null;
-  cultLogoUrl:     string | null;
+  /** The single Himalayan Drift brand mark, shown in the navbar, footer and hero. */
+  logoUrl: string | null;
 }
 
 export interface HomepageContent {
@@ -217,7 +213,6 @@ export interface HomepageContent {
 // ---------------------------------------------------------------------------
 
 export type MemberCardStatus = "pending" | "approved" | "rejected";
-export type MemberCommunity  = "AOG" | "CULT";
 
 export interface MemberCard {
   id:                 string;
@@ -231,7 +226,6 @@ export interface MemberCard {
   bloodGroup:         string;
   emergencyPhone:     string;
   licenseNumber:      string;         // stored, not shown on card
-  community:          MemberCommunity;
   chapter:            string;
   consentAccepted:    boolean;
 
@@ -296,7 +290,6 @@ export interface WeatherForecastDay {
 // ---------------------------------------------------------------------------
 
 export interface CalendarFilters {
-  community: Community | "all";
   chapter: ChapterName | "all";
   rideType: RideType | "all";
   status: RideStatus | "all";
@@ -346,7 +339,6 @@ export interface UserProfile {
   id:             string;
   fullName:       string;
   email:          string;          // stored at registration
-  community:      MemberCommunity | null;
   chapter:        string | null;
   phone:          string | null;
   avatarUrl:      string | null;
@@ -373,7 +365,6 @@ export interface ExportOptions {
   format: ExportFormat;
   year: number;
   includeChapters: ChapterName[] | "all";
-  includeCommunities: Community[] | "all";
   includeStatuses: RideStatus[] | "all";
   brandedExport: boolean;
 }

@@ -11,8 +11,7 @@ import { Save, Eye, CheckCircle2, AlertCircle } from "lucide-react";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import Link                      from "next/link";
 import { cn }                    from "@/utils/cn";
-import { ROUTES }                from "@/lib/constants";
-import { CommunityBadge }        from "@/components/shared/CommunityBadge";
+import { ROUTES, APP_META }      from "@/lib/constants";
 import { saveHomepageContent }   from "@/lib/supabase/actions";
 import type { HomepageContent, Ride } from "@/types";
 
@@ -80,13 +79,12 @@ function RideSelector({
         <option value="" className="bg-tvs-charcoal-900">- None -</option>
         {rides.map((r) => (
           <option key={r.id} value={r.id} className="bg-tvs-charcoal-900">
-            [{r.community}] {r.title} ({r.startDate})
+            {r.title} ({r.startDate})
           </option>
         ))}
       </select>
       {selected && (
         <div className="mt-2 flex items-center gap-2 p-2 rounded-lg bg-tvs-charcoal-800/60 border border-tvs-charcoal-700/40">
-          <CommunityBadge community={selected.community} size="xs" />
           <span className="text-xs text-tvs-charcoal-200 truncate">{selected.title}</span>
           <span className="text-xs text-tvs-charcoal-500 ml-auto">{selected.startDate}</span>
         </div>
@@ -330,49 +328,21 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
         </div>
       </Section>
 
-      {/* ── Brand logos ── */}
-      <Section title="🏷️ Brand Logos">
+      {/* ── Brand logo ── */}
+      <Section title="🏷️ Brand Logo">
         <p className="text-xs text-tvs-charcoal-500 -mt-2">
-          Uploaded logos appear in the navbar, hero, footer, and cards. Leave empty to
-          use the default text/icon fallback. Stored in the{" "}
+          The uploaded logo appears in the navbar, hero, footer, membership cards and
+          exports. Leave empty to use the default text/icon fallback. Stored in the{" "}
           <code className="text-tvs-charcoal-400">brand-logos</code> bucket.
         </p>
-        <div className="space-y-5">
-          <div>
-            <FieldLabel>TVS Nepal Logo</FieldLabel>
-            <ImageUpload
-              bucket="brand-logos"
-              currentUrl={content.brandLogos.tvsNepalLogoUrl}
-              onUpload={(url) =>
-                setTop("brandLogos", { ...content.brandLogos, tvsNepalLogoUrl: url })
-              }
-              compressMaxPx={0}
-            />
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <FieldLabel>AOG Logo</FieldLabel>
-              <ImageUpload
-                bucket="brand-logos"
-                currentUrl={content.brandLogos.aogLogoUrl}
-                onUpload={(url) =>
-                  setTop("brandLogos", { ...content.brandLogos, aogLogoUrl: url })
-                }
-                compressMaxPx={0}
-              />
-            </div>
-            <div>
-              <FieldLabel>CULT Logo</FieldLabel>
-              <ImageUpload
-                bucket="brand-logos"
-                currentUrl={content.brandLogos.cultLogoUrl}
-                onUpload={(url) =>
-                  setTop("brandLogos", { ...content.brandLogos, cultLogoUrl: url })
-                }
-                compressMaxPx={0}
-              />
-            </div>
-          </div>
+        <div>
+          <FieldLabel>{APP_META.name} Logo</FieldLabel>
+          <ImageUpload
+            bucket="brand-logos"
+            currentUrl={content.brandLogos.logoUrl}
+            onUpload={(url) => setTop("brandLogos", { logoUrl: url })}
+            compressMaxPx={0}
+          />
         </div>
       </Section>
 

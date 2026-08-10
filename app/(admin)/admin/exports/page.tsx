@@ -208,9 +208,9 @@ export default function ExportsPage() {
           accentColor="#DC2626"
           description={`A4 document with cover page and monthly ride tables for ${year}.`}
           bullets={[
-            "Cover page with TVS Nepal branding and year stats",
+            "Cover page with Himalayan Drift branding and year stats",
             "12 monthly sections - all rides in a clean table",
-            "Color-coded by community (AOG / CULT / AOGxCULT)",
+            "Color-coded by ride type",
             "Status and marshal details per ride",
             "Page headers and auto page numbers",
           ]}

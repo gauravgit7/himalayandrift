@@ -25,7 +25,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { cn }       from "@/utils/cn";
-import { ROUTES }   from "@/lib/constants";
+import { ROUTES, APP_META } from "@/lib/constants";
 import { signOut }  from "@/lib/supabase/actions";
 
 // ---------------------------------------------------------------------------
@@ -89,9 +89,9 @@ function NavLink({
 // Sidebar content (shared between desktop and mobile drawer)
 // ---------------------------------------------------------------------------
 
-function SidebarContent({ onLinkClick, tvsNepalLogoUrl, adminEmail, adminName }: {
+function SidebarContent({ onLinkClick, logoUrl, adminEmail, adminName }: {
   onLinkClick?: () => void;
-  tvsNepalLogoUrl?: string | null;
+  logoUrl?: string | null;
   adminEmail?: string | null;
   adminName?: string | null;
 }) {
@@ -100,20 +100,20 @@ function SidebarContent({ onLinkClick, tvsNepalLogoUrl, adminEmail, adminName }:
       {/* Brand */}
       <div className="px-3 py-4 mb-2 border-b border-tvs-charcoal-800/60">
         <div className="flex items-center gap-2.5">
-          {tvsNepalLogoUrl ? (
+          {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={tvsNepalLogoUrl}
-              alt="TVS Nepal"
+              src={logoUrl}
+              alt={APP_META.name}
               className="h-8 w-auto object-contain shrink-0"
             />
           ) : (
             <div className="size-8 rounded-lg bg-tvs-red-600 flex items-center justify-center shadow-glow-red shrink-0">
-              <span className="text-white font-black text-sm">T</span>
+              <span className="text-white font-black text-sm">{APP_META.shortName}</span>
             </div>
           )}
           <div>
-            <p className="text-sm font-bold text-tvs-charcoal-50 leading-tight">TVS Nepal</p>
+            <p className="text-sm font-bold text-tvs-charcoal-50 leading-tight">{APP_META.name}</p>
             <p className="text-[10px] text-tvs-charcoal-500 leading-tight">Admin Panel</p>
           </div>
         </div>
@@ -163,19 +163,19 @@ function SidebarContent({ onLinkClick, tvsNepalLogoUrl, adminEmail, adminName }:
 // ---------------------------------------------------------------------------
 
 interface AdminSidebarProps {
-  tvsNepalLogoUrl?: string | null;
+  logoUrl?: string | null;
   adminEmail?: string | null;
   adminName?: string | null;
 }
 
-export function AdminSidebar({ tvsNepalLogoUrl, adminEmail, adminName }: AdminSidebarProps) {
+export function AdminSidebar({ logoUrl, adminEmail, adminName }: AdminSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
       {/* ── Desktop sidebar - fixed left ── */}
       <aside className="hidden lg:flex flex-col fixed top-16 left-0 h-[calc(100dvh-4rem)] w-60 bg-tvs-charcoal-900 border-r border-tvs-charcoal-800/60 z-30">
-        <SidebarContent tvsNepalLogoUrl={tvsNepalLogoUrl} adminEmail={adminEmail} adminName={adminName} />
+        <SidebarContent logoUrl={logoUrl} adminEmail={adminEmail} adminName={adminName} />
       </aside>
 
       {/* ── Mobile hamburger button ── */}
@@ -205,7 +205,7 @@ export function AdminSidebar({ tvsNepalLogoUrl, adminEmail, adminName }: AdminSi
             <div className="pt-14 h-full">
               <SidebarContent
                 onLinkClick={() => setMobileOpen(false)}
-                tvsNepalLogoUrl={tvsNepalLogoUrl}
+                logoUrl={logoUrl}
                 adminEmail={adminEmail}
                 adminName={adminName}
               />

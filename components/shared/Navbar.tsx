@@ -12,7 +12,7 @@ import { usePathname }          from "next/navigation";
 import { Menu, X, Calendar, Map, BookOpen,
          Shield, CreditCard, LogOut, User } from "lucide-react";
 import { cn }                   from "@/utils/cn";
-import { ROUTES }               from "@/lib/constants";
+import { ROUTES, APP_META }     from "@/lib/constants";
 import { Button }               from "@/components/ui/Button";
 import { ThemeToggle }          from "@/components/theme/ThemeToggle";
 import { signOutPublic }        from "@/lib/supabase/actions";
@@ -75,21 +75,18 @@ export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
 
           {/* ── Brand ── */}
           <Link href={ROUTES.home} className="flex items-center gap-2.5 group">
-            {brandLogos?.tvsNepalLogoUrl ? (
+            {brandLogos?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <span className="shrink-0 inline-flex items-center" style={{ height: "18px" }}>
-                <img src={brandLogos.tvsNepalLogoUrl} alt="TVS Nepal" className="h-full w-auto block" />
+              <span className="shrink-0 inline-flex items-center" style={{ height: "28px" }}>
+                <img src={brandLogos.logoUrl} alt={APP_META.name} className="h-full w-auto block" />
               </span>
             ) : (
               <div className="size-8 rounded-lg bg-tvs-red-600 flex items-center justify-center shadow-glow-red group-hover:bg-tvs-red-500 transition-colors shrink-0">
-                <span className="text-white font-black text-sm leading-none">T</span>
+                <span className="text-white font-black text-sm leading-none">{APP_META.shortName}</span>
               </div>
             )}
             <div className="hidden sm:block">
-              <span className="text-white font-bold text-sm leading-none">TVS Nepal</span>
-              <span className="text-tvs-charcoal-400 text-[10px] leading-none block mt-0.5 font-medium tracking-widest uppercase">
-                AOG &amp; CULT
-              </span>
+              <span className="text-white font-bold text-sm leading-none">{APP_META.name}</span>
             </div>
           </Link>
 

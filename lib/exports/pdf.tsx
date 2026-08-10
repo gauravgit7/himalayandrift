@@ -15,7 +15,7 @@ import {
   renderToBuffer,
 } from "@react-pdf/renderer";
 import type { Ride, BrandLogos } from "@/types";
-import { MONTHS } from "@/lib/constants";
+import { MONTHS, APP_META } from "@/lib/constants";
 import { computeRideStats } from "@/utils/ride";
 import { formatRideDateRange } from "@/utils/date";
 
@@ -38,12 +38,6 @@ const P = {
   mixed:   "#7C3AED",
 } as const;
 
-const COMMUNITY_COLORS: Record<string, string> = {
-  AOG:      P.aog,
-  CULT:     P.cult,
-  AOGxCULT: P.mixed,
-};
-
 const STATUS_COLORS: Record<string, string> = {
   planned:   "#6B7280",
   tentative: "#D97706",
@@ -62,7 +56,6 @@ const COL = {
   title:     175,
   type:       58,
   chapter:    76,
-  community:  56,
   status:     50,
 } as const;
 
@@ -215,18 +208,12 @@ const S = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  // TVS Nepal logo in page header (left side) — slightly larger for visibility
+  // Brand logo in page header (left side) — slightly larger for visibility
   headerTvsLogo: {
     height: 22,
-    width: 66,   // wider aspect ratio for TVS Nepal logo
+    width: 66,
     objectFit: "contain",
     marginRight: 6,
-  },
-  // AOG / CULT logos in page header (right side)
-  headerCommunityLogo: {
-    height: 18,
-    width: 54,
-    objectFit: "contain",
   },
   // Legacy alias used in cover page
   headerLogo: {
@@ -236,16 +223,9 @@ const S = StyleSheet.create({
   },
   coverLogo: {
     height: 44,
-    width: 100,   // wider for TVS Nepal logo aspect ratio
+    width: 100,
     objectFit: "contain",
     marginRight: 10,
-  },
-  // AOG / CULT logos on cover page (bottom logo strip)
-  coverCommunityLogo: {
-    height: 32,
-    width: 80,
-    objectFit: "contain",
-    marginRight: 12,
   },
 
   // ── Month section ─────────────────────────────────────────────────────────
@@ -331,7 +311,6 @@ const S = StyleSheet.create({
   colTitle:     { width: COL.title     },
   colType:      { width: COL.type      },
   colChapter:   { width: COL.chapter   },
-  colCommunity: { width: COL.community },
   colStatus:    { width: COL.status    },
 });
 
@@ -340,12 +319,12 @@ const S = StyleSheet.create({
 // ---------------------------------------------------------------------------
 
 function CoverPage({
-  year, total, aog, cult, marquee, overnight, brandLogos,
+  year, total, day, multiday, marquee, overnight, brandLogos,
 }: {
   year: number;
   total: number;
-  aog: number;
-  cult: number;
+  day: number;
+  multiday: number;
   marquee: number;
   overnight: number;
   brandLogos?: BrandLogos | null;
@@ -354,19 +333,19 @@ function CoverPage({
     <View style={S.coverWrap}>
       {/* Brand row */}
       <View style={S.coverTopRow}>
-        {brandLogos?.tvsNepalLogoUrl ? (
-          <Image src={brandLogos.tvsNepalLogoUrl} style={S.coverLogo} />
+        {brandLogos?.logoUrl ? (
+          <Image src={brandLogos.logoUrl} style={S.coverLogo} />
         ) : (
           <View style={S.coverDot} />
         )}
-        <Text style={S.coverBrand}>TVS NEPAL RIDE OPERATIONS</Text>
+        <Text style={S.coverBrand}>{APP_META.name.toUpperCase()}</Text>
       </View>
 
       {/* Hero block */}
       <View>
         <Text style={S.coverYear}>{year}</Text>
         <Text style={S.coverTitle}>Annual Ride Operations Calendar</Text>
-        <Text style={S.coverSubtitle}>Apache Owners Group &amp; CULT Community · Nepal</Text>
+        <Text style={S.coverSubtitle}>{APP_META.name} · Nepal</Text>
 
         <View style={S.coverRule} />
 
@@ -377,50 +356,34 @@ function CoverPage({
             <Text style={S.coverStatLabel}>TOTAL RIDES</Text>
           </View>
           <View style={S.coverStatBox}>
-            <Text style={S.coverStatNum}>9</Text>
-            <Text style={S.coverStatLabel}>CHAPTERS</Text>
-          </View>
-          <View style={S.coverStatBox}>
-            <Text style={S.coverStatNum}>{marquee}</Text>
-            <Text style={S.coverStatLabel}>MARQUEE</Text>
+            <Text style={S.coverStatNum}>{day}</Text>
+            <Text style={S.coverStatLabel}>DAY RIDES</Text>
           </View>
           <View style={S.coverStatBox}>
             <Text style={S.coverStatNum}>{overnight}</Text>
             <Text style={S.coverStatLabel}>OVERNIGHT</Text>
           </View>
           <View style={S.coverStatBox}>
-            <Text style={S.coverStatNum}>{aog}</Text>
-            <Text style={S.coverStatLabel}>AOG RIDES</Text>
+            <Text style={S.coverStatNum}>{multiday}</Text>
+            <Text style={S.coverStatLabel}>MULTI-DAY</Text>
           </View>
           <View style={S.coverStatBox}>
-            <Text style={S.coverStatNum}>{cult}</Text>
-            <Text style={S.coverStatLabel}>CULT RIDES</Text>
+            <Text style={S.coverStatNum}>{marquee}</Text>
+            <Text style={S.coverStatLabel}>MARQUEE</Text>
           </View>
         </View>
 
-        {/* Community logos + badges */}
+        {/* Brand badge */}
         <View style={S.coverBadgesRow}>
-          {/* Show actual logos if available */}
-          {brandLogos?.aogLogoUrl ? (
-            <Image src={brandLogos.aogLogoUrl} style={S.coverCommunityLogo} />
-          ) : (
-            <Text style={[S.coverBadge, { backgroundColor: P.aog }]}>AOG</Text>
-          )}
-          {brandLogos?.cultLogoUrl ? (
-            <Image src={brandLogos.cultLogoUrl} style={S.coverCommunityLogo} />
-          ) : (
-            <Text style={[S.coverBadge, { backgroundColor: P.cult }]}>CULT</Text>
-          )}
-          {/* AOGxCULT text badge always shown */}
-          <Text style={[S.coverBadge, { backgroundColor: P.mixed, alignSelf: "center" }]}>
-            AOG × CULT
+          <Text style={[S.coverBadge, { backgroundColor: P.aog, alignSelf: "center" }]}>
+            {APP_META.shortName}
           </Text>
         </View>
       </View>
 
       {/* Footer */}
       <Text style={S.coverFooter}>
-        TVS NEPAL · CONFIDENTIAL · OPERATIONS DOCUMENT · {year}
+        {APP_META.name.toUpperCase()} · CONFIDENTIAL · OPERATIONS DOCUMENT · {year}
       </Text>
     </View>
   );
@@ -429,20 +392,20 @@ function CoverPage({
 function PageHeader({ year, brandLogos }: { year: number; brandLogos?: BrandLogos | null }) {
   return (
     <View style={S.pageHeaderWrap} fixed>
-      {/* Left: TVS Nepal logo + title */}
+      {/* Left: brand logo + title */}
       <View style={S.pageHeaderLeft}>
-        {brandLogos?.tvsNepalLogoUrl ? (
-          <Image src={brandLogos.tvsNepalLogoUrl} style={S.headerTvsLogo} />
+        {brandLogos?.logoUrl ? (
+          <Image src={brandLogos.logoUrl} style={S.headerTvsLogo} />
         ) : (
           <View style={S.pageHeaderDot} />
         )}
-        <Text style={S.pageHeaderText}>TVS NEPAL · {year} RIDE CALENDAR</Text>
+        <Text style={S.pageHeaderText}>
+          {APP_META.name.toUpperCase()} · {year} RIDE CALENDAR
+        </Text>
       </View>
 
-      {/* Right: AOG + CULT logos (if available), then page number */}
+      {/* Right: page number */}
       <View style={S.pageHeaderRight}>
-        {brandLogos?.aogLogoUrl  && <Image src={brandLogos.aogLogoUrl}  style={S.headerCommunityLogo} />}
-        {brandLogos?.cultLogoUrl && <Image src={brandLogos.cultLogoUrl} style={S.headerCommunityLogo} />}
         <Text
           style={S.pageNum}
           render={({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) =>
@@ -462,15 +425,13 @@ function TableHeaderRow() {
       <Text style={[S.tableHeaderCell, S.colTitle]}>TITLE</Text>
       <Text style={[S.tableHeaderCell, S.colType]}>TYPE</Text>
       <Text style={[S.tableHeaderCell, S.colChapter]}>CHAPTER</Text>
-      <Text style={[S.tableHeaderCell, S.colCommunity]}>COMMUNITY</Text>
       <Text style={[S.tableHeaderCell, S.colStatus]}>STATUS</Text>
     </View>
   );
 }
 
 function RideRow({ ride, idx }: { ride: Ride; idx: number }) {
-  const communityColor = COMMUNITY_COLORS[ride.community] ?? P.dark;
-  const statusColor    = STATUS_COLORS[ride.status]       ?? P.gray;
+  const statusColor = STATUS_COLORS[ride.status] ?? P.gray;
 
   return (
     <View style={[S.tableRow, idx % 2 === 1 ? S.tableRowAlt : {}]}>
@@ -485,9 +446,6 @@ function RideRow({ ride, idx }: { ride: Ride; idx: number }) {
       </Text>
       <Text style={[S.cellGray, S.colChapter]}>
         {ride.chapter}
-      </Text>
-      <Text style={[S.cellBold, S.colCommunity, { color: communityColor }]}>
-        {ride.community}
       </Text>
       <Text style={[S.cellBold, S.colStatus, { color: statusColor }]}>
         {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
@@ -540,26 +498,25 @@ function MonthSection({
 // ---------------------------------------------------------------------------
 
 function CalendarDocument({ rides, year, brandLogos }: { rides: Ride[]; year: number; brandLogos?: BrandLogos | null }) {
-  const stats    = computeRideStats(rides);
-  const overnight= rides.filter((r) => r.rideType === "overnight").length;
+  const stats = computeRideStats(rides);
 
   return (
     <Document
-      title={`TVS Nepal Ride Calendar ${year}`}
-      author="TVS Nepal Ride Operations"
+      title={`${APP_META.name} Ride Calendar ${year}`}
+      author={APP_META.name}
       subject="Annual Ride Operations Calendar"
-      creator="TVS Nepal Ride Operations Platform"
-      keywords="TVS Nepal AOG CULT rides calendar"
+      creator={`${APP_META.name} Ride Operations Platform`}
+      keywords={`${APP_META.name} rides calendar Nepal`}
     >
       {/* ── Cover page ── */}
       <Page size="A4" style={S.coverPage}>
         <CoverPage
           year={year}
           total={stats.total}
-          aog={stats.byCommunity.AOG}
-          cult={stats.byCommunity.CULT}
-          marquee={stats.marqueeCount}
-          overnight={overnight}
+          day={stats.byType.day}
+          multiday={stats.byType.multiday}
+          marquee={stats.byType.marquee}
+          overnight={stats.byType.overnight}
           brandLogos={brandLogos}
         />
       </Page>

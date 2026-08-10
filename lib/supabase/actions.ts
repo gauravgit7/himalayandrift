@@ -12,10 +12,10 @@ import { revalidatePath } from "next/cache";
 import { redirect }       from "next/navigation";
 import { createClient }   from "@/lib/supabase/server";
 import { ROUTES }         from "@/lib/constants";
-import type { HomepageContent, RouteData, MemberCard, CardSettings, MemberCommunity } from "@/types";
+import type { HomepageContent, RouteData, MemberCard, CardSettings } from "@/types";
 import type { PushOptInSettings }          from "@/components/shared/PushOptIn";
 import type { PwaSettings }               from "@/features/admin/PwaSettingsAdmin";
-import { CHAPTER_CODES }                  from "@/lib/constants";
+import { MEMBER_CARD_PREFIX }             from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
 // Auth - Sign In
@@ -50,7 +50,6 @@ export async function signOut(): Promise<void> {
 
 export interface RidePayload {
   title:            string;
-  community:        string;
   rideType:         string;
   chapter:          string;
   startDate:        string;
@@ -79,7 +78,6 @@ export async function saveRide(
 
   const dbRow = {
     title:             payload.title.trim(),
-    community:         payload.community,
     ride_type:         payload.rideType,
     chapter:           payload.chapter,
     start_date:        payload.startDate,
@@ -159,9 +157,7 @@ export async function saveHomepageContent(
     hero_secondary_cta_label:    content.heroBanner.secondaryCTALabel,
     hero_secondary_cta_link:     content.heroBanner.secondaryCTALink,
     hero_featured_ride_id:       content.heroBanner.featuredRideId,
-    tvs_nepal_logo_url:          content.brandLogos.tvsNepalLogoUrl,
-    aog_logo_url:                content.brandLogos.aogLogoUrl,
-    cult_logo_url:               content.brandLogos.cultLogoUrl,
+    brand_logo_url:              content.brandLogos.logoUrl,
     marquee_ride_ids:            content.marqueeRideIds,
     featured_upcoming_ride_ids:  content.featuredUpcomingRideIds,
     show_weather_widget:         content.showWeatherWidget,
@@ -421,7 +417,6 @@ export interface MemberCardPayload {
   bloodGroup:      string;
   emergencyPhone:  string;
   licenseNumber:   string;
-  community:       "AOG" | "CULT";
   chapter:         string;
   consentAccepted: boolean;
 }
@@ -444,7 +439,6 @@ export async function submitMemberCard(
       blood_group:      payload.bloodGroup,
       emergency_phone:  payload.emergencyPhone.trim(),
       license_number:   payload.licenseNumber.trim(),
-      community:        payload.community,
       chapter:          payload.chapter,
       consent_accepted: payload.consentAccepted,
       status:           "pending",
@@ -507,7 +501,7 @@ export async function approveMemberCard(
   // Fetch card to build the card number
   const { data: card, error: fetchError } = await supabase
     .from("member_cards")
-    .select("community, chapter, id")
+    .select("id")
     .eq("id", id)
     .single();
 
@@ -521,21 +515,17 @@ export async function approveMemberCard(
     .single();
   const validityYears = settings?.validity_years ?? 2;
 
-  // Compute sequential card number for this community-chapter-year
-  const year = new Date().getFullYear();
-  const yearShort = String(year).slice(2); // "26"
-  const chapterCode = CHAPTER_CODES[card.chapter as string] ?? card.chapter.slice(0, 3).toUpperCase();
+  // Compute the sequential card number for this year, e.g. HD-26-00001
+  const yearShort = String(new Date().getFullYear()).slice(2); // "26"
+  const prefix    = `${MEMBER_CARD_PREFIX}-${yearShort}-`;
 
   const { count } = await supabase
     .from("member_cards")
     .select("id", { count: "exact", head: true })
-    .eq("community", card.community)
-    .eq("chapter", card.chapter)
-    .eq("status", "approved")
-    .not("card_number", "is", null);
+    .like("card_number", `${prefix}%`);
 
   const seq = String((count ?? 0) + 1).padStart(5, "0");
-  const cardNumber = `${card.community}-${chapterCode}-${yearShort}-${seq}`;
+  const cardNumber = `${prefix}${seq}`;
 
   // Compute valid_until
   const validUntil = new Date();
@@ -620,7 +610,6 @@ export interface SignUpPayload {
   fullName:      string;
   email:         string;
   password:      string;
-  community?:    MemberCommunity | null;
   chapter?:      string | null;
   phone?:        string | null;
   address?:      string | null;
@@ -654,7 +643,6 @@ export async function signUpPublic(
     id:             data.user.id,
     full_name:      payload.fullName.trim(),
     email:          payload.email.trim(),
-    community:      payload.community      ?? null,
     chapter:        payload.chapter        ?? null,
     phone:          payload.phone?.trim()  ?? null,
     address:        payload.address?.trim() ?? null,
@@ -709,7 +697,6 @@ export async function signOutPublic(): Promise<void> {
 /** Update the signed-in user's own profile. */
 export async function updateProfile(data: {
   fullName:      string;
-  community?:    MemberCommunity | null;
   chapter?:      string | null;
   phone?:        string | null;
   avatarUrl?:    string | null;
@@ -726,7 +713,6 @@ export async function updateProfile(data: {
     .from("profiles")
     .update({
       full_name:      data.fullName.trim(),
-      community:      data.community       ?? null,
       chapter:        data.chapter         ?? null,
       phone:          data.phone?.trim()   ?? null,
       avatar_url:     data.avatarUrl       ?? null,
@@ -798,7 +784,6 @@ export async function updateRegistrationByAdmin(
   id:   string,
   data: {
     fullName?:     string;
-    community?:    MemberCommunity | null;
     chapter?:      string | null;
     phone?:        string | null;
     address?:      string | null;
@@ -813,7 +798,6 @@ export async function updateRegistrationByAdmin(
 
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (data.fullName      !== undefined) patch.full_name      = data.fullName.trim();
-  if (data.community     !== undefined) patch.community      = data.community      ?? null;
   if (data.chapter       !== undefined) patch.chapter        = data.chapter        ?? null;
   if (data.phone         !== undefined) patch.phone          = data.phone?.trim()  ?? null;
   if (data.address       !== undefined) patch.address        = data.address?.trim() ?? null;

@@ -22,7 +22,7 @@
 
   /* ── TVS Brand Colors ── */
 
-  /* Deep Reds - primary AOG identity */
+  /* Deep Reds - primary brand identity */
   --color-tvs-red-50:  #fef2f2;
   --color-tvs-red-100: #fee2e2;
   --color-tvs-red-200: #fecaca;
@@ -43,7 +43,7 @@
   --color-tvs-crimson-900: #380810;
   --color-tvs-crimson-950: #1a0308;
 
-  /* Steel Blues - CULT identity */
+  /* Steel Blues - secondary accent */
   --color-tvs-steel-50:  #f0f4ff;
   --color-tvs-steel-100: #dde5ff;
   --color-tvs-steel-200: #b3c4ff;
@@ -77,11 +77,6 @@
   --color-status-postponed: #dc2626;
   --color-status-cancelled: #7f1d1d;
   --color-status-completed: #1d4ed8;
-
-  /* Community colors */
-  --color-community-aog:     #dc2626;
-  --color-community-cult:    #2563eb;
-  --color-community-aogcult: #7c3aed;
 
   /* ── Spacing extensions ── */
   --spacing-18: 4.5rem;
@@ -274,22 +269,18 @@ html.light .gradient-card {
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.08), 0 0 0 1px rgb(0 0 0 / 0.06);
 }
 
-/* Community-aware gradients - hardcoded dark values so they stay
-   consistent in both light and dark mode. All three use a "colour → near-black"
-   approach for a premium, high-contrast cinematic feel. */
+/* Banner gradients - hardcoded dark values so they stay consistent in both
+   light and dark mode. Both use a "colour → near-black" approach for a
+   premium, high-contrast cinematic feel. */
 
-.gradient-aog {
-  /* Deep crimson → near-black */
+/* Fallback banner fill for rides with no photo and no route map.
+   Palette is finalised with the brand pass. */
+.gradient-brand {
   background: linear-gradient(135deg, #6b1111 0%, #2a0505 55%, #0e0202 100%);
 }
 
-.gradient-cult {
-  /* Dark navy → near-black */
-  background: linear-gradient(135deg, #1e3a8a 0%, #0a1832 55%, #050b15 100%);
-}
-
+/* Flagship rides get a richer treatment than the standard brand fill. */
 .gradient-marquee {
-  /* Deep purple → crimson → near-black */
   background: linear-gradient(135deg, #4c1d95 0%, #6b1111 50%, #0a0308 100%);
 }
 

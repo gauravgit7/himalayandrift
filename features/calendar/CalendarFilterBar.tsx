@@ -1,6 +1,6 @@
 // =============================================================================
 // CalendarFilterBar - Phase 4 · Horizontal filter controls
-// Community pills + dropdowns for chapter, type, status + search
+// Ride-type pills + dropdowns for chapter, status + search
 // =============================================================================
 
 "use client";
@@ -9,12 +9,11 @@ import { Search, X, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/utils/cn";
 import {
-  COMMUNITIES,
   CHAPTERS,
   RIDE_TYPES,
   RIDE_STATUSES,
 } from "@/lib/constants";
-import type { CalendarFilters, Community, ChapterName, RideType, RideStatus } from "@/types";
+import type { CalendarFilters, ChapterName, RideType, RideStatus } from "@/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,22 +27,11 @@ interface CalendarFilterBarProps {
 }
 
 // ---------------------------------------------------------------------------
-// Community pill colors
+// Ride-type pill colors
 // ---------------------------------------------------------------------------
 
-const COMMUNITY_PILL: Record<string, string> = {
-  all:      "border-tvs-charcoal-700 text-tvs-charcoal-300 hover:border-tvs-charcoal-500",
-  AOG:      "border-tvs-red-700/60   text-tvs-red-300   hover:border-tvs-red-500",
-  CULT:     "border-tvs-steel-700/60 text-tvs-steel-300 hover:border-tvs-steel-500",
-  AOGxCULT: "border-violet-700/60   text-violet-300   hover:border-violet-500",
-};
-
-const COMMUNITY_PILL_ACTIVE: Record<string, string> = {
-  all:      "bg-tvs-charcoal-700 border-tvs-charcoal-600 text-tvs-charcoal-50",
-  AOG:      "bg-tvs-red-700      border-tvs-red-600      text-white",
-  CULT:     "bg-tvs-steel-700    border-tvs-steel-600    text-white",
-  AOGxCULT: "bg-violet-700      border-violet-600      text-white",
-};
+const PILL_IDLE   = "border-tvs-charcoal-700 text-tvs-charcoal-300 hover:border-tvs-charcoal-500";
+const PILL_ACTIVE = "bg-tvs-charcoal-700 border-tvs-charcoal-600 text-tvs-charcoal-50";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -58,7 +46,6 @@ export function CalendarFilterBar({
   const [expanded, setExpanded] = useState(false);
 
   const activeCount = [
-    filters.community !== "all",
     filters.chapter   !== "all",
     filters.rideType  !== "all",
     filters.status    !== "all",
@@ -67,40 +54,36 @@ export function CalendarFilterBar({
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 pb-3 border-t border-tvs-charcoal-800/40">
-      {/* ── Top row: community pills + expand button ── */}
+      {/* ── Top row: ride-type pills + expand button ── */}
       <div className="flex items-center gap-2 pt-3 flex-wrap">
-        {/* Community pills */}
+        {/* Ride-type pills */}
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* All pill */}
           <button
-            onClick={() => onUpdate("community", "all")}
+            onClick={() => onUpdate("rideType", "all")}
             className={cn(
               "text-xs font-semibold px-3 py-1.5 rounded-full border transition-all duration-150",
-              filters.community === "all"
-                ? COMMUNITY_PILL_ACTIVE.all
-                : COMMUNITY_PILL.all
+              filters.rideType === "all" ? PILL_ACTIVE : PILL_IDLE
             )}
           >
             All
           </button>
-          {/* Community-specific pills */}
-          {COMMUNITIES.map((c) => (
+          {/* Type-specific pills */}
+          {RIDE_TYPES.map((t) => (
             <button
-              key={c.value}
+              key={t.value}
               onClick={() =>
                 onUpdate(
-                  "community",
-                  filters.community === c.value ? "all" : (c.value as Community)
+                  "rideType",
+                  filters.rideType === t.value ? "all" : (t.value as RideType)
                 )
               }
               className={cn(
                 "text-xs font-semibold px-3 py-1.5 rounded-full border transition-all duration-150",
-                filters.community === c.value
-                  ? COMMUNITY_PILL_ACTIVE[c.value]
-                  : COMMUNITY_PILL[c.value]
+                filters.rideType === t.value ? PILL_ACTIVE : PILL_IDLE
               )}
             >
-              {c.value === "AOGxCULT" ? "AOG×CULT" : c.value}
+              {t.label}
             </button>
           ))}
         </div>
@@ -159,17 +142,6 @@ export function CalendarFilterBar({
             options={[
               { value: "all", label: "All Chapters" },
               ...CHAPTERS.map((c) => ({ value: c.name, label: c.name + (c.isPriority ? " ★" : "") })),
-            ]}
-          />
-
-          {/* Ride type */}
-          <Select
-            label="Type"
-            value={filters.rideType as string}
-            onChange={(v) => onUpdate("rideType", v === "all" ? "all" : (v as RideType))}
-            options={[
-              { value: "all", label: "All Types" },
-              ...RIDE_TYPES.map((t) => ({ value: t.value, label: t.label })),
             ]}
           />
 

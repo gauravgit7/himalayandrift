@@ -26,18 +26,13 @@ import { format, parseISO, addDays } from "@/utils/date";
 import { differenceInDays } from "date-fns";
 import { getMonthCalendarDays } from "@/utils/date";
 import { cn } from "@/utils/cn";
-import { ROUTES, MONTHS } from "@/lib/constants";
+import { ROUTES, MONTHS, RIDE_TYPE_STYLES, RIDE_TYPE_STYLE_FALLBACK } from "@/lib/constants";
 import type { Ride } from "@/types";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const COMMUNITY_BG: Record<string, string> = {
-  AOG:      "bg-tvs-red-900/60 border-l-tvs-red-500 text-tvs-red-200",
-  CULT:     "bg-tvs-steel-900/60 border-l-tvs-steel-400 text-tvs-steel-200",
-  AOGxCULT: "bg-violet-900/60 border-l-violet-500 text-violet-200",
-};
 
 // ---------------------------------------------------------------------------
 // Draggable ride chip
@@ -68,7 +63,7 @@ function DraggableChip({
       className={cn(
         "px-1.5 py-0.5 rounded text-[11px] border-l-2 truncate cursor-grab active:cursor-grabbing select-none",
         "transition-opacity duration-100 leading-snug",
-        COMMUNITY_BG[ride.community] ?? "bg-tvs-charcoal-800 border-l-tvs-charcoal-600 text-tvs-charcoal-200",
+        (RIDE_TYPE_STYLES[ride.rideType] ?? RIDE_TYPE_STYLE_FALLBACK).chip,
         isDragged ? "opacity-40" : "hover:brightness-110"
       )}
       title={`Drag to reschedule: ${ride.title}`}
@@ -164,7 +159,7 @@ function DragOverlayChip({ ride }: { ride: Ride }) {
     <div
       className={cn(
         "px-2 py-1 rounded text-xs border-l-2 shadow-lg cursor-grabbing select-none max-w-[180px]",
-        COMMUNITY_BG[ride.community] ?? "bg-tvs-charcoal-800 border-l-tvs-charcoal-600 text-tvs-charcoal-200"
+        (RIDE_TYPE_STYLES[ride.rideType] ?? RIDE_TYPE_STYLE_FALLBACK).chip
       )}
     >
       {ride.title}

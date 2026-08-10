@@ -8,8 +8,8 @@ import { notFound }            from "next/navigation";
 import Link                    from "next/link";
 import { CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 import { getMemberCardByCardNumber, getBrandLogos } from "@/lib/supabase/queries";
-import { CommunityBadge }      from "@/components/shared/CommunityBadge";
 import { cn }                  from "@/utils/cn";
+import { APP_META }            from "@/lib/constants";
 
 interface PageProps {
   params: Promise<{ cardNumber: string }>;
@@ -66,7 +66,7 @@ export default async function ValidatePage({ params }: PageProps) {
           )}>
             {effectivelyValid ? "Valid Member" : isExpired ? "Membership Expired" : "Invalid Card"}
           </h1>
-          <p className="text-sm text-tvs-charcoal-400 mt-1">TVS Nepal Community</p>
+          <p className="text-sm text-tvs-charcoal-400 mt-1">{APP_META.name}</p>
         </div>
 
         {/* Member details card */}
@@ -88,9 +88,6 @@ export default async function ValidatePage({ params }: PageProps) {
             <div>
               <p className="font-black text-tvs-charcoal-50 text-lg leading-tight">{card.fullName}</p>
               <p className="text-xs text-tvs-charcoal-500 mt-0.5">{card.chapter} Chapter</p>
-              <div className="mt-1.5">
-                <CommunityBadge community={card.community} size="xs" brandLogos={brandLogos} />
-              </div>
             </div>
           </div>
 
@@ -114,8 +111,8 @@ export default async function ValidatePage({ params }: PageProps) {
         <div className="flex items-start gap-2 text-left">
           <ShieldCheck className="size-4 text-tvs-charcoal-600 shrink-0 mt-0.5" />
           <p className="text-[10px] text-tvs-charcoal-600 leading-relaxed">
-            This page confirms the authenticity of a TVS Nepal community membership card.
-            Verified by TVS Nepal Operations Platform.
+            This page confirms the authenticity of a {APP_META.name} membership card.
+            Verified by the {APP_META.name} operations platform.
           </p>
         </div>
 

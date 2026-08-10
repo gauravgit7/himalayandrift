@@ -5,7 +5,7 @@
 
 import { RideCard } from "@/components/shared/RideCard";
 import { cn } from "@/utils/cn";
-import { MONTHS } from "@/lib/constants";
+import { MONTHS, RIDE_TYPES, RIDE_TYPE_STYLES, RIDE_TYPE_STYLE_FALLBACK } from "@/lib/constants";
 import { adToBs, BS_MONTHS } from "@/utils/nepali-date";
 import { groupRidesByMonth, sortRidesByDate } from "@/utils/ride";
 import type { Ride, BrandLogos } from "@/types";
@@ -38,10 +38,14 @@ function MonthSection({ monthKey, rides, brandLogos, dateMode = "ad" }: { monthK
     ? `${bsFirst.year} ${bsFirst.monthName}`
     : `${bsFirst.year} ${bsFirst.monthName} / ${BS_MONTHS[bsLast.month]}`;
 
-  // Count by community
-  const aogCount  = rides.filter((r) => r.community === "AOG").length;
-  const cultCount = rides.filter((r) => r.community === "CULT").length;
-  const aocCount  = rides.filter((r) => r.community === "AOGxCULT").length;
+  // Count by ride type, keeping only the types actually present this month
+  const typeCounts = RIDE_TYPES
+    .map((t) => ({
+      value: t.value,
+      label: t.label,
+      count: rides.filter((r) => r.rideType === t.value).length,
+    }))
+    .filter((t) => t.count > 0);
 
   return (
     <div className="space-y-3">
@@ -54,23 +58,19 @@ function MonthSection({ monthKey, rides, brandLogos, dateMode = "ad" }: { monthK
         <span className="text-xs text-tvs-charcoal-500">
           {rides.length} {rides.length === 1 ? "ride" : "rides"}
         </span>
-        {/* Community breakdown pills */}
+        {/* Ride-type breakdown pills */}
         <div className="flex items-center gap-1.5 ml-auto">
-          {aogCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-tvs-red-900/50 border border-tvs-red-800/40 text-tvs-red-400 font-medium">
-              {aogCount} AOG
+          {typeCounts.map((t) => (
+            <span
+              key={t.value}
+              className={cn(
+                "text-[10px] px-1.5 py-0.5 rounded border font-medium",
+                (RIDE_TYPE_STYLES[t.value] ?? RIDE_TYPE_STYLE_FALLBACK).chip,
+              )}
+            >
+              {t.count} {t.label}
             </span>
-          )}
-          {cultCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-tvs-steel-900/50 border border-tvs-steel-800/40 text-tvs-steel-400 font-medium">
-              {cultCount} CULT
-            </span>
-          )}
-          {aocCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-900/50 border border-violet-800/40 text-violet-400 font-medium">
-              {aocCount} AOG×CULT
-            </span>
-          )}
+          ))}
         </div>
       </div>
 

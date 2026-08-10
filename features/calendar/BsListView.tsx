@@ -7,6 +7,8 @@ import { RideCard }          from "@/components/shared/RideCard";
 import { sortRidesByDate }   from "@/utils/ride";
 import { adToBs, BS_MONTHS } from "@/utils/nepali-date";
 import { formatRideDateRange } from "@/utils/date";
+import { cn } from "@/utils/cn";
+import { RIDE_TYPES, RIDE_TYPE_STYLES, RIDE_TYPE_STYLE_FALLBACK } from "@/lib/constants";
 import type { Ride, BrandLogos } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -43,9 +45,15 @@ function BsMonthSection({
   brandLogos?: BrandLogos | null;
 }) {
   const monthName = BS_MONTHS[bsMonth] ?? "";
-  const aogCount  = rides.filter((r) => r.community === "AOG").length;
-  const cultCount = rides.filter((r) => r.community === "CULT").length;
-  const aocCount  = rides.filter((r) => r.community === "AOGxCULT").length;
+
+  // Count by ride type, keeping only the types actually present this month
+  const typeCounts = RIDE_TYPES
+    .map((t) => ({
+      value: t.value,
+      label: t.label,
+      count: rides.filter((r) => r.rideType === t.value).length,
+    }))
+    .filter((t) => t.count > 0);
 
   return (
     <div className="space-y-3">
@@ -63,21 +71,17 @@ function BsMonthSection({
           {rides.length} {rides.length === 1 ? "ride" : "rides"}
         </span>
         <div className="flex items-center gap-1.5 ml-auto">
-          {aogCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-tvs-red-900/50 border border-tvs-red-800/40 text-tvs-red-400 font-medium">
-              {aogCount} AOG
+          {typeCounts.map((t) => (
+            <span
+              key={t.value}
+              className={cn(
+                "text-[10px] px-1.5 py-0.5 rounded border font-medium",
+                (RIDE_TYPE_STYLES[t.value] ?? RIDE_TYPE_STYLE_FALLBACK).chip,
+              )}
+            >
+              {t.count} {t.label}
             </span>
-          )}
-          {cultCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-tvs-steel-900/50 border border-tvs-steel-800/40 text-tvs-steel-400 font-medium">
-              {cultCount} CULT
-            </span>
-          )}
-          {aocCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-900/50 border border-violet-800/40 text-violet-400 font-medium">
-              {aocCount} AOG×CULT
-            </span>
-          )}
+          ))}
         </div>
       </div>
 

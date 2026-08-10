@@ -13,10 +13,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatRideDateRange } from "@/utils/date";
-import { ROUTES, COMMUNITIES, RIDE_STATUSES } from "@/lib/constants";
-import { CommunityBadge } from "@/components/shared/CommunityBadge";
+import { ROUTES, RIDE_TYPES, RIDE_TYPE_STYLES, RIDE_TYPE_STYLE_FALLBACK, RIDE_STATUSES } from "@/lib/constants";
 import { StatusBadge }    from "@/components/shared/StatusBadge";
-import type { Ride, Community, RideStatus, BrandLogos } from "@/types";
+import type { Ride, RideType, RideStatus, BrandLogos } from "@/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,19 +26,16 @@ interface RidesTableProps {
   brandLogos?:  BrandLogos | null;
 }
 
-type SortKey   = "startDate" | "title" | "chapter" | "status" | "community";
+type SortKey   = "startDate" | "title" | "chapter" | "status" | "rideType";
 type SortOrder = "asc" | "desc";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const COMMUNITY_FILTER_OPTS = [
-  { value: "all", label: "All Communities" },
-  ...COMMUNITIES.map((c) => ({
-    value: c.value,
-    label: c.value === "AOGxCULT" ? "AOG × CULT" : c.value,
-  })),
+const TYPE_FILTER_OPTS = [
+  { value: "all", label: "All Types" },
+  ...RIDE_TYPES.map((t) => ({ value: t.value, label: t.label })),
 ];
 
 const STATUS_FILTER_OPTS = [
@@ -54,7 +50,7 @@ const STATUS_FILTER_OPTS = [
 export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
   const [rides,  setRides]  = useState<Ride[]>(initialRides);
   const [query,  setQuery]  = useState("");
-  const [community, setCommunity] = useState<Community | "all">("all");
+  const [rideType, setRideType] = useState<RideType | "all">("all");
   const [status, setStatus] = useState<RideStatus | "all">("all");
   const [sortKey,   setSortKey]   = useState<SortKey>("startDate");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
@@ -63,14 +59,14 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
   // ── Filtered + sorted ──────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let list = rides.filter((r) => {
-      if (community !== "all" && r.community !== community) return false;
-      if (status    !== "all" && r.status    !== status)    return false;
+      if (rideType !== "all" && r.rideType !== rideType) return false;
+      if (status   !== "all" && r.status   !== status)   return false;
       if (query) {
         const q = query.toLowerCase();
         if (
           !r.title.toLowerCase().includes(q) &&
           !r.chapter.toLowerCase().includes(q) &&
-          !r.community.toLowerCase().includes(q)
+          !r.rideType.toLowerCase().includes(q)
         ) return false;
       }
       return true;
@@ -83,7 +79,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
         case "title":     aVal = a.title;           bVal = b.title;          break;
         case "chapter":   aVal = a.chapter;         bVal = b.chapter;        break;
         case "status":    aVal = a.status;          bVal = b.status;         break;
-        case "community": aVal = a.community;       bVal = b.community;      break;
+        case "rideType":  aVal = a.rideType;         bVal = b.rideType;       break;
         default:          aVal = a.startDate;       bVal = b.startDate;
       }
       return sortOrder === "asc"
@@ -92,7 +88,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
     });
 
     return list;
-  }, [rides, community, status, query, sortKey, sortOrder]);
+  }, [rides, rideType, status, query, sortKey, sortOrder]);
 
   // ── Sort toggle ────────────────────────────────────────────────────────
   const toggleSort = (key: SortKey) => {
@@ -131,13 +127,13 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
           />
         </div>
 
-        {/* Community filter */}
+        {/* Ride type filter */}
         <select
-          value={community}
-          onChange={(e) => setCommunity(e.target.value as Community | "all")}
+          value={rideType}
+          onChange={(e) => setRideType(e.target.value as RideType | "all")}
           className="h-9 px-3 rounded-lg bg-tvs-charcoal-900 border border-tvs-charcoal-800 text-sm text-tvs-charcoal-300 focus:outline-none focus:border-tvs-red-600 transition-colors appearance-none"
         >
-          {COMMUNITY_FILTER_OPTS.map((o) => (
+          {TYPE_FILTER_OPTS.map((o) => (
             <option key={o.value} value={o.value} className="bg-tvs-charcoal-900">
               {o.label}
             </option>
@@ -178,7 +174,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
           {(
             [
               { key: "title",     label: "Ride" },
-              { key: "community", label: "Community" },
+              { key: "rideType",  label: "Type" },
               { key: "chapter",   label: "Chapter" },
               { key: "startDate", label: "Date" },
               { key: "status",    label: "Status" },
@@ -217,8 +213,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
                 <div
                   className={cn(
                     "w-0.5 h-6 rounded-full shrink-0",
-                    ride.community === "AOGxCULT" ? "bg-violet-600" :
-                    ride.community === "CULT"     ? "bg-tvs-steel-500" : "bg-tvs-red-600"
+                    (RIDE_TYPE_STYLES[ride.rideType] ?? RIDE_TYPE_STYLE_FALLBACK).dot
                   )}
                 />
                 <div className="min-w-0">
@@ -230,9 +225,11 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
                   )}
                 </div>
               </div>
-              {/* Community */}
+              {/* Ride type */}
               <div className="px-3 py-3">
-                <CommunityBadge community={ride.community} size="xs" brandLogos={brandLogos} />
+                <span className="text-xs text-tvs-charcoal-300">
+                  {(RIDE_TYPE_STYLES[ride.rideType] ?? RIDE_TYPE_STYLE_FALLBACK).label}
+                </span>
               </div>
               {/* Chapter */}
               <div className="px-3 py-3 text-xs text-tvs-charcoal-300">{ride.chapter}</div>

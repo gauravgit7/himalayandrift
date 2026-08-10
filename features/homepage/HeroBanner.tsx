@@ -12,12 +12,11 @@ import Link from "next/link";
 import { Calendar, ArrowRight, MapPin, Users } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatRideDateRange } from "@/utils/date";
-import { CommunityBadge } from "@/components/shared/CommunityBadge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { RideQrCodeInline } from "@/components/shared/RideQrCode";
 import { RideCountdown }    from "@/features/homepage/RideCountdown";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, RIDE_TYPES } from "@/lib/constants";
 import type { Ride, HomepageContent, BrandLogos } from "@/types";
 
 interface HeroBannerStats {
@@ -133,18 +132,20 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
             animate="show"
             className="flex flex-col gap-7"
           >
-            {/* Community tags */}
+            {/* Ride type tags */}
             <motion.div
               variants={fadeUp}
               transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="flex flex-wrap gap-2"
             >
-              <CommunityBadge community="AOG"      size="sm" brandLogos={brandLogos} />
-              <CommunityBadge community="CULT"     size="sm" brandLogos={brandLogos} />
-              <CommunityBadge community="AOGxCULT" size="sm" brandLogos={brandLogos} />
-              <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-tvs-charcoal-800/80 border border-tvs-charcoal-700 text-tvs-charcoal-400">
-                9 Chapters · All Nepal
-              </span>
+              {RIDE_TYPES.map((t) => (
+                <span
+                  key={t.value}
+                  className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-tvs-charcoal-800/80 border border-tvs-charcoal-700 text-tvs-charcoal-400"
+                >
+                  {t.icon} {t.label}
+                </span>
+              ))}
             </motion.div>
 
             {/* Main headline */}
@@ -299,7 +300,7 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
       <div
         className={cn(
           "absolute inset-0",
-          isMarquee ? "gradient-marquee" : ride.community === "CULT" ? "gradient-cult" : "gradient-aog"
+          isMarquee ? "gradient-marquee" : "gradient-brand"
         )}
       />
       {/* Overlay for text contrast */}
@@ -316,7 +317,6 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
       <div className="relative flex flex-col gap-4 p-6 pt-5">
         {/* Top badges row */}
         <div className="flex items-start gap-2 flex-wrap">
-          <CommunityBadge community={ride.community} size="sm" brandLogos={brandLogos} />
           {isMarquee && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-900/50 text-yellow-400 border border-yellow-700/40">
               ★ MARQUEE

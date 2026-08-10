@@ -5,8 +5,7 @@ import Link             from "next/link";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn }           from "@/utils/cn";
 import { signUpPublic } from "@/lib/supabase/actions";
-import { ROUTES }       from "@/lib/constants";
-import type { MemberCommunity } from "@/types";
+import { ROUTES, APP_META } from "@/lib/constants";
 
 const CHAPTERS = [
   "Bagmati","Narayani","Gandaki","Lumbini",
@@ -22,7 +21,6 @@ export function SignUpForm() {
   const [licenseNumber,  setLicenseNumber]  = useState("");
   const [address,        setAddress]        = useState("");
   const [bikeModel,      setBikeModel]      = useState("");
-  const [community,      setCommunity]      = useState<MemberCommunity | "">("");
   const [chapter,        setChapter]        = useState("");
   const [phone,          setPhone]          = useState("");
   const [loading,        setLoading]        = useState(false);
@@ -39,7 +37,6 @@ export function SignUpForm() {
       fullName,
       email,
       password,
-      community:     community     || null,
       chapter:       chapter       || null,
       phone:         phone         || null,
       address:       address       || null,
@@ -88,7 +85,7 @@ export function SignUpForm() {
   return (
     <div className="w-full max-w-lg space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-black text-white">Join TVS Nepal</h1>
+        <h1 className="text-2xl font-black text-white">Join {APP_META.name}</h1>
         <p className="text-sm text-tvs-charcoal-400 mt-1">Create your community account</p>
       </div>
 
@@ -186,18 +183,8 @@ export function SignUpForm() {
         <div className="border-t border-tvs-charcoal-800 pt-3">
           <p className="text-[11px] uppercase tracking-widest text-tvs-charcoal-500 mb-3">Chapter & Contact</p>
 
-          {/* Community + Chapter */}
+          {/* Chapter */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label htmlFor="community" className={labelClass}>Community</label>
-              <select id="community" value={community} disabled={loading}
-                onChange={(e) => setCommunity(e.target.value as MemberCommunity | "")}
-                className={selectClass}>
-                <option value="">Select…</option>
-                <option value="AOG">AOG</option>
-                <option value="CULT">CULT</option>
-              </select>
-            </div>
             <div className="space-y-1">
               <label htmlFor="chapter" className={labelClass}>Chapter</label>
               <select id="chapter" value={chapter} disabled={loading}

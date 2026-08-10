@@ -250,8 +250,8 @@ export const getHomepageContent = cache(async (): Promise<HomepageContent> => {
     if (error) console.error("[queries] getHomepageContent:", error.message);
     return {
       heroBanner: {
-        title:              "Ride Nepal. Together.",
-        subtitle:           "Annual ride operations for AOG & CULT - 9 chapters, one community.",
+        title:              "Ride the Himalaya. Together.",
+        subtitle:           "Ride planning and operations for the Himalayan Drift community.",
         backgroundImageUrl: null,
         overlayOpacity:     0.6,
         primaryCTALabel:    "View Calendar",
@@ -261,9 +261,7 @@ export const getHomepageContent = cache(async (): Promise<HomepageContent> => {
         featuredRideId:     null,
       },
       brandLogos: {
-        tvsNepalLogoUrl: null,
-        aogLogoUrl:      null,
-        cultLogoUrl:     null,
+        logoUrl: null,
       },
       marqueeRideIds:          [],
       featuredUpcomingRideIds: [],
@@ -375,7 +373,6 @@ export async function getProfile(): Promise<import("@/types").UserProfileWithEma
       id:            user.id,
       fullName:      (user.user_metadata?.full_name as string | undefined) ?? "",
       email:         user.email ?? "",
-      community:     null,
       chapter:       null,
       phone:         null,
       avatarUrl:     null,
@@ -447,11 +444,9 @@ export const getBrandLogos = cache(async (): Promise<BrandLogos> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("homepage_content")
-    .select("tvs_nepal_logo_url, aog_logo_url, cult_logo_url")
+    .select("brand_logo_url")
     .maybeSingle();
   return {
-    tvsNepalLogoUrl: data?.tvs_nepal_logo_url ?? null,
-    aogLogoUrl:      data?.aog_logo_url        ?? null,
-    cultLogoUrl:     data?.cult_logo_url        ?? null,
+    logoUrl: data?.brand_logo_url ?? null,
   };
 });

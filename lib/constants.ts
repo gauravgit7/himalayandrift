@@ -4,7 +4,6 @@
 
 import type {
   ChapterName,
-  Community,
   RideStatus,
   RideType,
   RidePriority,
@@ -16,17 +15,6 @@ import type {
 
 export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] as const;
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
-
-// ---------------------------------------------------------------------------
-// Communities
-// ---------------------------------------------------------------------------
-
-export const COMMUNITIES: { value: Community; label: string; color: string }[] =
-  [
-    { value: "AOG", label: "Apache Owners Group", color: "#DC2626" },   // red-600
-    { value: "CULT", label: "CULT", color: "#2563EB" },                  // blue-600
-    { value: "AOGxCULT", label: "AOG × CULT", color: "#7C3AED" },       // violet-700
-  ];
 
 // ---------------------------------------------------------------------------
 // Chapters (9 total; 4 priority)
@@ -54,18 +42,11 @@ export const CHAPTERS: {
 export const CHAPTER_NAMES = CHAPTERS.map((c) => c.name);
 export const PRIORITY_CHAPTERS = CHAPTERS.filter((c) => c.isPriority).map((c) => c.name);
 
-/** 3-letter abbreviations used in membership card numbers  e.g. AOG-BAG-26-00001 */
-export const CHAPTER_CODES: Record<string, string> = {
-  Bagmati:  "BAG",
-  Gandaki:  "GAN",
-  Narayani: "NAR",
-  Lumbini:  "LUM",
-  Rapti:    "RAP",
-  Bheri:    "BHE",
-  Mahakali: "MAH",
-  Koshi:    "KOS",
-  Mechi:    "MEC",
-} as const;
+/**
+ * Prefix for membership card numbers: `HD-<2-digit year>-<5-digit sequence>`,
+ * e.g. HD-26-00001. The sequence restarts each calendar year.
+ */
+export const MEMBER_CARD_PREFIX = "HD";
 
 // ---------------------------------------------------------------------------
 // Ride Types
@@ -79,34 +60,77 @@ export const RIDE_TYPES: {
   durationDays: string;
 }[] = [
   {
-    value: "chapter",
-    label: "Chapter Ride",
-    description: "Breakfast or recreational rides - 20–30 riders",
+    value: "day",
+    label: "Day Ride",
+    description: "Out and back in a single day",
     icon: "🏍️",
     durationDays: "1",
   },
   {
-    value: "cult",
-    label: "CULT Ride",
-    description: "Travel, lifestyle, exploration & culture focused",
-    icon: "🗺️",
-    durationDays: "1",
-  },
-  {
     value: "overnight",
-    label: "Overnight Ride",
-    description: "2D1N rides - quarterly cadence",
+    label: "Overnight",
+    description: "Two days, one night on the road",
     icon: "🌙",
     durationDays: "2",
   },
   {
+    value: "multiday",
+    label: "Multi-Day",
+    description: "Three days or more",
+    icon: "🏔️",
+    durationDays: "3+",
+  },
+  {
     value: "marquee",
-    label: "Marquee Ride",
-    description: "Flagship 4–6 day rides - AOG × CULT - 2 per year",
+    label: "Marquee",
+    description: "Flagship ride of the year",
     icon: "⭐",
-    durationDays: "4–6",
+    durationDays: "Flagship",
   },
 ];
+
+/**
+ * Calendar colour coding. With a single community, ride type is what the
+ * calendar views colour-code by: chips in the month grids, continuation bars
+ * for multi-day rides, and dots in the year grids.
+ */
+export const RIDE_TYPE_STYLES: Record<
+  RideType,
+  { chip: string; continuation: string; dot: string; label: string }
+> = {
+  day: {
+    chip:         "bg-tvs-charcoal-800/70 border-l-tvs-charcoal-400 text-tvs-charcoal-100 hover:bg-tvs-charcoal-700/70",
+    continuation: "bg-tvs-charcoal-700/30 border-l-tvs-charcoal-600",
+    dot:          "bg-tvs-charcoal-300",
+    label:        "Day Ride",
+  },
+  overnight: {
+    chip:         "bg-tvs-steel-900/50 border-l-tvs-steel-400 text-tvs-steel-200 hover:bg-tvs-steel-800/60",
+    continuation: "bg-tvs-steel-800/30 border-l-tvs-steel-700",
+    dot:          "bg-tvs-steel-400",
+    label:        "Overnight",
+  },
+  multiday: {
+    chip:         "bg-amber-900/50 border-l-amber-400 text-amber-200 hover:bg-amber-800/60",
+    continuation: "bg-amber-800/30 border-l-amber-700",
+    dot:          "bg-amber-400",
+    label:        "Multi-Day",
+  },
+  marquee: {
+    chip:         "bg-violet-900/50 border-l-violet-400 text-violet-200 hover:bg-violet-800/60",
+    continuation: "bg-violet-800/30 border-l-violet-700",
+    dot:          "bg-violet-400",
+    label:        "Marquee",
+  },
+};
+
+/** Fallbacks for a ride whose type isn't recognised (e.g. legacy DB rows). */
+export const RIDE_TYPE_STYLE_FALLBACK = {
+  chip:         "bg-tvs-charcoal-800 border-l-tvs-charcoal-600 text-tvs-charcoal-200",
+  continuation: "bg-tvs-charcoal-800 border-l-tvs-charcoal-600",
+  dot:          "bg-tvs-charcoal-500",
+  label:        "Ride",
+} as const;
 
 // ---------------------------------------------------------------------------
 // Ride Statuses
@@ -173,10 +197,9 @@ export const RIDE_PRIORITIES: {
   description: string;
   weight: number; // higher = more prominent in UI
 }[] = [
-  { value: "local",    label: "Local",    description: "Single chapter, local event",    weight: 1 },
-  { value: "chapter",  label: "Chapter",  description: "Chapter-wide ride",              weight: 2 },
-  { value: "national", label: "National", description: "Multi-chapter national event",   weight: 3 },
-  { value: "marquee",  label: "Marquee",  description: "Flagship ride - premium treatment", weight: 4 },
+  { value: "standard",  label: "Standard",  description: "Regular ride on the calendar",       weight: 1 },
+  { value: "signature", label: "Signature", description: "Headline ride - promoted prominently", weight: 2 },
+  { value: "marquee",   label: "Marquee",   description: "Flagship ride - premium treatment",  weight: 3 },
 ];
 
 // ---------------------------------------------------------------------------
@@ -197,17 +220,6 @@ export const SHORT_MONTHS = [
 export const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 export const DEFAULT_CALENDAR_YEAR = new Date().getFullYear();
-
-// ---------------------------------------------------------------------------
-// Frequency expectations (for planning validation/display)
-// ---------------------------------------------------------------------------
-
-export const RIDE_FREQUENCY = {
-  aogMonthly: { min: 3, max: 4 },
-  cultMonthly: { min: 1, max: 2 },
-  overnightQuarterly: { min: 1, max: 2 },
-  marqueeYearly: 2,
-} as const;
 
 // ---------------------------------------------------------------------------
 // Riding condition thresholds (weather)
@@ -282,9 +294,9 @@ export const API = {
 // ---------------------------------------------------------------------------
 
 export const APP_META = {
-  name:        "TVS Nepal Ride Operations",
-  shortName:   "TVS Nepal",
-  description: "Annual ride planning and operations platform for AOG & CULT communities",
+  name:        "Himalayan Drift",
+  shortName:   "HD",
+  description: "Ride planning and operations for the Himalayan Drift riding community.",
   url:         process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   primaryColor: "#DC2626",
 } as const;

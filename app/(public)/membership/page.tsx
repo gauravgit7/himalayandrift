@@ -11,8 +11,8 @@ import { AnimateIn }           from "@/components/shared/AnimateIn";
 import { MembershipTabs }      from "@/features/membership/MembershipTabs";
 
 export const metadata: Metadata = {
-  title:       "Membership Card | TVS Nepal",
-  description: "Apply for your TVS Nepal community membership card — free digital ID for AOG & CULT riders.",
+  title:       "Membership Card | Himalayan Drift",
+  description: "Apply for your Himalayan Drift membership card — a free digital ID for members.",
 };
 
 export const revalidate = 3600;
@@ -36,8 +36,8 @@ export default async function MembershipPage() {
           Membership Card
         </h1>
         <p className="text-sm sm:text-base text-tvs-charcoal-400 max-w-lg mx-auto leading-relaxed">
-          Official digital ID for TVS Nepal AOG &amp; CULT community members.
-          Free to apply — approved by the TVS Nepal team.
+          Official digital ID for Himalayan Drift members.
+          Free to apply — approved by the Himalayan Drift team.
         </p>
       </AnimateIn>
 

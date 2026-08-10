@@ -31,7 +31,6 @@ import {
   rideIsUpcoming,
 } from "@/utils/date";
 import { formatBsDateRange } from "@/utils/nepali-date";
-import { CommunityBadge }     from "@/components/shared/CommunityBadge";
 import { StatusBadge }        from "@/components/shared/StatusBadge";
 import { RideSharePanel }       from "@/components/shared/RideSharePanel";
 import { RideQrCode, RideQrCodePrint } from "@/components/shared/RideQrCode";
@@ -42,20 +41,18 @@ import Image                  from "next/image";
 import RideRouteMap from "@/components/maps/RideRouteMapClient";
 
 // ---------------------------------------------------------------------------
-// Community gradient config
+// Hero gradient config — marquee rides get the premium treatment
 // ---------------------------------------------------------------------------
 
-const COMMUNITY_HERO: Record<string, string> = {
-  AOG:      "from-tvs-red-950 via-tvs-charcoal-950 to-tvs-charcoal-950",
-  CULT:     "from-blue-950 via-tvs-charcoal-950 to-tvs-charcoal-950",
-  AOGxCULT: "from-violet-950 via-tvs-charcoal-950 to-tvs-charcoal-950",
-};
+const HERO_GRADIENT = {
+  marquee:  "from-violet-950 via-tvs-charcoal-950 to-tvs-charcoal-950",
+  standard: "from-tvs-red-950 via-tvs-charcoal-950 to-tvs-charcoal-950",
+} as const;
 
-const COMMUNITY_ACCENT: Record<string, string> = {
-  AOG:      "border-tvs-red-800/40",
-  CULT:     "border-blue-800/40",
-  AOGxCULT: "border-violet-800/40",
-};
+const HERO_ACCENT = {
+  marquee:  "border-violet-800/40",
+  standard: "border-tvs-red-800/40",
+} as const;
 
 // ---------------------------------------------------------------------------
 // Metadata
@@ -114,8 +111,9 @@ export default async function RideDetailPage({ params }: PageProps) {
     }
   }
 
-  const heroGradient  = COMMUNITY_HERO[ride.community]  ?? COMMUNITY_HERO.AOG;
-  const accentBorder  = COMMUNITY_ACCENT[ride.community] ?? COMMUNITY_ACCENT.AOG;
+  const heroKey       = ride.rideType === "marquee" ? "marquee" : "standard";
+  const heroGradient  = HERO_GRADIENT[heroKey];
+  const accentBorder  = HERO_ACCENT[heroKey];
 
   return (
     <>
@@ -180,7 +178,6 @@ export default async function RideDetailPage({ params }: PageProps) {
 
           {/* Badges — hidden on print */}
           <div className="print:hidden flex flex-wrap items-center gap-2 mb-4">
-            <CommunityBadge community={ride.community} brandLogos={brandLogos} />
             <StatusBadge    status={ride.status} />
             <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-tvs-charcoal-700 bg-tvs-charcoal-800/60 text-tvs-charcoal-400">
               {ride.rideType}
@@ -195,8 +192,6 @@ export default async function RideDetailPage({ params }: PageProps) {
 
           {/* Print-only compact badges */}
           <div className="hidden print:flex items-center gap-2 mb-2 text-xs font-semibold text-gray-600">
-            <span>{ride.community}</span>
-            <span>·</span>
             <span className="capitalize">{ride.status}</span>
             <span>·</span>
             <span className="capitalize">{ride.rideType}</span>
@@ -292,7 +287,6 @@ export default async function RideDetailPage({ params }: PageProps) {
             adDateLabel={adDateLabel}
             bsDateLabel={bsDateLabel}
             chapter={ride.chapter}
-            community={ride.community}
             shortDescription={ride.shortDescription}
             registrationLink={ride.registrationLink}
             slug={ride.slug}

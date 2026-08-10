@@ -18,13 +18,12 @@ export const metadata: Metadata = {
   },
   description: APP_META.description,
   keywords: [
-    "TVS Nepal",
-    "Apache Owners Group",
-    "AOG",
-    "CULT rides",
+    "Himalayan Drift",
     "motorcycle Nepal",
     "ride calendar",
-    "AOG CULT",
+    "Himalayan riding",
+    "adventure riding Nepal",
+    "biking community",
   ],
   openGraph: {
     type: "website",

@@ -8,7 +8,7 @@ import { format, parseISO, isToday } from "@/utils/date";
 import { getMonthCalendarDays } from "@/utils/date";
 import { adToBs } from "@/utils/nepali-date";
 import { cn } from "@/utils/cn";
-import { MONTHS, SHORT_MONTHS } from "@/lib/constants";
+import { MONTHS, SHORT_MONTHS, RIDE_TYPE_STYLES, RIDE_TYPE_STYLE_FALLBACK } from "@/lib/constants";
 import type { Ride } from "@/types";
 import type { DateMode } from "@/hooks/useDateMode";
 
@@ -25,21 +25,13 @@ interface YearViewProps {
 }
 
 // ---------------------------------------------------------------------------
-// Community → dot color
+// Priority → dot ring (extra visual weight for the headline rides)
 // ---------------------------------------------------------------------------
 
-const DOT_COLOR: Record<string, string> = {
-  AOG:      "bg-tvs-red-500",
-  CULT:     "bg-tvs-steel-500",
-  AOGxCULT: "bg-violet-500",
-};
-
-// Status → dot ring (extra visual weight for confirmed/marquee)
 const PRIORITY_DOT: Record<string, string> = {
-  marquee:  "ring-1 ring-yellow-400/60",
-  national: "ring-1 ring-tvs-red-400/40",
-  chapter:  "",
-  local:    "",
+  marquee:   "ring-1 ring-yellow-400/60",
+  signature: "ring-1 ring-tvs-red-400/40",
+  standard:  "",
 };
 
 // ---------------------------------------------------------------------------
@@ -122,9 +114,9 @@ function MiniMonth({
           const hasRides          = ridesOnDay.length > 0;
           const todayFlag         = isToday(day);
 
-          // Collect unique communities on this day (for dots)
-          const communities = [...new Set(ridesOnDay.map((r) => r.community))].slice(0, 3);
-          const extraRides  = ridesOnDay.length - 3;
+          // Collect unique ride types on this day (for dots)
+          const rideTypes  = [...new Set(ridesOnDay.map((r) => r.rideType))].slice(0, 3);
+          const extraRides = ridesOnDay.length - 3;
 
           return (
             <button
@@ -176,14 +168,14 @@ function MiniMonth({
               {/* Ride dots */}
               {hasRides && isCurrentMonthDay && (
                 <div className="flex items-center gap-[2px]">
-                  {communities.slice(0, 3).map((comm, ci) => {
-                    const topRide = ridesOnDay.find((r) => r.community === comm);
+                  {rideTypes.slice(0, 3).map((type, ci) => {
+                    const topRide = ridesOnDay.find((r) => r.rideType === type);
                     return (
                       <span
-                        key={`${comm}-${ci}`}
+                        key={`${type}-${ci}`}
                         className={cn(
                           "size-1 rounded-full",
-                          DOT_COLOR[comm] ?? "bg-tvs-charcoal-500",
+                          (RIDE_TYPE_STYLES[type] ?? RIDE_TYPE_STYLE_FALLBACK).dot,
                           topRide ? PRIORITY_DOT[topRide.priority] : ""
                         )}
                       />
@@ -270,14 +262,10 @@ export function YearView({ rides, year, dateMode = "ad", onDayClick, onMonthClic
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-tvs-charcoal-800/50 text-xs text-tvs-charcoal-500">
         <span className="font-medium text-tvs-charcoal-400">Legend:</span>
-        {[
-          { label: "AOG",      color: "bg-tvs-red-500" },
-          { label: "CULT",     color: "bg-tvs-steel-500" },
-          { label: "AOG×CULT", color: "bg-violet-500" },
-        ].map((l) => (
-          <span key={l.label} className="flex items-center gap-1.5">
-            <span className={cn("size-2 rounded-full", l.color)} />
-            {l.label}
+        {Object.values(RIDE_TYPE_STYLES).map((style) => (
+          <span key={style.label} className="flex items-center gap-1.5">
+            <span className={cn("size-2 rounded-full", style.dot)} />
+            {style.label}
           </span>
         ))}
         <span className="flex items-center gap-1.5 ml-2">

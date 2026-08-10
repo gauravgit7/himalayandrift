@@ -12,7 +12,7 @@ import {
   rejectRegistration,
   updateRegistrationByAdmin,
 } from "@/lib/supabase/actions";
-import type { UserProfile, MemberRegistrationStatus, MemberCommunity } from "@/types";
+import type { UserProfile, MemberRegistrationStatus } from "@/types";
 
 const CHAPTERS = [
   "Bagmati","Narayani","Gandaki","Lumbini",
@@ -47,7 +47,6 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
   const [editBike,     setEditBike]     = useState(member.bikeModel ?? "");
   const [editDob,      setEditDob]      = useState(member.dateOfBirth ?? "");
   const [editLicense,  setEditLicense]  = useState(member.licenseNumber ?? "");
-  const [editCommunity,setEditCommunity]= useState<MemberCommunity | "">(member.community ?? "");
   const [editChapter,  setEditChapter]  = useState(member.chapter ?? "");
   const [editNotes,    setEditNotes]    = useState(member.adminNotes ?? "");
 
@@ -83,7 +82,6 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
     setLoading(true); setError(null);
     const res = await updateRegistrationByAdmin(member.id, {
       fullName:     editName,
-      community:    editCommunity || null,
       chapter:      editChapter   || null,
       phone:        editPhone     || null,
       address:      editAddress   || null,
@@ -135,11 +133,6 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
           <p className="font-semibold text-tvs-charcoal-100 truncate">{member.fullName}</p>
           <p className="text-xs text-tvs-charcoal-500 truncate">{member.email}</p>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            {member.community && (
-              <span className="text-[10px] font-bold uppercase tracking-wide text-tvs-charcoal-400">
-                {member.community}
-              </span>
-            )}
             {member.chapter && (
               <span className="text-[10px] text-tvs-charcoal-500">{member.chapter}</span>
             )}
@@ -196,20 +189,11 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase tracking-wide text-tvs-charcoal-500">TVS Model</label>
-                  <input type="text" value={editBike} onChange={(e) => setEditBike(e.target.value)} placeholder="Apache RTR 200 4V" className={inputClass} />
+                  <input type="text" value={editBike} onChange={(e) => setEditBike(e.target.value)} placeholder="Royal Enfield Himalayan 450" className={inputClass} />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase tracking-wide text-tvs-charcoal-500">Address</label>
                   <input type="text" value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="City / District" className={inputClass} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wide text-tvs-charcoal-500">Community</label>
-                  <select value={editCommunity} onChange={(e) => setEditCommunity(e.target.value as MemberCommunity | "")}
-                    className={cn(inputClass, "cursor-pointer")}>
-                    <option value="">Not selected</option>
-                    <option value="AOG">AOG</option>
-                    <option value="CULT">CULT</option>
-                  </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase tracking-wide text-tvs-charcoal-500">Chapter</label>
@@ -286,7 +270,6 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
                 <Detail icon={<Bike className="size-3" />} label="TVS Model" value={member.bikeModel} />
                 <Detail icon={<Home className="size-3" />} label="Address" value={member.address} />
                 <Detail icon={<MapPin className="size-3" />} label="Chapter" value={member.chapter} />
-                <Detail icon={<Shield className="size-3" />} label="Community" value={member.community} />
                 <Detail icon={<Calendar className="size-3" />} label="Registered" value={fmtDate(member.createdAt)} />
                 {member.approvedAt && <Detail icon={<CheckCircle2 className="size-3 text-emerald-400" />} label="Approved" value={fmtDate(member.approvedAt)} />}
               </div>
@@ -370,8 +353,7 @@ export function UserRegistrationsAdmin({ initialMembers }: Props) {
       list = list.filter((m) =>
         m.fullName.toLowerCase().includes(q) ||
         m.email.toLowerCase().includes(q) ||
-        (m.chapter ?? "").toLowerCase().includes(q) ||
-        (m.community ?? "").toLowerCase().includes(q)
+        (m.chapter ?? "").toLowerCase().includes(q)
       );
     }
     return list;

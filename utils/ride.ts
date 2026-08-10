@@ -1,9 +1,9 @@
 // =============================================================================
-// Ride utility functions - status colors, community badges, filtering helpers
+// Ride utility functions - status colors, filtering helpers, stats
 // =============================================================================
 
-import type { Ride, CalendarFilters, RideStatus, RidePriority, Community } from "@/types";
-import { RIDE_STATUSES, COMMUNITIES, RIDE_PRIORITIES } from "@/lib/constants";
+import type { Ride, CalendarFilters, RideStatus, RidePriority, RideType } from "@/types";
+import { RIDE_STATUSES, RIDE_PRIORITIES } from "@/lib/constants";
 import { rideIsActive, rideIsUpcoming, rideIsPast } from "@/utils/date";
 
 // ---------------------------------------------------------------------------
@@ -12,10 +12,6 @@ import { rideIsActive, rideIsUpcoming, rideIsPast } from "@/utils/date";
 
 export function getStatusConfig(status: RideStatus) {
   return RIDE_STATUSES.find((s) => s.value === status) ?? RIDE_STATUSES[0];
-}
-
-export function getCommunityConfig(community: Community) {
-  return COMMUNITIES.find((c) => c.value === community) ?? COMMUNITIES[0];
 }
 
 export function getPriorityConfig(priority: RidePriority) {
@@ -28,7 +24,6 @@ export function getPriorityConfig(priority: RidePriority) {
 
 export function applyCalendarFilters(rides: Ride[], filters: CalendarFilters): Ride[] {
   return rides.filter((ride) => {
-    if (filters.community !== "all" && ride.community !== filters.community) return false;
     if (filters.chapter   !== "all" && ride.chapter   !== filters.chapter)   return false;
     if (filters.rideType  !== "all" && ride.rideType  !== filters.rideType)  return false;
     if (filters.status    !== "all" && ride.status    !== filters.status)     return false;
@@ -41,8 +36,7 @@ export function applyCalendarFilters(rides: Ride[], filters: CalendarFilters): R
       const q = filters.searchQuery.toLowerCase();
       if (
         !ride.title.toLowerCase().includes(q) &&
-        !ride.chapter.toLowerCase().includes(q) &&
-        !ride.community.toLowerCase().includes(q)
+        !ride.chapter.toLowerCase().includes(q)
       ) return false;
     }
 
@@ -107,7 +101,7 @@ export function getRidesForYear(rides: Ride[], year: number): Ride[] {
 export interface RideStats {
   total: number;
   byStatus: Record<RideStatus, number>;
-  byCommunity: Record<Community, number>;
+  byType: Record<RideType, number>;
   completed: number;
   upcoming: number;
   marqueeCount: number;
@@ -120,7 +114,7 @@ export function computeRideStats(rides: Ride[]): RideStats {
       planned: 0, tentative: 0, confirmed: 0,
       postponed: 0, cancelled: 0, completed: 0,
     },
-    byCommunity: { AOG: 0, CULT: 0, AOGxCULT: 0 },
+    byType: { day: 0, overnight: 0, multiday: 0, marquee: 0 },
     completed: 0,
     upcoming: 0,
     marqueeCount: 0,
@@ -128,7 +122,7 @@ export function computeRideStats(rides: Ride[]): RideStats {
 
   rides.forEach((r) => {
     stats.byStatus[r.status]++;
-    stats.byCommunity[r.community]++;
+    if (r.rideType in stats.byType) stats.byType[r.rideType]++;
     if (r.status === "completed") stats.completed++;
     if (rideIsUpcoming(r.startDate)) stats.upcoming++;
     if (r.rideType === "marquee") stats.marqueeCount++;

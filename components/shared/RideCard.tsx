@@ -10,8 +10,7 @@ import RideRouteMapClient from "@/components/maps/RideRouteMapClient";
 import { cn } from "@/utils/cn";
 import { formatRideDateRange, getRideDurationDays } from "@/utils/date";
 import { formatBsDateRange } from "@/utils/nepali-date";
-import { ROUTES } from "@/lib/constants";
-import { CommunityBadge } from "./CommunityBadge";
+import { ROUTES, APP_META } from "@/lib/constants";
 import { StatusBadge } from "./StatusBadge";
 import type { Ride, BrandLogos } from "@/types";
 import type { DateMode } from "@/hooks/useDateMode";
@@ -20,37 +19,15 @@ import type { DateMode } from "@/hooks/useDateMode";
 // Logo overlay - centered in the gradient banner when no photo is uploaded
 // ---------------------------------------------------------------------------
 
-function LogoOverlay({
-  community,
-  brandLogos,
-}: {
-  community: string;
-  brandLogos?: BrandLogos | null;
-}) {
-  if (!brandLogos) return null;
-  const { aogLogoUrl, cultLogoUrl } = brandLogos;
-
-  if (community === "AOGxCULT" && aogLogoUrl && cultLogoUrl) {
-    return (
-      <div className="absolute inset-0 flex items-center justify-center gap-3 pointer-events-none">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={aogLogoUrl}  alt="AOG"  className="h-10 w-auto object-contain opacity-80 max-w-[28%]" />
-        <span className="text-white/40 font-black text-xl select-none leading-none">×</span>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={cultLogoUrl} alt="CULT" className="h-10 w-auto object-contain opacity-80 max-w-[28%]" />
-      </div>
-    );
-  }
-
-  const logoUrl = community === "CULT" ? cultLogoUrl : aogLogoUrl;
-  if (!logoUrl) return null;
+function LogoOverlay({ brandLogos }: { brandLogos?: BrandLogos | null }) {
+  if (!brandLogos?.logoUrl) return null;
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={logoUrl}
-        alt={community}
+        src={brandLogos.logoUrl}
+        alt={APP_META.shortName}
         className="h-12 w-auto object-contain opacity-80 max-w-[55%]"
       />
     </div>
@@ -118,7 +95,7 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
           <p className="text-xs text-tvs-charcoal-300 mt-0.5 leading-tight">{primaryDate}</p>
           <p className="text-[10px] text-tvs-charcoal-500 leading-tight">{referenceDate}</p>
         </div>
-        <CommunityBadge community={ride.community} size="xs" brandLogos={brandLogos} />
+        <StatusBadge status={ride.status} size="xs" />
       </Link>
     );
   }
@@ -156,24 +133,19 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
             />
           </div>
         ) : (
-          /* Gradient + community logo */
+          /* Gradient + brand logo */
           <div
             className={cn(
               "relative w-full h-full",
-              ride.community === "AOGxCULT"
-                ? "gradient-marquee"
-                : ride.community === "CULT"
-                ? "gradient-cult"
-                : "gradient-aog"
+              isMarquee ? "gradient-marquee" : "gradient-brand"
             )}
           >
-            <LogoOverlay community={ride.community} brandLogos={brandLogos} />
+            <LogoOverlay brandLogos={brandLogos} />
           </div>
         )}
 
         {/* Overlay badges */}
         <div className="absolute top-2 left-2 flex gap-1.5">
-          <CommunityBadge community={ride.community} size="xs" brandLogos={brandLogos} />
           {isMarquee && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-black/60 text-yellow-400 border border-yellow-700/50">
               ★ MARQUEE

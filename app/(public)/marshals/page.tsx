@@ -12,8 +12,8 @@ import { MarshalPageClient }      from "@/features/marshals/MarshalPageClient";
 import type { ChapterName }       from "@/types";
 
 export const metadata: Metadata = {
-  title:       "Marshals | TVS Nepal",
-  description: "Meet the marshals of TVS Nepal - AOG & CULT community leaders across all 9 chapters.",
+  title:       "Marshals | Himalayan Drift",
+  description: "Meet the marshals who lead Himalayan Drift rides.",
 };
 
 export const revalidate = 3600; // 1 hour
@@ -47,7 +47,7 @@ export default async function MarshalsPage() {
           Meet Our Marshals
         </h1>
         <p className="text-sm sm:text-base text-tvs-charcoal-400 max-w-lg mx-auto leading-relaxed">
-          Experienced riders leading TVS Nepal&apos;s AOG &amp; CULT communities.
+          Experienced riders leading Himalayan Drift on the road.
           {marshals.length > 0 && (
             <span className="block mt-1 text-tvs-charcoal-500">
               {marshals.length} active marshal{marshals.length !== 1 ? "s" : ""} across{" "}

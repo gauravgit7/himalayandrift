@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatRideDateRange } from "@/utils/date";
-import { ROUTES } from "@/lib/constants";
-import { CommunityBadge } from "@/components/shared/CommunityBadge";
+import { ROUTES, APP_META, RIDE_TYPE_STYLES, RIDE_TYPE_STYLE_FALLBACK } from "@/lib/constants";
 import type { BrandLogos } from "@/types";
 import { StatusBadge }    from "@/components/shared/StatusBadge";
 import type { Ride, Chapter } from "@/types";
@@ -126,7 +125,7 @@ export function AdminDashboard({
       <div>
         <h1 className="text-2xl font-black text-tvs-charcoal-50">Dashboard</h1>
         <p className="text-sm text-tvs-charcoal-400 mt-0.5">
-          TVS Nepal AOG & CULT Adventures · 2026 Season
+          {APP_META.name} · {new Date().getFullYear()} Season
         </p>
       </div>
 
@@ -312,11 +311,7 @@ function RideRow({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogos | n
       <div
         className={cn(
           "w-1 self-stretch rounded-full shrink-0",
-          ride.community === "AOGxCULT"
-            ? "bg-violet-600"
-            : ride.community === "CULT"
-            ? "bg-tvs-steel-500"
-            : "bg-tvs-red-600"
+          (RIDE_TYPE_STYLES[ride.rideType] ?? RIDE_TYPE_STYLE_FALLBACK).dot
         )}
       />
       <div className="flex-1 min-w-0">
@@ -328,8 +323,7 @@ function RideRow({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogos | n
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <CommunityBadge community={ride.community} size="xs" brandLogos={brandLogos} />
-        <StatusBadge    status={ride.status}        size="xs" />
+        <StatusBadge status={ride.status} size="xs" />
       </div>
     </Link>
   );

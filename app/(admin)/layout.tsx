@@ -38,7 +38,7 @@ export default async function AdminLayout({
     console.warn("[admin-layout] ADMIN_EMAILS not set — allowing all authenticated users into admin.");
   }
 
-  const { tvsNepalLogoUrl } = await getBrandLogos();
+  const { logoUrl } = await getBrandLogos();
 
   const adminName  = (user.user_metadata?.full_name as string | undefined) ?? null;
   const adminEmail = user.email ?? null;
@@ -46,7 +46,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-dvh bg-tvs-charcoal-950">
       <Navbar transparent={false} />
-      <AdminSidebar tvsNepalLogoUrl={tvsNepalLogoUrl} adminEmail={adminEmail} adminName={adminName} />
+      <AdminSidebar logoUrl={logoUrl} adminEmail={adminEmail} adminName={adminName} />
       <main className="pt-16 lg:pl-60 min-h-dvh">
         {children}
       </main>

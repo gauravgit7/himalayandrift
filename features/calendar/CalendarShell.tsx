@@ -32,7 +32,6 @@ const DEFAULT_YEAR  = new Date().getFullYear();
 const DEFAULT_MONTH = new Date().getMonth(); // 0-indexed
 
 const DEFAULT_FILTERS: CalendarFilters = {
-  community:  "all",
   chapter:    "all",
   rideType:   "all",
   status:     "all",

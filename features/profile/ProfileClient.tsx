@@ -8,7 +8,8 @@ import {
 import { cn }            from "@/utils/cn";
 import { updateProfile } from "@/lib/supabase/actions";
 import { ImageUpload }   from "@/components/ui/ImageUpload";
-import type { UserProfileWithEmail, MemberCommunity, MemberRegistrationStatus } from "@/types";
+import { APP_META }      from "@/lib/constants";
+import type { UserProfileWithEmail, MemberRegistrationStatus } from "@/types";
 
 const CHAPTERS = [
   "Bagmati","Narayani","Gandaki","Lumbini",
@@ -26,7 +27,7 @@ function StatusBadge({ status, adminNotes }: { status: MemberRegistrationStatus;
         <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
         <div>
           <p className="text-sm font-semibold text-emerald-300">Account Approved</p>
-          <p className="text-xs text-emerald-600">You are a verified TVS Nepal community member.</p>
+          <p className="text-xs text-emerald-600">You are a verified {APP_META.name} member.</p>
         </div>
       </div>
     );
@@ -58,7 +59,6 @@ function StatusBadge({ status, adminNotes }: { status: MemberRegistrationStatus;
 
 export function ProfileClient({ profile }: Props) {
   const [fullName,       setFullName]       = useState(profile.fullName);
-  const [community,      setCommunity]      = useState<MemberCommunity | "">(profile.community ?? "");
   const [chapter,        setChapter]        = useState(profile.chapter ?? "");
   const [phone,          setPhone]          = useState(profile.phone ?? "");
   const [address,        setAddress]        = useState(profile.address ?? "");
@@ -81,7 +81,6 @@ export function ProfileClient({ profile }: Props) {
     setSaving(true); setError(null); setSaved(false);
     const result = await updateProfile({
       fullName,
-      community:     community     || null,
       chapter:       chapter       || null,
       phone:         phone         || null,
       avatarUrl,
@@ -94,7 +93,7 @@ export function ProfileClient({ profile }: Props) {
     if (result.error) { setError(result.error); return; }
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  }, [fullName, community, chapter, phone, avatarUrl, address, bikeModel, dateOfBirth, licenseNumber]);
+  }, [fullName, chapter, phone, avatarUrl, address, bikeModel, dateOfBirth, licenseNumber]);
 
   const inputClass = cn(
     "w-full h-10 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm transition-colors",
@@ -154,16 +153,10 @@ export function ProfileClient({ profile }: Props) {
             <p className="text-[10px] uppercase tracking-widest text-tvs-charcoal-500 mb-0.5">Email</p>
             <p className="text-sm font-medium text-tvs-charcoal-200">{profile.email}</p>
           </div>
-          {profile.community && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border"
-              style={{
-                color: profile.community === "AOG" ? "#dc2626" : "#2563eb",
-                borderColor: profile.community === "AOG" ? "#dc262640" : "#2563eb40",
-                background: profile.community === "AOG" ? "#dc262610" : "#2563eb10",
-              }}>
+          {profile.chapter && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-tvs-red-800/40 bg-tvs-red-950/30 text-tvs-red-400">
               <Shield className="size-3" />
-              {profile.community}
-              {profile.chapter && ` · ${profile.chapter}`}
+              {profile.chapter}
             </div>
           )}
           {profile.approvedAt && (
@@ -246,18 +239,8 @@ export function ProfileClient({ profile }: Props) {
           />
         </div>
 
-        {/* Community + Chapter */}
+        {/* Chapter */}
         <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className={labelClass}><Shield className="size-3" /> Community</label>
-            <select value={community} disabled={saving}
-              onChange={(e) => setCommunity(e.target.value as MemberCommunity | "")}
-              className={cn(inputClass, "cursor-pointer")}>
-              <option value="">Not selected</option>
-              <option value="AOG">AOG — Apache Owners Group</option>
-              <option value="CULT">CULT</option>
-            </select>
-          </div>
           <div className="space-y-1.5">
             <label className={labelClass}><MapPin className="size-3" /> Chapter</label>
             <select value={chapter} disabled={saving}

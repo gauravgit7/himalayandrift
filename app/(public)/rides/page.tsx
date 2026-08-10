@@ -9,7 +9,7 @@ import { RidesFilterList } from "@/features/rides/RidesFilterList";
 
 export const metadata: Metadata = {
   title: "All Rides | TVS Nepal",
-  description: "Browse all AOG & CULT rides across 9 chapters - filter by community, type, and status.",
+  description: "Browse every Himalayan Drift ride - filter by type and status.",
 };
 
 export const revalidate = 1800;

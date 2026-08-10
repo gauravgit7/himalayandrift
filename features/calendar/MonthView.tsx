@@ -9,7 +9,7 @@ import { format, parseISO, isToday } from "@/utils/date";
 import { getMonthCalendarDays, getRideDurationDays } from "@/utils/date";
 import { adToBs } from "@/utils/nepali-date";
 import { cn } from "@/utils/cn";
-import { ROUTES, MONTHS } from "@/lib/constants";
+import { ROUTES, MONTHS, RIDE_TYPE_STYLES, RIDE_TYPE_STYLE_FALLBACK } from "@/lib/constants";
 import type { Ride } from "@/types";
 import type { DateMode } from "@/hooks/useDateMode";
 
@@ -25,23 +25,10 @@ interface MonthViewProps {
 }
 
 // ---------------------------------------------------------------------------
-// Community chip styles
+// Ride-type chip styles
 // ---------------------------------------------------------------------------
 
 const CHIP_BASE = "block w-full text-left px-1.5 py-0.5 rounded text-[11px] truncate border-l-2 leading-snug";
-
-const CHIP_COMMUNITY: Record<string, string> = {
-  AOG:      "bg-tvs-red-900/50   border-l-tvs-red-500   text-tvs-red-200   hover:bg-tvs-red-800/60",
-  CULT:     "bg-tvs-steel-900/50 border-l-tvs-steel-400 text-tvs-steel-200 hover:bg-tvs-steel-800/60",
-  AOGxCULT: "bg-violet-900/50   border-l-violet-400    text-violet-200   hover:bg-violet-800/60",
-};
-
-// Continuation bar (multi-day ride, not start day)
-const CONT_COMMUNITY: Record<string, string> = {
-  AOG:      "bg-tvs-red-800/30   border-l-tvs-red-700",
-  CULT:     "bg-tvs-steel-800/30 border-l-tvs-steel-700",
-  AOGxCULT: "bg-violet-800/30   border-l-violet-700",
-};
 
 // Status dot
 const STATUS_DOT: Record<string, string> = {
@@ -80,6 +67,7 @@ function RideChip({ ride, dateStr }: { ride: Ride; dateStr: string }) {
   const isStart    = ride.startDate === dateStr;
   const duration   = getRideDurationDays(ride.startDate, ride.endDate);
   const isMultiDay = duration > 1;
+  const typeStyle  = RIDE_TYPE_STYLES[ride.rideType] ?? RIDE_TYPE_STYLE_FALLBACK;
 
   if (!isStart) {
     // Continuation bar - thin, no text
@@ -87,7 +75,7 @@ function RideChip({ ride, dateStr }: { ride: Ride; dateStr: string }) {
       <div
         className={cn(
           "w-full h-4 rounded-sm border-l-2 opacity-60",
-          CONT_COMMUNITY[ride.community] ?? "bg-tvs-charcoal-800 border-l-tvs-charcoal-600"
+          typeStyle.continuation
         )}
         title={`${ride.title} (day ${
           Math.floor(
@@ -103,7 +91,7 @@ function RideChip({ ride, dateStr }: { ride: Ride; dateStr: string }) {
       href={ROUTES.ride(ride.slug)}
       className={cn(
         CHIP_BASE,
-        CHIP_COMMUNITY[ride.community] ?? "bg-tvs-charcoal-800 border-l-tvs-charcoal-600 text-tvs-charcoal-200",
+        typeStyle.chip,
         "transition-colors duration-150 group"
       )}
       title={ride.title}

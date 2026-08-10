@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
   if (ride.shortDescription) descLines.push(ride.shortDescription);
   descLines.push(`BS Date: ${formatBsDateRange(ride.startDate, ride.endDate)}`);
   descLines.push(`Chapter: ${ride.chapter}, Nepal`);
-  descLines.push(`Community: ${ride.community}`);
+  descLines.push(`Type: ${ride.rideType}`);
   if (ride.registrationLink) descLines.push(`Register: ${ride.registrationLink}`);
   descLines.push(`Full details: ${pageUrl}`);
 

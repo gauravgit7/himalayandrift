@@ -8,7 +8,7 @@ import type {
   Ride, Chapter, Sponsor, Marshal, HomepageContent, BrandLogos,
   MemberCard, CardSettings, UserProfile,
   RouteData, ItineraryDay, RecurringPattern,
-  Community, RideType, RideStatus, RidePriority, ChapterName, MemberCommunity,
+  RideType, RideStatus, RidePriority, ChapterName,
   MemberRegistrationStatus,
 } from "@/types";
 
@@ -63,7 +63,6 @@ export interface DbRide {
   id:                string;
   title:             string;
   slug:              string;
-  community:         Community;
   ride_type:         RideType;
   chapter:           ChapterName;
   start_date:        string;
@@ -101,10 +100,8 @@ export interface DbHomepageContent {
   hero_secondary_cta_label:    string | null;
   hero_secondary_cta_link:     string | null;
   hero_featured_ride_id:       string | null;
-  tvs_nepal_logo_url:          string | null;
-  aog_logo_url:                string | null;
-  cult_logo_url:                string | null;
-  marquee_ride_ids:             string[];
+  brand_logo_url:              string | null;
+  marquee_ride_ids:            string[];
   featured_upcoming_ride_ids:  string[];
   show_weather_widget:         boolean;
   show_sponsor_showcase:       boolean;
@@ -170,7 +167,6 @@ export function mapRide(row: DbRide): Ride {
     id:               row.id,
     title:            row.title,
     slug:             row.slug,
-    community:        row.community,
     rideType:         row.ride_type,
     chapter:          row.chapter,
     startDate:        row.start_date,
@@ -210,7 +206,6 @@ export interface DbMemberCard {
   blood_group:         string;
   emergency_phone:     string;
   license_number:      string;
-  community:           string;
   chapter:             string;
   consent_accepted:    boolean;
   status:              string;
@@ -234,7 +229,6 @@ export function mapMemberCard(row: DbMemberCard): MemberCard {
     bloodGroup:        row.blood_group,
     emergencyPhone:    row.emergency_phone,
     licenseNumber:     row.license_number,
-    community:         row.community          as "AOG" | "CULT",
     chapter:           row.chapter,
     consentAccepted:   row.consent_accepted,
     status:            row.status             as "pending" | "approved" | "rejected",
@@ -292,9 +286,7 @@ export function mapHomepageContent(row: DbHomepageContent): HomepageContent {
       featuredRideId:     row.hero_featured_ride_id,
     },
     brandLogos: {
-      tvsNepalLogoUrl: row.tvs_nepal_logo_url  ?? null,
-      aogLogoUrl:      row.aog_logo_url         ?? null,
-      cultLogoUrl:     row.cult_logo_url         ?? null,
+      logoUrl: row.brand_logo_url ?? null,
     } satisfies BrandLogos,
     marqueeRideIds:          row.marquee_ride_ids         ?? [],
     featuredUpcomingRideIds: row.featured_upcoming_ride_ids ?? [],
@@ -312,7 +304,6 @@ export interface DbProfile {
   id:              string;
   full_name:       string;
   email:           string | null;
-  community:       string | null;
   chapter:         string | null;
   phone:           string | null;
   avatar_url:      string | null;
@@ -333,7 +324,6 @@ export function mapProfile(row: DbProfile): UserProfile {
     id:            row.id,
     fullName:      row.full_name,
     email:         row.email        ?? "",
-    community:     (row.community   as MemberCommunity) ?? null,
     chapter:       row.chapter      ?? null,
     phone:         row.phone        ?? null,
     avatarUrl:     row.avatar_url   ?? null,

@@ -186,7 +186,7 @@ function ApplicationModal({
             />
             <div>
               <h3 className="text-lg font-black text-tvs-charcoal-50">{card.fullName}</h3>
-              <p className="text-sm text-tvs-charcoal-400">{card.community} · {card.chapter} Chapter</p>
+              <p className="text-sm text-tvs-charcoal-400">{card.chapter} Chapter</p>
               <StatusChip status={card.status} />
             </div>
           </div>
@@ -394,7 +394,7 @@ export function MembersAdmin({
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-tvs-charcoal-50 text-sm truncate">{card.fullName}</p>
                 <p className="text-xs text-tvs-charcoal-500">
-                  {card.community} · {card.chapter} · {fmtDate(card.createdAt)}
+                  {card.chapter} · {fmtDate(card.createdAt)}
                 </p>
               </div>
 
