@@ -22,17 +22,6 @@ export type RideStatus =
 
 export type RidePriority = "standard" | "signature" | "marquee";
 
-export type ChapterName =
-  | "Bagmati"
-  | "Narayani"
-  | "Gandaki"
-  | "Lumbini"
-  | "Rapti"
-  | "Bheri"
-  | "Mahakali"
-  | "Koshi"
-  | "Mechi";
-
 // ---------------------------------------------------------------------------
 // Sponsor
 // ---------------------------------------------------------------------------
@@ -85,9 +74,7 @@ export interface Marshal {
   name: string;
   phone: string | null;
   avatarUrl: string | null;
-  /** Null for Head Marshal (national-level, not chapter-specific) */
-  chapter: ChapterName | null;
-  /** Tier role: "Head Marshal" | "Senior Marshal" | "Regional Marshal" | custom */
+  /** Tier role: "Head Marshal" | "Senior Marshal" | "Ride Marshal" | custom */
   role: string;
   /** Comma-separated specialty tags, e.g. "Navigation, Route Planning, High Altitude" */
   specialty: string | null;
@@ -107,7 +94,8 @@ export interface Ride {
   title: string;
   slug: string;
   rideType: RideType;
-  chapter: ChapterName;
+  /** Free-text start/meeting location, e.g. "Kathmandu" or "Pokhara". */
+  location: string;
   startDate: string;        // ISO date string "YYYY-MM-DD"
   endDate: string;          // ISO date string "YYYY-MM-DD"
   status: RideStatus;
@@ -141,27 +129,6 @@ export interface RecurringPattern {
   dayOfWeek: number | null;   // 0 = Sunday … 6 = Saturday
   weekOfMonth: number | null; // 1–4 for monthly
   endDate: string | null;
-}
-
-// ---------------------------------------------------------------------------
-// Chapter
-// ---------------------------------------------------------------------------
-
-export interface Chapter {
-  id: string;
-  name: ChapterName;
-  description: string | null;
-  region: string;
-  coverImageUrl: string | null;
-  memberCount: number;
-  /** Lead marshal - the one stored in chapters.marshal_id */
-  marshal: Marshal | null;
-  /** All marshals belonging to this chapter */
-  marshals: Marshal[];
-  isActive: boolean;
-  isPriority: boolean; // Bagmati, Gandaki, Narayani, Lumbini = true
-  totalRidesThisYear: number;
-  coordinates: [number, number]; // [lng, lat] chapter HQ location
 }
 
 // ---------------------------------------------------------------------------
@@ -226,7 +193,6 @@ export interface MemberCard {
   bloodGroup:         string;
   emergencyPhone:     string;
   licenseNumber:      string;         // stored, not shown on card
-  chapter:            string;
   consentAccepted:    boolean;
 
   // Workflow
@@ -249,7 +215,6 @@ export interface CardSettings {
   showBloodGroup:     boolean;
   showDob:            boolean;
   showEmergencyPhone: boolean;
-  showChapter:        boolean;
   benefits:           string[];
 }
 
@@ -290,7 +255,6 @@ export interface WeatherForecastDay {
 // ---------------------------------------------------------------------------
 
 export interface CalendarFilters {
-  chapter: ChapterName | "all";
   rideType: RideType | "all";
   status: RideStatus | "all";
   priority: RidePriority | "all";
@@ -339,7 +303,6 @@ export interface UserProfile {
   id:             string;
   fullName:       string;
   email:          string;          // stored at registration
-  chapter:        string | null;
   phone:          string | null;
   avatarUrl:      string | null;
   // Extended registration fields
@@ -364,7 +327,6 @@ export type ExportFormat = "pdf" | "excel";
 export interface ExportOptions {
   format: ExportFormat;
   year: number;
-  includeChapters: ChapterName[] | "all";
   includeStatuses: RideStatus[] | "all";
   brandedExport: boolean;
 }

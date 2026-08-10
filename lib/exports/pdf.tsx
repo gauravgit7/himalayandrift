@@ -445,7 +445,7 @@ function RideRow({ ride, idx }: { ride: Ride; idx: number }) {
         {ride.rideType.charAt(0).toUpperCase() + ride.rideType.slice(1)}
       </Text>
       <Text style={[S.cellGray, S.colChapter]}>
-        {ride.chapter}
+        {ride.location}
       </Text>
       <Text style={[S.cellBold, S.colStatus, { color: statusColor }]}>
         {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}

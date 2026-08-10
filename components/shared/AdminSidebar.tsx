@@ -37,7 +37,6 @@ const NAV_ITEMS = [
   { href: ROUTES.adminRides,     label: "Rides",     icon: Flag,            exact: false },
   { href: ROUTES.adminCalendar,  label: "Calendar",  icon: Calendar,        exact: false },
   { href: ROUTES.adminHomepage,  label: "Homepage",  icon: Globe,           exact: false },
-  { href: ROUTES.adminChapters,  label: "Chapters",  icon: Map,             exact: false },
   { href: ROUTES.adminMarshals,  label: "Marshals",  icon: Shield,          exact: false },
   { href: ROUTES.adminMembers,   label: "Members",   icon: CreditCard,      exact: false },
   { href: ROUTES.adminSponsors,  label: "Sponsors",  icon: Star,            exact: false },

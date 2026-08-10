@@ -78,7 +78,7 @@ export default async function HomePage() {
 
   // Fetch live weather for the 3 upcoming ride destinations (server-side, cached 30 min)
   const weatherResults = await fetchWeatherForRides(
-    weatherRides.map((r) => ({ id: r.id, chapter: r.chapter }))
+    weatherRides.map((r) => ({ id: r.id, chapter: r.location }))
   );
   const weatherItems: WeatherItem[] = weatherRides.map((ride, i) => ({
     ride,

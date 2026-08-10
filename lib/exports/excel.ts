@@ -118,7 +118,7 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
       date:         formatRideDateRange(ride.startDate, ride.endDate),
       title:        ride.title,
       type:         cap(ride.rideType),
-      chapter:      ride.chapter,
+      chapter:      ride.location,
       status:       cap(ride.status),
       priority:     cap(ride.priority),
       riders:       ride.expectedRiders,
@@ -250,7 +250,7 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
   styleHeaderRow(ws3.getRow(1));
 
   CHAPTERS.forEach((ch, idx) => {
-    const cr = rides.filter((r) => r.chapter === ch.name);
+    const cr = rides.filter((r) => r.location === ch.name);
 
     const row = ws3.addRow({
       chapter:   ch.name,

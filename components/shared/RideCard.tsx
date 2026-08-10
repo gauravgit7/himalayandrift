@@ -196,7 +196,7 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
           </span>
           <span className="flex items-center gap-1">
             <MapPin className="size-3 shrink-0 text-tvs-charcoal-400" />
-            {ride.chapter}
+            {ride.location}
           </span>
           {ride.expectedRiders > 0 && (
             <span className="flex items-center gap-1">

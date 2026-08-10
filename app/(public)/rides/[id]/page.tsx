@@ -100,13 +100,13 @@ export default async function RideDetailPage({ params }: PageProps) {
   // Live weather for upcoming rides
   let weather = null;
   if (isUpcoming) {
-    const coords = getChapterCoords(ride.chapter);
+    const coords = getChapterCoords(ride.location);
     if (coords) {
       weather = await fetchRideWeather(
         ride.id,
         coords[1], // lat
         coords[0], // lng
-        `${ride.chapter}, Nepal`,
+        `${ride.location}, Nepal`,
       );
     }
   }
@@ -215,7 +215,7 @@ export default async function RideDetailPage({ params }: PageProps) {
             </span>
             <span className="flex items-center gap-1.5">
               <MapPin className="size-3.5 shrink-0" />
-              {ride.chapter}
+              {ride.location}
             </span>
             <span className="flex items-center gap-1.5">
               <Users className="size-3.5 shrink-0" />
@@ -286,7 +286,7 @@ export default async function RideDetailPage({ params }: PageProps) {
             rideTitle={ride.title}
             adDateLabel={adDateLabel}
             bsDateLabel={bsDateLabel}
-            chapter={ride.chapter}
+            chapter={ride.location}
             shortDescription={ride.shortDescription}
             registrationLink={ride.registrationLink}
             slug={ride.slug}
@@ -438,7 +438,7 @@ export default async function RideDetailPage({ params }: PageProps) {
               <div className={cn("print:hidden p-5 rounded-xl gradient-card border", accentBorder)}>
                 <h3 className="text-sm font-bold text-tvs-charcoal-50 mb-3">Register Now</h3>
                 <p className="text-xs text-tvs-charcoal-400 mb-4">
-                  {formatRideDate(ride.startDate)} · {ride.chapter}
+                  {formatRideDate(ride.startDate)} · {ride.location}
                 </p>
                 <a
                   href={ride.registrationLink!}
@@ -501,7 +501,7 @@ export default async function RideDetailPage({ params }: PageProps) {
                   <>
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-xs text-tvs-charcoal-500">{ride.chapter}, Nepal</p>
+                        <p className="text-xs text-tvs-charcoal-500">{ride.location}, Nepal</p>
                         <div className="flex items-baseline gap-1 mt-0.5">
                           <span className="text-3xl font-black text-tvs-charcoal-50">
                             {weather.temperatureCelsius}°

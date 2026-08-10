@@ -5,10 +5,10 @@
 // =============================================================================
 
 import type {
-  Ride, Chapter, Sponsor, Marshal, HomepageContent, BrandLogos,
+  Ride, Sponsor, Marshal, HomepageContent, BrandLogos,
   MemberCard, CardSettings, UserProfile,
   RouteData, ItineraryDay, RecurringPattern,
-  RideType, RideStatus, RidePriority, ChapterName,
+  RideType, RideStatus, RidePriority,
   MemberRegistrationStatus,
 } from "@/types";
 
@@ -21,7 +21,6 @@ export interface DbMarshal {
   name:             string;
   phone:            string | null;
   avatar_url:       string | null;
-  chapter:          ChapterName | null;
   role:             string;
   specialty:        string | null;
   bio:              string | null;
@@ -42,29 +41,12 @@ export interface DbSponsor {
   created_at:  string;
 }
 
-export interface DbChapter {
-  id:              string;
-  name:            ChapterName;
-  region:          string;
-  description:     string | null;
-  cover_image_url: string | null;
-  member_count:    number;
-  marshal_id:      string | null;
-  is_active:       boolean;
-  is_priority:     boolean;
-  coordinates:     { lng: number; lat: number } | null;
-  created_at:      string;
-  updated_at:      string;
-  // FK join
-  marshals?:       DbMarshal | null;
-}
-
 export interface DbRide {
   id:                string;
   title:             string;
   slug:              string;
   ride_type:         RideType;
-  chapter:           ChapterName;
+  location:          string;
   start_date:        string;
   end_date:          string;
   status:            RideStatus;
@@ -118,8 +100,7 @@ export function mapMarshal(row: DbMarshal): Marshal {
     name:          row.name,
     phone:         row.phone,
     avatarUrl:     row.avatar_url,
-    chapter:       row.chapter,
-    role:          row.role          ?? "Regional Marshal",
+    role:          row.role          ?? "Ride Marshal",
     specialty:     row.specialty     ?? null,
     bio:           row.bio           ?? null,
     totalRidesLed:   row.total_rides_led ?? 0,
@@ -139,36 +120,13 @@ export function mapSponsor(row: DbSponsor): Sponsor {
   };
 }
 
-export function mapChapter(
-  row: DbChapter,
-  rideCount = 0,
-  allChapterMarshals: DbMarshal[] = [],
-): Chapter {
-  return {
-    id:                 row.id,
-    name:               row.name,
-    region:             row.region,
-    description:        row.description,
-    coverImageUrl:      row.cover_image_url,
-    memberCount:        row.member_count,
-    marshal:            row.marshals ? mapMarshal(row.marshals) : null,
-    marshals:           allChapterMarshals.map(mapMarshal),
-    isActive:           row.is_active,
-    isPriority:         row.is_priority,
-    totalRidesThisYear: rideCount,
-    coordinates:        row.coordinates
-      ? [row.coordinates.lng, row.coordinates.lat]
-      : [0, 0],
-  };
-}
-
 export function mapRide(row: DbRide): Ride {
   return {
     id:               row.id,
     title:            row.title,
     slug:             row.slug,
     rideType:         row.ride_type,
-    chapter:          row.chapter,
+    location:         row.location ?? "",
     startDate:        row.start_date,
     endDate:          row.end_date,
     status:           row.status,
@@ -206,7 +164,6 @@ export interface DbMemberCard {
   blood_group:         string;
   emergency_phone:     string;
   license_number:      string;
-  chapter:             string;
   consent_accepted:    boolean;
   status:              string;
   rejection_reason:    string | null;
@@ -229,7 +186,6 @@ export function mapMemberCard(row: DbMemberCard): MemberCard {
     bloodGroup:        row.blood_group,
     emergencyPhone:    row.emergency_phone,
     licenseNumber:     row.license_number,
-    chapter:           row.chapter,
     consentAccepted:   row.consent_accepted,
     status:            row.status             as "pending" | "approved" | "rejected",
     rejectionReason:   row.rejection_reason   ?? null,
@@ -253,7 +209,6 @@ export interface DbCardSettings {
   show_blood_group:     boolean;
   show_dob:             boolean;
   show_emergency_phone: boolean;
-  show_chapter:         boolean;
   benefits:             string[];
 }
 
@@ -265,7 +220,6 @@ export function mapCardSettings(row: DbCardSettings): CardSettings {
     showBloodGroup:     row.show_blood_group,
     showDob:            row.show_dob,
     showEmergencyPhone: row.show_emergency_phone,
-    showChapter:        row.show_chapter,
     benefits:           row.benefits ?? [],
   };
 }
@@ -304,7 +258,6 @@ export interface DbProfile {
   id:              string;
   full_name:       string;
   email:           string | null;
-  chapter:         string | null;
   phone:           string | null;
   avatar_url:      string | null;
   address:         string | null;
@@ -324,7 +277,6 @@ export function mapProfile(row: DbProfile): UserProfile {
     id:            row.id,
     fullName:      row.full_name,
     email:         row.email        ?? "",
-    chapter:       row.chapter      ?? null,
     phone:         row.phone        ?? null,
     avatarUrl:     row.avatar_url   ?? null,
     address:       row.address      ?? null,

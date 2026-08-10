@@ -319,7 +319,7 @@ function RideRow({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogos | n
           {ride.title}
         </p>
         <p className="text-xs text-tvs-charcoal-500 mt-0.5">
-          {formatRideDateRange(ride.startDate, ride.endDate)} · {ride.chapter}
+          {formatRideDateRange(ride.startDate, ride.endDate)} · {ride.location}
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">

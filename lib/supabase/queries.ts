@@ -8,14 +8,14 @@
 import { cache }               from "react";
 import { createClient }        from "@/lib/supabase/server";
 import {
-  mapRide, mapChapter, mapSponsor, mapMarshal, mapHomepageContent,
+  mapRide, mapSponsor, mapMarshal, mapHomepageContent,
   mapMemberCard, mapCardSettings, mapProfile,
-  type DbRide, type DbChapter, type DbSponsor, type DbMarshal,
+  type DbRide, type DbSponsor, type DbMarshal,
   type DbHomepageContent, type DbMemberCard, type DbCardSettings,
   type DbProfile,
 } from "@/lib/supabase/mappers";
 import type {
-  Ride, Chapter, Sponsor, Marshal, HomepageContent, BrandLogos,
+  Ride, Sponsor, Marshal, HomepageContent, BrandLogos,
   MemberCard, CardSettings,
 } from "@/types";
 
@@ -26,7 +26,6 @@ import type {
 const RIDE_SELECT =
   "*, marshals(*), ride_sponsors(sponsors(*))" as const;
 
-const CHAPTER_SELECT = "*, marshals(*)" as const;
 
 // ---------------------------------------------------------------------------
 // Rides
@@ -116,64 +115,6 @@ export async function getRidesByIds(ids: string[]): Promise<Ride[]> {
   }
   const rowById = new Map((data as DbRide[]).map((r) => [r.id, mapRide(r)]));
   return ids.map((id) => rowById.get(id)).filter((r): r is Ride => !!r);
-}
-
-// ---------------------------------------------------------------------------
-// Chapters
-// ---------------------------------------------------------------------------
-
-/**
- * All chapters with their marshals (lead + all), plus totalRidesThisYear.
- * Fetches all marshals in one query and groups them by chapter name.
- */
-export async function getChapters(year = new Date().getFullYear()): Promise<Chapter[]> {
-  const supabase = await createClient();
-
-  const [chaptersResult, rideCountsResult, marshalsResult] = await Promise.all([
-    supabase
-      .from("chapters")
-      .select(CHAPTER_SELECT)
-      .order("is_priority", { ascending: false }),
-
-    supabase
-      .from("rides")
-      .select("chapter")
-      .gte("start_date", `${year}-01-01`)
-      .lte("start_date", `${year}-12-31`),
-
-    // Fetch ALL marshals (active + inactive) so admin sees full picture.
-    // Public pages filter by isActive client-side if needed.
-    supabase
-      .from("marshals")
-      .select("*")
-      .order("name", { ascending: true }),
-  ]);
-
-  if (chaptersResult.error) {
-    console.error("[queries] getChapters:", chaptersResult.error.message);
-    return [];
-  }
-
-  const countByChapter: Record<string, number> = {};
-  for (const row of rideCountsResult.data ?? []) {
-    countByChapter[row.chapter] = (countByChapter[row.chapter] ?? 0) + 1;
-  }
-
-  // Group marshals by chapter name — skip null (Head Marshal is national-level)
-  const marshalsByChapter: Record<string, DbMarshal[]> = {};
-  for (const m of (marshalsResult.data ?? []) as DbMarshal[]) {
-    if (!m.chapter) continue;
-    if (!marshalsByChapter[m.chapter]) marshalsByChapter[m.chapter] = [];
-    marshalsByChapter[m.chapter].push(m);
-  }
-
-  return (chaptersResult.data as DbChapter[]).map((ch) =>
-    mapChapter(
-      ch,
-      countByChapter[ch.name] ?? 0,
-      marshalsByChapter[ch.name] ?? [],
-    )
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -338,13 +279,12 @@ export const getCardSettings = cache(async (): Promise<CardSettings> => {
     .maybeSingle();
   if (!data) {
     return {
-      tagline:            "NEPAL RIDES TOGETHER",
-      disclaimer:         "If found, please return to the original owner or nearest TVS Nepal showroom.",
+      tagline:            "RIDE THE HIMALAYA",
+      disclaimer:         "If found, please return to the original owner or contact Himalayan Drift.",
       validityYears:      2,
       showBloodGroup:     true,
       showDob:            true,
       showEmergencyPhone: true,
-      showChapter:        true,
       benefits:           [],
     };
   }
@@ -373,7 +313,6 @@ export async function getProfile(): Promise<import("@/types").UserProfileWithEma
       id:            user.id,
       fullName:      (user.user_metadata?.full_name as string | undefined) ?? "",
       email:         user.email ?? "",
-      chapter:       null,
       phone:         null,
       avatarUrl:     null,
       address:       null,

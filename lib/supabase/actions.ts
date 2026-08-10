@@ -51,7 +51,7 @@ export async function signOut(): Promise<void> {
 export interface RidePayload {
   title:            string;
   rideType:         string;
-  chapter:          string;
+  location:         string;
   startDate:        string;
   endDate:          string;
   status:           string;
@@ -79,7 +79,7 @@ export async function saveRide(
   const dbRow = {
     title:             payload.title.trim(),
     ride_type:         payload.rideType,
-    chapter:           payload.chapter,
+    location:          payload.location.trim(),
     start_date:        payload.startDate,
     end_date:          payload.endDate,
     status:            payload.status,
@@ -172,48 +172,6 @@ export async function saveHomepageContent(
 }
 
 // ---------------------------------------------------------------------------
-// Chapters - Save (update only; chapters cannot be created/deleted, only edited)
-// ---------------------------------------------------------------------------
-
-export interface ChapterPayload {
-  id:            string;
-  region:        string;
-  description:   string | null;
-  coverImageUrl: string | null;
-  memberCount:   number;
-  isActive:      boolean;
-  isPriority:    boolean;
-  coordinates:   { lng: number; lat: number } | null;
-}
-
-export async function saveChapter(
-  payload: ChapterPayload,
-): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("chapters")
-    .update({
-      region:          payload.region.trim(),
-      description:     payload.description?.trim() || null,
-      cover_image_url: payload.coverImageUrl || null,
-      member_count:    payload.memberCount,
-      is_active:       payload.isActive,
-      is_priority:     payload.isPriority,
-      coordinates:     payload.coordinates,
-    })
-    .eq("id", payload.id);
-
-  if (error) return { error: error.message };
-
-  revalidatePath(ROUTES.adminChapters);
-  revalidatePath("/chapters");
-  revalidatePath("/marshals");
-  revalidatePath("/home");
-  return { error: null };
-}
-
-// ---------------------------------------------------------------------------
 // Sponsors - Save (create or update)
 // ---------------------------------------------------------------------------
 
@@ -280,8 +238,6 @@ export interface MarshalPayload {
   name:          string;
   phone:         string | null;
   avatarUrl:     string | null;
-  /** Null for Head Marshal (national-level) */
-  chapter:       string | null;
   role:          string;
   /** Comma-separated specialty tags: "Navigation, Route Planning" */
   specialty:     string | null;
@@ -301,8 +257,7 @@ export async function saveMarshal(
     name:            payload.name.trim(),
     phone:           payload.phone?.trim()   || null,
     avatar_url:      payload.avatarUrl       || null,
-    chapter:         payload.chapter         || null,
-    role:            payload.role.trim()     || "Regional Marshal",
+    role:            payload.role.trim()     || "Ride Marshal",
     specialty:       payload.specialty?.trim() || null,
     bio:             payload.bio?.trim()     || null,
     total_rides_led:  payload.totalRidesLed   ?? 0,
@@ -318,8 +273,6 @@ export async function saveMarshal(
     if (error) return { error: error.message };
   }
 
-  revalidatePath(ROUTES.adminChapters);
-  revalidatePath("/chapters");
   revalidatePath("/marshals");
   revalidatePath("/home");
   return { error: null };
@@ -337,8 +290,6 @@ export async function deleteMarshal(
 
   if (error) return { error: error.message };
 
-  revalidatePath(ROUTES.adminChapters);
-  revalidatePath("/chapters");
   revalidatePath("/marshals");
   revalidatePath("/home");
   return { error: null };
@@ -417,7 +368,6 @@ export interface MemberCardPayload {
   bloodGroup:      string;
   emergencyPhone:  string;
   licenseNumber:   string;
-  chapter:         string;
   consentAccepted: boolean;
 }
 
@@ -439,7 +389,6 @@ export async function submitMemberCard(
       blood_group:      payload.bloodGroup,
       emergency_phone:  payload.emergencyPhone.trim(),
       license_number:   payload.licenseNumber.trim(),
-      chapter:          payload.chapter,
       consent_accepted: payload.consentAccepted,
       status:           "pending",
     });
@@ -589,7 +538,6 @@ export async function saveCardSettings(
       show_blood_group:     settings.showBloodGroup,
       show_dob:             settings.showDob,
       show_emergency_phone: settings.showEmergencyPhone,
-      show_chapter:         settings.showChapter,
       benefits:             settings.benefits,
       updated_at:           new Date().toISOString(),
     });
@@ -610,7 +558,6 @@ export interface SignUpPayload {
   fullName:      string;
   email:         string;
   password:      string;
-  chapter?:      string | null;
   phone?:        string | null;
   address?:      string | null;
   bikeModel?:    string | null;
@@ -643,7 +590,6 @@ export async function signUpPublic(
     id:             data.user.id,
     full_name:      payload.fullName.trim(),
     email:          payload.email.trim(),
-    chapter:        payload.chapter        ?? null,
     phone:          payload.phone?.trim()  ?? null,
     address:        payload.address?.trim() ?? null,
     bike_model:     payload.bikeModel?.trim() ?? null,
@@ -697,7 +643,6 @@ export async function signOutPublic(): Promise<void> {
 /** Update the signed-in user's own profile. */
 export async function updateProfile(data: {
   fullName:      string;
-  chapter?:      string | null;
   phone?:        string | null;
   avatarUrl?:    string | null;
   address?:      string | null;
@@ -713,7 +658,6 @@ export async function updateProfile(data: {
     .from("profiles")
     .update({
       full_name:      data.fullName.trim(),
-      chapter:        data.chapter         ?? null,
       phone:          data.phone?.trim()   ?? null,
       avatar_url:     data.avatarUrl       ?? null,
       address:        data.address?.trim() ?? null,
@@ -784,7 +728,6 @@ export async function updateRegistrationByAdmin(
   id:   string,
   data: {
     fullName?:     string;
-    chapter?:      string | null;
     phone?:        string | null;
     address?:      string | null;
     bikeModel?:    string | null;
@@ -798,7 +741,6 @@ export async function updateRegistrationByAdmin(
 
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (data.fullName      !== undefined) patch.full_name      = data.fullName.trim();
-  if (data.chapter       !== undefined) patch.chapter        = data.chapter        ?? null;
   if (data.phone         !== undefined) patch.phone          = data.phone?.trim()  ?? null;
   if (data.address       !== undefined) patch.address        = data.address?.trim() ?? null;
   if (data.bikeModel     !== undefined) patch.bike_model     = data.bikeModel?.trim() ?? null;

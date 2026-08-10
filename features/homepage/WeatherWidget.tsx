@@ -120,7 +120,7 @@ function WeatherCard({ ride, weather }: WeatherItem) {
       ) : (
         /* Fallback when API not configured */
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-tvs-charcoal-200">{ride.chapter}</p>
+          <p className="text-sm font-semibold text-tvs-charcoal-200">{ride.location}</p>
           <p className="text-xs text-tvs-charcoal-600">
             Set OPENWEATHER_API_KEY for live conditions
           </p>

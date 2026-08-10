@@ -5,9 +5,8 @@
 // Results are cached for 30 minutes via Next.js fetch caching.
 // =============================================================================
 
-import type { RideWeather, WeatherCondition, WeatherForecastDay } from "@/types";
-import type { ChapterName } from "@/types";
-import { CHAPTERS } from "@/lib/constants";
+import type { Ride, RideWeather, WeatherCondition, WeatherForecastDay } from "@/types";
+import { DEFAULT_RIDE_COORDINATES, DEFAULT_RIDE_LOCATION_NAME } from "@/lib/constants";
 
 const BASE = "https://api.openweathermap.org/data/2.5";
 
@@ -15,9 +14,25 @@ const BASE = "https://api.openweathermap.org/data/2.5";
 // Coordinate helpers
 // ---------------------------------------------------------------------------
 
-/** Returns [lng, lat] for a chapter's HQ, or null if unknown */
-export function getChapterCoords(chapter: ChapterName): [number, number] | null {
-  return CHAPTERS.find((c) => c.name === chapter)?.coordinates ?? null;
+/** The point a ride's weather is reported for: its first route waypoint. */
+type RideLocationSource = Pick<Ride, "id" | "location" | "routeData">;
+
+/**
+ * Resolves a ride to the [lng, lat] its weather should be read at, plus a
+ * human label. Prefers the first route waypoint; falls back to the ride's
+ * free-text location name against the default coordinates.
+ */
+export function getRideCoords(
+  ride: RideLocationSource,
+): { coordinates: [number, number]; label: string } {
+  const first = ride.routeData?.waypoints?.[0];
+  if (first) {
+    return { coordinates: first.coordinates, label: first.name || ride.location };
+  }
+  return {
+    coordinates: DEFAULT_RIDE_COORDINATES,
+    label: ride.location || DEFAULT_RIDE_LOCATION_NAME,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -184,18 +199,17 @@ export async function fetchRideWeather(
 }
 
 /**
- * Fetch weather for a list of rides using their chapter coordinates.
+ * Fetch weather for a list of rides, reading each ride's own route start.
  * Returns one entry per ride (null if unavailable).
  */
 export async function fetchWeatherForRides(
-  rides: Array<{ id: string; chapter: ChapterName }>,
+  rides: RideLocationSource[],
 ): Promise<(RideWeather | null)[]> {
   return Promise.all(
     rides.map((ride) => {
-      const coords = getChapterCoords(ride.chapter);
-      if (!coords) return null;
-      const [lng, lat] = coords;
-      return fetchRideWeather(ride.id, lat, lng, `${ride.chapter}, Nepal`);
+      const { coordinates, label } = getRideCoords(ride);
+      const [lng, lat] = coordinates;
+      return fetchRideWeather(ride.id, lat, lng, `${label}, Nepal`);
     }),
   );
 }

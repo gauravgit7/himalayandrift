@@ -26,7 +26,7 @@ interface RidesTableProps {
   brandLogos?:  BrandLogos | null;
 }
 
-type SortKey   = "startDate" | "title" | "chapter" | "status" | "rideType";
+type SortKey   = "startDate" | "title" | "location" | "status" | "rideType";
 type SortOrder = "asc" | "desc";
 
 // ---------------------------------------------------------------------------
@@ -65,7 +65,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
         const q = query.toLowerCase();
         if (
           !r.title.toLowerCase().includes(q) &&
-          !r.chapter.toLowerCase().includes(q) &&
+          !r.location.toLowerCase().includes(q) &&
           !r.rideType.toLowerCase().includes(q)
         ) return false;
       }
@@ -77,7 +77,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
       switch (sortKey) {
         case "startDate": aVal = a.startDate;      bVal = b.startDate;      break;
         case "title":     aVal = a.title;           bVal = b.title;          break;
-        case "chapter":   aVal = a.chapter;         bVal = b.chapter;        break;
+        case "location":  aVal = a.location;        bVal = b.location;       break;
         case "status":    aVal = a.status;          bVal = b.status;         break;
         case "rideType":  aVal = a.rideType;         bVal = b.rideType;       break;
         default:          aVal = a.startDate;       bVal = b.startDate;
@@ -175,7 +175,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
             [
               { key: "title",     label: "Ride" },
               { key: "rideType",  label: "Type" },
-              { key: "chapter",   label: "Chapter" },
+              { key: "location",  label: "Location" },
               { key: "startDate", label: "Date" },
               { key: "status",    label: "Status" },
             ] as { key: SortKey; label: string }[]
@@ -232,7 +232,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
                 </span>
               </div>
               {/* Chapter */}
-              <div className="px-3 py-3 text-xs text-tvs-charcoal-300">{ride.chapter}</div>
+              <div className="px-3 py-3 text-xs text-tvs-charcoal-300">{ride.location}</div>
               {/* Date */}
               <div className="px-3 py-3 text-xs text-tvs-charcoal-400">
                 {formatRideDateRange(ride.startDate, ride.endDate)}

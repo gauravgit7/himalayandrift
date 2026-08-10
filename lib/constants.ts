@@ -3,7 +3,6 @@
 // =============================================================================
 
 import type {
-  ChapterName,
   RideStatus,
   RideType,
   RidePriority,
@@ -17,36 +16,25 @@ export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] a
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 
 // ---------------------------------------------------------------------------
-// Chapters (9 total; 4 priority)
+// Membership cards
 // ---------------------------------------------------------------------------
-
-export const CHAPTERS: {
-  name: ChapterName;
-  region: string;
-  isPriority: boolean;
-  coordinates: [number, number]; // [lng, lat]
-}[] = [
-  // Priority chapters
-  { name: "Bagmati",   region: "Bagmati Province",   isPriority: true,  coordinates: [85.3240, 27.7172] },
-  { name: "Gandaki",   region: "Gandaki Province",   isPriority: true,  coordinates: [84.0148, 28.2096] },
-  { name: "Narayani",  region: "Bagmati Province",   isPriority: true,  coordinates: [85.1200, 27.6783] },
-  { name: "Lumbini",   region: "Lumbini Province",   isPriority: true,  coordinates: [83.2762, 27.4833] },
-  // Standard chapters
-  { name: "Rapti",     region: "Lumbini Province",   isPriority: false, coordinates: [82.1980, 28.0900] },
-  { name: "Bheri",     region: "Karnali Province",   isPriority: false, coordinates: [81.6100, 28.2600] },
-  { name: "Mahakali",  region: "Sudurpashchim Province", isPriority: false, coordinates: [80.1780, 29.5900] },
-  { name: "Koshi",     region: "Koshi Province",     isPriority: false, coordinates: [87.2700, 26.8065] },
-  { name: "Mechi",     region: "Koshi Province",     isPriority: false, coordinates: [88.0900, 26.6400] },
-];
-
-export const CHAPTER_NAMES = CHAPTERS.map((c) => c.name);
-export const PRIORITY_CHAPTERS = CHAPTERS.filter((c) => c.isPriority).map((c) => c.name);
 
 /**
  * Prefix for membership card numbers: `HD-<2-digit year>-<5-digit sequence>`,
  * e.g. HD-26-00001. The sequence restarts each calendar year.
  */
 export const MEMBER_CARD_PREFIX = "HD";
+
+// ---------------------------------------------------------------------------
+// Geography
+// ---------------------------------------------------------------------------
+
+/**
+ * Fallback point used for ride weather when a ride has no route waypoints.
+ * Kathmandu — where most rides start.
+ */
+export const DEFAULT_RIDE_COORDINATES: [number, number] = [85.3240, 27.7172]; // [lng, lat]
+export const DEFAULT_RIDE_LOCATION_NAME = "Kathmandu";
 
 // ---------------------------------------------------------------------------
 // Ride Types
@@ -252,13 +240,11 @@ export const STORAGE_BUCKETS = {
 export const ROUTES = {
   home:           "/",
   calendar:       "/calendar",
-  chapters:       "/chapters",
   marshals:       "/marshals",
   rides:          "/rides",
   ride:           (id: string) => `/rides/${id}`,
   admin:          "/admin",
   adminRides:     "/admin/rides",
-  adminChapters:  "/admin/chapters",
   adminCalendar:  "/admin/calendar",
   adminHomepage:  "/admin/homepage",
   adminSponsors:  "/admin/sponsors",
@@ -283,7 +269,6 @@ export const ROUTES = {
 export const API = {
   rides:          "/api/rides",
   ride:           (id: string) => `/api/rides/${id}`,
-  chapters:       "/api/chapters",
   weather:        (rideId: string) => `/api/weather/${rideId}`,
   export:         "/api/export",
   homepage:       "/api/homepage",

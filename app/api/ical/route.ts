@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
   const descLines: string[] = [];
   if (ride.shortDescription) descLines.push(ride.shortDescription);
   descLines.push(`BS Date: ${formatBsDateRange(ride.startDate, ride.endDate)}`);
-  descLines.push(`Chapter: ${ride.chapter}, Nepal`);
+  descLines.push(`Chapter: ${ride.location}, Nepal`);
   descLines.push(`Type: ${ride.rideType}`);
   if (ride.registrationLink) descLines.push(`Register: ${ride.registrationLink}`);
   descLines.push(`Full details: ${pageUrl}`);
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
     `DTEND;VALUE=DATE:${exclusiveEnd(ride.endDate)}`,
     fold(`SUMMARY:${esc(ride.title)}`),
     fold(`DESCRIPTION:${esc(descLines.join("\\n"))}`),
-    fold(`LOCATION:${esc(`${ride.chapter}, Nepal`)}`),
+    fold(`LOCATION:${esc(`${ride.location}, Nepal`)}`),
     fold(`URL:${pageUrl}`),
     `STATUS:${ride.status === "confirmed" ? "CONFIRMED" : "TENTATIVE"}`,
     "CLASS:PUBLIC",

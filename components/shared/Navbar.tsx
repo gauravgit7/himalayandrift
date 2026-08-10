@@ -21,7 +21,6 @@ import type { BrandLogos }      from "@/types";
 const NAV_LINKS = [
   { href: ROUTES.home,       label: "Home",       icon: null       },
   { href: ROUTES.calendar,   label: "Calendar",   icon: Calendar   },
-  { href: ROUTES.chapters,   label: "Chapters",   icon: Map        },
   { href: ROUTES.marshals,   label: "Marshals",   icon: Shield     },
   { href: ROUTES.rides,      label: "Rides",      icon: BookOpen   },
   { href: ROUTES.membership, label: "Membership", icon: CreditCard },

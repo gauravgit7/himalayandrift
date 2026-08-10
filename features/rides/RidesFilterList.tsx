@@ -72,7 +72,7 @@ export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) 
       if (status === "upcoming"  && !rideIsUpcoming(r.startDate)) return false;
       if (status === "completed" && r.status !== "completed")     return false;
       if (q && !r.title.toLowerCase().includes(q) &&
-               !r.chapter.toLowerCase().includes(q) &&
+               !r.location.toLowerCase().includes(q) &&
                !(r.shortDescription ?? "").toLowerCase().includes(q)) return false;
       return true;
     });
