@@ -42,11 +42,16 @@ export function Footer({ brandLogos }: FooterProps = {}) {
               />
               {/* Text - always shown */}
               <div>
-                <span className="text-white font-bold text-sm">{APP_META.name}</span>
+                <span className="text-white font-bold text-sm block leading-tight">
+                  {APP_META.name}
+                </span>
+                <span className="text-tvs-charcoal-500 text-[10px] block tracking-widest uppercase">
+                  {APP_META.motto}
+                </span>
               </div>
             </div>
             <p className="text-tvs-charcoal-400 text-sm max-w-xs leading-relaxed">
-              {APP_META.description}
+              {APP_META.tagline}.
             </p>
           </div>
 

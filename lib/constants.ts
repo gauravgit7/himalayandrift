@@ -296,7 +296,11 @@ export const API = {
 export const APP_META = {
   name:        "Himalayan Drift",
   shortName:   "HD",
-  description: "Ride planning and operations for the Himalayan Drift riding community.",
+  /** Three-beat motto. Short enough for badges, cards and the footer mark. */
+  motto:       "Grit, Brotherhood, Adventure",
+  /** Full tagline. Used as the hero subtitle and the site meta description. */
+  tagline:     "Riding the raw side of Nepal, together",
+  description: "Riding the raw side of Nepal, together — ride planning and operations for the Himalayan Drift community.",
   url:         process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   primaryColor: "#DC2626",
 } as const;
