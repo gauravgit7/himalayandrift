@@ -1,0 +1,212 @@
+// =============================================================================
+// RidesFilterList - client-side filterable ride grid for the public /rides page
+// 'use client' - filter state
+// =============================================================================
+
+"use client";
+
+import { useState, useMemo }     from "react";
+import Link                      from "next/link";
+import { Search, ArrowRight, SlidersHorizontal } from "lucide-react";
+import { RideCard }              from "@/components/shared/RideCard";
+import { DateModeToggle }        from "@/components/shared/DateModeToggle";
+import { AnimateIn }             from "@/components/shared/AnimateIn";
+import { useDateMode }           from "@/hooks/useDateMode";
+import { cn }                    from "@/utils/cn";
+import { rideIsUpcoming }        from "@/utils/date";
+import { ROUTES }                from "@/lib/constants";
+import type { Ride, Community, RideType, BrandLogos } from "@/types";
+
+interface RidesFilterListProps {
+  allRides:    Ride[];
+  brandLogos?: BrandLogos | null;
+}
+
+type CommunityFilter = Community | "all";
+type TypeFilter      = RideType  | "all";
+type StatusFilter    = "upcoming" | "completed" | "all";
+
+const COMMUNITY_OPTS: { value: CommunityFilter; label: string }[] = [
+  { value: "all",      label: "All" },
+  { value: "AOG",      label: "AOG" },
+  { value: "CULT",     label: "CULT" },
+  { value: "AOGxCULT", label: "AOG × CULT" },
+];
+
+const TYPE_OPTS: { value: TypeFilter; label: string }[] = [
+  { value: "all",       label: "All types" },
+  { value: "chapter",   label: "Chapter" },
+  { value: "overnight", label: "Overnight" },
+  { value: "marquee",   label: "Marquee" },
+  { value: "cult",      label: "CULT" },
+];
+
+const STATUS_OPTS: { value: StatusFilter; label: string }[] = [
+  { value: "all",       label: "All" },
+  { value: "upcoming",  label: "Upcoming" },
+  { value: "completed", label: "Completed" },
+];
+
+function FilterChip<T extends string>({
+  options, value, onChange,
+}: { options: { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150",
+            value === opt.value
+              ? "bg-tvs-red-600 text-white"
+              : "bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-tvs-charcoal-400 hover:text-tvs-charcoal-100 hover:border-tvs-charcoal-500"
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) {
+  const { mode: dateMode, toggle: toggleDateMode } = useDateMode();
+  const [search,    setSearch]    = useState("");
+  const [community, setCommunity] = useState<CommunityFilter>("all");
+  const [type,      setType]      = useState<TypeFilter>("all");
+  const [status,    setStatus]    = useState<StatusFilter>("all");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return allRides.filter((r) => {
+      if (community !== "all" && r.community !== community) return false;
+      if (type      !== "all" && r.rideType  !== type)      return false;
+      if (status === "upcoming"  && !rideIsUpcoming(r.startDate)) return false;
+      if (status === "completed" && r.status !== "completed")     return false;
+      if (q && !r.title.toLowerCase().includes(q) &&
+               !r.chapter.toLowerCase().includes(q) &&
+               !(r.shortDescription ?? "").toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [allRides, search, community, type, status]);
+
+  const upcoming   = allRides.filter((r) => rideIsUpcoming(r.startDate)).length;
+  const completed  = allRides.filter((r) => r.status === "completed").length;
+
+  return (
+    <>
+      {/* Header */}
+      <AnimateIn className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="block w-6 h-px bg-tvs-red-600 rounded-full" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-tvs-red-400">
+            Ride Catalogue
+          </span>
+        </div>
+        <h1 className="text-4xl sm:text-5xl font-black text-tvs-charcoal-50 mb-2">
+          All Rides
+        </h1>
+        <div className="flex flex-wrap gap-4 text-sm text-tvs-charcoal-400 mt-2">
+          <span><strong className="text-tvs-charcoal-200">{allRides.length}</strong> total rides</span>
+          <span><strong className="text-emerald-400">{upcoming}</strong> upcoming</span>
+          <span><strong className="text-tvs-charcoal-400">{completed}</strong> completed</span>
+        </div>
+      </AnimateIn>
+
+      {/* Filters */}
+      <AnimateIn
+        className="mb-8 p-4 rounded-xl gradient-card border border-tvs-charcoal-700/60 space-y-3"
+        delay={0.05}
+      >
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <div className="flex items-center gap-2 text-xs font-semibold text-tvs-charcoal-400 uppercase tracking-wide">
+            <SlidersHorizontal className="size-3.5" />
+            Filters
+          </div>
+          <DateModeToggle mode={dateMode} toggle={toggleDateMode} size="xs" />
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-tvs-charcoal-500" />
+          <input
+            type="text"
+            placeholder="Search rides, chapters…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={cn(
+              "w-full h-9 pl-9 pr-3 rounded-lg text-sm",
+              "bg-tvs-charcoal-800 border border-tvs-charcoal-700",
+              "text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
+              "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors"
+            )}
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-y-2 gap-x-4">
+          <div>
+            <p className="text-[10px] text-tvs-charcoal-600 mb-1.5 uppercase tracking-wide">Community</p>
+            <FilterChip options={COMMUNITY_OPTS} value={community} onChange={setCommunity} />
+          </div>
+          <div>
+            <p className="text-[10px] text-tvs-charcoal-600 mb-1.5 uppercase tracking-wide">Type</p>
+            <FilterChip options={TYPE_OPTS} value={type} onChange={setType} />
+          </div>
+          <div>
+            <p className="text-[10px] text-tvs-charcoal-600 mb-1.5 uppercase tracking-wide">Status</p>
+            <FilterChip options={STATUS_OPTS} value={status} onChange={setStatus} />
+          </div>
+        </div>
+      </AnimateIn>
+
+      {/* Results count */}
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-xs text-tvs-charcoal-500">
+          {filtered.length === allRides.length
+            ? `${filtered.length} rides`
+            : `${filtered.length} of ${allRides.length} rides`}
+        </p>
+        {(search || community !== "all" || type !== "all" || status !== "all") && (
+          <button
+            onClick={() => { setSearch(""); setCommunity("all"); setType("all"); setStatus("all"); }}
+            className="text-xs text-tvs-red-400 hover:text-tvs-red-300 transition-colors"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      {/* Grid */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-tvs-charcoal-600 text-sm space-y-2">
+          <p className="text-2xl">🏍️</p>
+          <p>No rides match your filters.</p>
+          <button
+            onClick={() => { setSearch(""); setCommunity("all"); setType("all"); setStatus("all"); }}
+            className="text-tvs-red-400 hover:text-tvs-red-300 text-xs underline underline-offset-2 transition-colors"
+          >
+            Clear all filters
+          </button>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((ride) => (
+            <RideCard key={ride.id} ride={ride} variant="default" className="h-full" brandLogos={brandLogos} dateMode={dateMode} />
+          ))}
+        </div>
+      )}
+
+      {/* Bottom CTA */}
+      <AnimateIn className="mt-10 text-center" delay={0.1}>
+        <Link
+          href={ROUTES.calendar}
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-tvs-charcoal-700 hover:border-tvs-charcoal-500 text-tvs-charcoal-300 hover:text-tvs-charcoal-50 font-semibold text-sm transition-all duration-200"
+        >
+          View as Calendar
+          <ArrowRight className="size-4" />
+        </Link>
+      </AnimateIn>
+    </>
+  );
+}

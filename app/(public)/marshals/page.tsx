@@ -1,0 +1,89 @@
+// =============================================================================
+// Public Marshals Page - hierarchical display of all TVS Nepal marshals
+// Head Marshal → Senior Marshals → Regional Marshals
+// ISR: 1 hour revalidation
+// =============================================================================
+
+import type { Metadata }          from "next";
+import { getMarshals }            from "@/lib/supabase/queries";
+import { CHAPTER_NAMES }          from "@/lib/constants";
+import { AnimateIn }              from "@/components/shared/AnimateIn";
+import { MarshalPageClient }      from "@/features/marshals/MarshalPageClient";
+import type { ChapterName }       from "@/types";
+
+export const metadata: Metadata = {
+  title:       "Marshals | TVS Nepal",
+  description: "Meet the marshals of TVS Nepal - AOG & CULT community leaders across all 9 chapters.",
+};
+
+export const revalidate = 3600; // 1 hour
+
+export default async function MarshalsPage() {
+  const marshals = await getMarshals();
+
+  // Only show chapters that have at least one active marshal
+  const chapterSet        = new Set(marshals.map((m) => m.chapter));
+  const activeChapters    = CHAPTER_NAMES.filter((c) => chapterSet.has(c)) as ChapterName[];
+
+  const headCount    = marshals.filter((m) => m.role === "Head Marshal").length;
+  const seniorCount  = marshals.filter((m) => m.role === "Senior Marshal").length;
+  const regionalCount = marshals.filter(
+    (m) => m.role !== "Head Marshal" && m.role !== "Senior Marshal"
+  ).length;
+
+  return (
+    <main className="min-h-dvh py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+
+      {/* ── Header ── */}
+      <AnimateIn className="mb-12 text-center">
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <span className="block w-8 h-px bg-tvs-red-600 rounded-full" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-tvs-red-400">
+            The Team
+          </span>
+          <span className="block w-8 h-px bg-tvs-red-600 rounded-full" />
+        </div>
+        <h1 className="text-4xl sm:text-5xl font-black text-tvs-charcoal-50 mb-3">
+          Meet Our Marshals
+        </h1>
+        <p className="text-sm sm:text-base text-tvs-charcoal-400 max-w-lg mx-auto leading-relaxed">
+          Experienced riders leading TVS Nepal&apos;s AOG &amp; CULT communities.
+          {marshals.length > 0 && (
+            <span className="block mt-1 text-tvs-charcoal-500">
+              {marshals.length} active marshal{marshals.length !== 1 ? "s" : ""} across{" "}
+              {activeChapters.length} chapter{activeChapters.length !== 1 ? "s" : ""}.
+            </span>
+          )}
+        </p>
+
+        {/* Stats row */}
+        {marshals.length > 0 && (
+          <div className="flex items-center justify-center gap-6 mt-5">
+            {headCount > 0 && (
+              <div className="text-center">
+                <p className="text-lg font-black text-tvs-red-400">{headCount}</p>
+                <p className="text-[10px] text-tvs-charcoal-600 uppercase tracking-wider">Head</p>
+              </div>
+            )}
+            {seniorCount > 0 && (
+              <div className="text-center">
+                <p className="text-lg font-black text-amber-400">{seniorCount}</p>
+                <p className="text-[10px] text-tvs-charcoal-600 uppercase tracking-wider">Senior</p>
+              </div>
+            )}
+            {regionalCount > 0 && (
+              <div className="text-center">
+                <p className="text-lg font-black text-blue-400">{regionalCount}</p>
+                <p className="text-[10px] text-tvs-charcoal-600 uppercase tracking-wider">Regional</p>
+              </div>
+            )}
+          </div>
+        )}
+      </AnimateIn>
+
+      {/* ── Client component (filter + cards) ── */}
+      <MarshalPageClient marshals={marshals} activeChapters={activeChapters} />
+
+    </main>
+  );
+}

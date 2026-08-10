@@ -1,0 +1,387 @@
+/* =============================================================================
+   TVS Nepal Ride Operations Platform - Global Styles
+   Tailwind v4 CSS-based configuration
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   Google Fonts - must come before @import "tailwindcss" (CSS spec: @import
+   rules must precede all other rules; Tailwind's import expands inline)
+   --------------------------------------------------------------------------- */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&display=swap");
+
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Tailwind v4 Theme Customization
+   All custom design tokens defined here - no tailwind.config.js needed
+   --------------------------------------------------------------------------- */
+
+@theme {
+  /* ── Typography ── */
+  --font-family-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+  /* ── TVS Brand Colors ── */
+
+  /* Deep Reds - primary AOG identity */
+  --color-tvs-red-50:  #fef2f2;
+  --color-tvs-red-100: #fee2e2;
+  --color-tvs-red-200: #fecaca;
+  --color-tvs-red-300: #fca5a5;
+  --color-tvs-red-400: #f87171;
+  --color-tvs-red-500: #ef4444;
+  --color-tvs-red-600: #dc2626;
+  --color-tvs-red-700: #b91c1c;
+  --color-tvs-red-800: #991b1b;
+  --color-tvs-red-900: #7f1d1d;
+  --color-tvs-red-950: #450a0a;
+
+  /* Dark Crimson - premium accent */
+  --color-tvs-crimson-500: #c41e3a;
+  --color-tvs-crimson-600: #a01830;
+  --color-tvs-crimson-700: #7d1224;
+  --color-tvs-crimson-800: #5a0d1a;
+  --color-tvs-crimson-900: #380810;
+  --color-tvs-crimson-950: #1a0308;
+
+  /* Steel Blues - CULT identity */
+  --color-tvs-steel-50:  #f0f4ff;
+  --color-tvs-steel-100: #dde5ff;
+  --color-tvs-steel-200: #b3c4ff;
+  --color-tvs-steel-300: #809fff;
+  --color-tvs-steel-400: #4d78ff;
+  --color-tvs-steel-500: #2563eb;
+  --color-tvs-steel-600: #1d4ed8;
+  --color-tvs-steel-700: #1e40af;
+  --color-tvs-steel-800: #1e3a8a;
+  --color-tvs-steel-900: #1e3270;
+
+  /* Charcoal Blacks - dark base */
+  --color-tvs-charcoal-50:  #f8f8f8;
+  --color-tvs-charcoal-100: #efefef;
+  --color-tvs-charcoal-200: #d4d4d4;
+  --color-tvs-charcoal-300: #a3a3a3;
+  --color-tvs-charcoal-400: #6b6b6b;
+  --color-tvs-charcoal-500: #4a4a4a;
+  --color-tvs-charcoal-600: #333333;
+  --color-tvs-charcoal-700: #242424;
+  --color-tvs-charcoal-800: #1a1a1a;
+  --color-tvs-charcoal-900: #111111;
+  --color-tvs-charcoal-950: #080808;
+
+  /* ── Semantic Color Aliases ── */
+
+  /* Status colors */
+  --color-status-planned:   #6b7280;
+  --color-status-tentative: #d97706;
+  --color-status-confirmed: #059669;
+  --color-status-postponed: #dc2626;
+  --color-status-cancelled: #7f1d1d;
+  --color-status-completed: #1d4ed8;
+
+  /* Community colors */
+  --color-community-aog:     #dc2626;
+  --color-community-cult:    #2563eb;
+  --color-community-aogcult: #7c3aed;
+
+  /* ── Spacing extensions ── */
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+  --spacing-128: 32rem;
+
+  /* ── Z-index layers ── */
+  --z-index-modal:    1000;
+  --z-index-overlay:  999;
+  --z-index-drawer:   998;
+  --z-index-navbar:   100;
+  --z-index-tooltip:  200;
+
+  /* ── Border radius ── */
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+
+  /* ── Shadows ── */
+  --shadow-glow-red:    0 0 24px -4px rgb(220 38 38 / 0.4);
+  --shadow-glow-blue:   0 0 24px -4px rgb(37 99 235 / 0.4);
+  --shadow-glow-violet: 0 0 24px -4px rgb(124 58 237 / 0.4);
+  --shadow-cinematic:   0 25px 60px -12px rgb(0 0 0 / 0.7);
+  --shadow-card:        0 4px 24px -4px rgb(0 0 0 / 0.3);
+}
+
+/* ---------------------------------------------------------------------------
+   Dark Surface - force dark charcoal values regardless of page theme.
+   Use on hero sections, dramatic banners, or any element that is designed
+   to always be dark (e.g. <section className="dark-surface ...">).
+   In dark mode this is a no-op. In light mode it re-pins the variables.
+   --------------------------------------------------------------------------- */
+
+html.light .dark-surface {
+  --color-tvs-charcoal-950: #080808;
+  --color-tvs-charcoal-900: #111111;
+  --color-tvs-charcoal-800: #1a1a1a;
+  --color-tvs-charcoal-700: #242424;
+  --color-tvs-charcoal-600: #333333;
+  --color-tvs-charcoal-500: #4a4a4a;
+  --color-tvs-charcoal-400: #6b6b6b;
+  --color-tvs-charcoal-300: #a3a3a3;
+  --color-tvs-charcoal-200: #d4d4d4;
+  --color-tvs-charcoal-100: #efefef;
+  --color-tvs-charcoal-50:  #f8f8f8;
+
+  /* Restore full-depth shadows inside dark surfaces */
+  --shadow-cinematic: 0 25px 60px -12px rgb(0 0 0 / 0.7);
+  --shadow-card:      0 4px 24px -4px  rgb(0 0 0 / 0.3);
+}
+
+/* ---------------------------------------------------------------------------
+   Base Reset & Global Styles
+   --------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Ensure Poppins applies to all form controls (browsers default to system font) */
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+html {
+  font-family: var(--font-family-sans);
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent horizontal overflow from reaching the root layout viewport.
+     Without this, Android PWA WebView calculates content width from the
+     html element (not body), so body overflow-x:hidden alone is ignored
+     and any x-translate animation (e.g. Framer Motion slideRight x:36)
+     causes the WebView to zoom out to show the full content width. */
+  overflow-x: hidden;
+}
+
+body {
+  background-color: var(--color-tvs-charcoal-950);
+  color: var(--color-tvs-charcoal-100);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  /* Safe-area bottom padding for iOS PWA home-indicator overlap */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ---------------------------------------------------------------------------
+   Light Mode - override charcoal scale and semantic adjustments
+   Activated by adding class="light" to <html>
+   The utility classes (bg-tvs-charcoal-*) all use CSS vars at runtime,
+   so flipping the vars here propagates to every component automatically.
+   --------------------------------------------------------------------------- */
+
+html.light {
+  /* Flip the charcoal scale: 950=white, 50=near-black */
+  --color-tvs-charcoal-950: #ffffff;
+  --color-tvs-charcoal-900: #f8f9fb;
+  --color-tvs-charcoal-800: #f1f3f6;
+  --color-tvs-charcoal-700: #e2e6ea;
+  --color-tvs-charcoal-600: #c8cdd6;
+  --color-tvs-charcoal-500: #9aa3af;
+  --color-tvs-charcoal-400: #6c7480;
+  --color-tvs-charcoal-300: #4a5260;
+  --color-tvs-charcoal-200: #2d3340;
+  --color-tvs-charcoal-100: #1a1f2e;
+  --color-tvs-charcoal-50:  #0d1117;
+
+  /* Softer shadows in light mode */
+  --shadow-cinematic:   0 25px 60px -12px rgb(0 0 0 / 0.12);
+  --shadow-card:        0 4px 24px -4px  rgb(0 0 0 / 0.08);
+
+  /* Slightly more visible glow tints */
+  --shadow-glow-red:    0 0 24px -4px rgb(220 38 38 / 0.25);
+  --shadow-glow-blue:   0 0 24px -4px rgb(37 99 235 / 0.25);
+  --shadow-glow-violet: 0 0 24px -4px rgb(124 58 237 / 0.25);
+}
+
+/* ---------------------------------------------------------------------------
+   Custom Scrollbar (webkit)
+   --------------------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-tvs-charcoal-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-tvs-charcoal-600);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-tvs-charcoal-400);
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: var(--color-tvs-charcoal-800);
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: var(--color-tvs-charcoal-500);
+}
+
+/* ---------------------------------------------------------------------------
+   Focus styles - accessible, on-brand
+   --------------------------------------------------------------------------- */
+
+:focus-visible {
+  outline: 2px solid var(--color-tvs-red-500);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Gradient utilities (referenced in components)
+   --------------------------------------------------------------------------- */
+
+.gradient-hero {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgb(8 8 8 / 0.3) 50%,
+    rgb(8 8 8 / 0.9) 85%,
+    var(--color-tvs-charcoal-950) 100%
+  );
+}
+
+.gradient-card {
+  background: linear-gradient(
+    135deg,
+    var(--color-tvs-charcoal-800) 0%,
+    var(--color-tvs-charcoal-900) 100%
+  );
+}
+
+/* Light mode: give cards a white surface with a defined border so they
+   stand out against the light page background.
+   Also pin the card shadow so it's visible against white. */
+html.light .gradient-card {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.08), 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+
+/* Community-aware gradients - hardcoded dark values so they stay
+   consistent in both light and dark mode. All three use a "colour → near-black"
+   approach for a premium, high-contrast cinematic feel. */
+
+.gradient-aog {
+  /* Deep crimson → near-black */
+  background: linear-gradient(135deg, #6b1111 0%, #2a0505 55%, #0e0202 100%);
+}
+
+.gradient-cult {
+  /* Dark navy → near-black */
+  background: linear-gradient(135deg, #1e3a8a 0%, #0a1832 55%, #050b15 100%);
+}
+
+.gradient-marquee {
+  /* Deep purple → crimson → near-black */
+  background: linear-gradient(135deg, #4c1d95 0%, #6b1111 50%, #0a0308 100%);
+}
+
+/* ---------------------------------------------------------------------------
+   Glass morphism surfaces
+   --------------------------------------------------------------------------- */
+
+.glass {
+  background: rgb(255 255 255 / 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgb(255 255 255 / 0.08);
+}
+
+html.light .glass {
+  background: rgb(255 255 255 / 0.75);
+  border: 1px solid rgb(0 0 0 / 0.08);
+}
+
+.glass-dark {
+  background: rgb(0 0 0 / 0.4);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgb(255 255 255 / 0.06);
+}
+
+html.light .glass-dark {
+  background: rgb(0 0 0 / 0.06);
+  border: 1px solid rgb(0 0 0 / 0.1);
+}
+
+/* ---------------------------------------------------------------------------
+   Text utilities
+   --------------------------------------------------------------------------- */
+
+.text-gradient-red {
+  background: linear-gradient(135deg, #f87171, #dc2626, #991b1b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-steel {
+  background: linear-gradient(135deg, #93c5fd, #2563eb, #1e3a8a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ---------------------------------------------------------------------------
+   Animation utilities
+   --------------------------------------------------------------------------- */
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.4s ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s ease-out both;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-tvs-charcoal-800) 25%,
+    var(--color-tvs-charcoal-700) 50%,
+    var(--color-tvs-charcoal-800) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

@@ -1,0 +1,351 @@
+// =============================================================================
+// Supabase DB → TypeScript mappers
+// DB columns are snake_case; TypeScript types are camelCase.
+// These types mirror schema.sql exactly - update both together.
+// =============================================================================
+
+import type {
+  Ride, Chapter, Sponsor, Marshal, HomepageContent, BrandLogos,
+  MemberCard, CardSettings, UserProfile,
+  RouteData, ItineraryDay, RecurringPattern,
+  Community, RideType, RideStatus, RidePriority, ChapterName, MemberCommunity,
+  MemberRegistrationStatus,
+} from "@/types";
+
+// ---------------------------------------------------------------------------
+// Raw DB row types (snake_case)
+// ---------------------------------------------------------------------------
+
+export interface DbMarshal {
+  id:               string;
+  name:             string;
+  phone:            string | null;
+  avatar_url:       string | null;
+  chapter:          ChapterName | null;
+  role:             string;
+  specialty:        string | null;
+  bio:              string | null;
+  total_rides_led:  number;
+  is_active:        boolean;
+  instagram_handle: string | null;
+  created_at:       string;
+}
+
+export interface DbSponsor {
+  id:          string;
+  name:        string;
+  logo_url:    string | null;
+  description: string | null;
+  website_url: string | null;
+  tier:        "title" | "co" | "associate" | "media";
+  is_active:   boolean;
+  created_at:  string;
+}
+
+export interface DbChapter {
+  id:              string;
+  name:            ChapterName;
+  region:          string;
+  description:     string | null;
+  cover_image_url: string | null;
+  member_count:    number;
+  marshal_id:      string | null;
+  is_active:       boolean;
+  is_priority:     boolean;
+  coordinates:     { lng: number; lat: number } | null;
+  created_at:      string;
+  updated_at:      string;
+  // FK join
+  marshals?:       DbMarshal | null;
+}
+
+export interface DbRide {
+  id:                string;
+  title:             string;
+  slug:              string;
+  community:         Community;
+  ride_type:         RideType;
+  chapter:           ChapterName;
+  start_date:        string;
+  end_date:          string;
+  status:            RideStatus;
+  priority:          RidePriority;
+  description:       string | null;
+  short_description: string | null;
+  banner_image_url:  string | null;
+  expected_riders:   number;
+  registration_link: string | null;
+  route_data:        RouteData | null;
+  itinerary:         ItineraryDay[] | null;
+  marshal_id:        string | null;
+  tags:              string[];
+  is_featured:       boolean;
+  is_recurring:      boolean;
+  recurring_pattern: RecurringPattern | null;
+  interest_count:    number;
+  created_at:        string;
+  updated_at:        string;
+  // FK joins
+  marshals?:         DbMarshal | null;
+  ride_sponsors?:    { sponsors: DbSponsor }[];
+}
+
+export interface DbHomepageContent {
+  id:                          number;
+  hero_title:                  string;
+  hero_subtitle:               string;
+  hero_background_image_url:   string | null;
+  hero_overlay_opacity:        number;
+  hero_primary_cta_label:      string;
+  hero_primary_cta_link:       string;
+  hero_secondary_cta_label:    string | null;
+  hero_secondary_cta_link:     string | null;
+  hero_featured_ride_id:       string | null;
+  tvs_nepal_logo_url:          string | null;
+  aog_logo_url:                string | null;
+  cult_logo_url:                string | null;
+  marquee_ride_ids:             string[];
+  featured_upcoming_ride_ids:  string[];
+  show_weather_widget:         boolean;
+  show_sponsor_showcase:       boolean;
+  updated_at:                  string;
+}
+
+// ---------------------------------------------------------------------------
+// Mapper functions - DB row → TypeScript domain type
+// ---------------------------------------------------------------------------
+
+export function mapMarshal(row: DbMarshal): Marshal {
+  return {
+    id:            row.id,
+    name:          row.name,
+    phone:         row.phone,
+    avatarUrl:     row.avatar_url,
+    chapter:       row.chapter,
+    role:          row.role          ?? "Regional Marshal",
+    specialty:     row.specialty     ?? null,
+    bio:           row.bio           ?? null,
+    totalRidesLed:   row.total_rides_led ?? 0,
+    isActive:        row.is_active,
+    instagramHandle: row.instagram_handle ?? null,
+  };
+}
+
+export function mapSponsor(row: DbSponsor): Sponsor {
+  return {
+    id:          row.id,
+    name:        row.name,
+    logoUrl:     row.logo_url,
+    description: row.description,
+    websiteUrl:  row.website_url,
+    tier:        row.tier,
+  };
+}
+
+export function mapChapter(
+  row: DbChapter,
+  rideCount = 0,
+  allChapterMarshals: DbMarshal[] = [],
+): Chapter {
+  return {
+    id:                 row.id,
+    name:               row.name,
+    region:             row.region,
+    description:        row.description,
+    coverImageUrl:      row.cover_image_url,
+    memberCount:        row.member_count,
+    marshal:            row.marshals ? mapMarshal(row.marshals) : null,
+    marshals:           allChapterMarshals.map(mapMarshal),
+    isActive:           row.is_active,
+    isPriority:         row.is_priority,
+    totalRidesThisYear: rideCount,
+    coordinates:        row.coordinates
+      ? [row.coordinates.lng, row.coordinates.lat]
+      : [0, 0],
+  };
+}
+
+export function mapRide(row: DbRide): Ride {
+  return {
+    id:               row.id,
+    title:            row.title,
+    slug:             row.slug,
+    community:        row.community,
+    rideType:         row.ride_type,
+    chapter:          row.chapter,
+    startDate:        row.start_date,
+    endDate:          row.end_date,
+    status:           row.status,
+    priority:         row.priority,
+    description:      row.description,
+    shortDescription: row.short_description,
+    bannerImageUrl:   row.banner_image_url,
+    expectedRiders:   row.expected_riders,
+    registrationLink: row.registration_link,
+    routeData:        row.route_data,
+    itinerary:        row.itinerary ?? [],
+    marshal:          row.marshals ? mapMarshal(row.marshals) : null,
+    sponsors:         row.ride_sponsors?.map((rs) => mapSponsor(rs.sponsors)) ?? [],
+    tags:             row.tags ?? [],
+    isFeatured:       row.is_featured,
+    isRecurring:      row.is_recurring,
+    recurringPattern: row.recurring_pattern,
+    interestCount:    row.interest_count ?? 0,
+    createdAt:        row.created_at,
+    updatedAt:        row.updated_at,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// MemberCard
+// ---------------------------------------------------------------------------
+
+export interface DbMemberCard {
+  id:                  string;
+  access_code:         string;
+  card_number:         string | null;
+  full_name:           string;
+  photo_url:           string;
+  date_of_birth:       string;
+  blood_group:         string;
+  emergency_phone:     string;
+  license_number:      string;
+  community:           string;
+  chapter:             string;
+  consent_accepted:    boolean;
+  status:              string;
+  rejection_reason:    string | null;
+  admin_notes:         string | null;
+  resubmission_count:  number;
+  created_at:          string;
+  updated_at:          string;
+  approved_at:         string | null;
+  valid_until:         string | null;
+}
+
+export function mapMemberCard(row: DbMemberCard): MemberCard {
+  return {
+    id:                row.id,
+    accessCode:        row.access_code,
+    cardNumber:        row.card_number        ?? null,
+    fullName:          row.full_name,
+    photoUrl:          row.photo_url,
+    dateOfBirth:       row.date_of_birth,
+    bloodGroup:        row.blood_group,
+    emergencyPhone:    row.emergency_phone,
+    licenseNumber:     row.license_number,
+    community:         row.community          as "AOG" | "CULT",
+    chapter:           row.chapter,
+    consentAccepted:   row.consent_accepted,
+    status:            row.status             as "pending" | "approved" | "rejected",
+    rejectionReason:   row.rejection_reason   ?? null,
+    adminNotes:        row.admin_notes        ?? null,
+    resubmissionCount: row.resubmission_count ?? 0,
+    createdAt:         row.created_at,
+    updatedAt:         row.updated_at,
+    approvedAt:        row.approved_at        ?? null,
+    validUntil:        row.valid_until        ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// CardSettings
+// ---------------------------------------------------------------------------
+
+export interface DbCardSettings {
+  tagline:              string;
+  disclaimer:           string;
+  validity_years:       number;
+  show_blood_group:     boolean;
+  show_dob:             boolean;
+  show_emergency_phone: boolean;
+  show_chapter:         boolean;
+  benefits:             string[];
+}
+
+export function mapCardSettings(row: DbCardSettings): CardSettings {
+  return {
+    tagline:            row.tagline,
+    disclaimer:         row.disclaimer,
+    validityYears:      row.validity_years,
+    showBloodGroup:     row.show_blood_group,
+    showDob:            row.show_dob,
+    showEmergencyPhone: row.show_emergency_phone,
+    showChapter:        row.show_chapter,
+    benefits:           row.benefits ?? [],
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+export function mapHomepageContent(row: DbHomepageContent): HomepageContent {
+  return {
+    heroBanner: {
+      title:              row.hero_title,
+      subtitle:           row.hero_subtitle,
+      backgroundImageUrl: row.hero_background_image_url,
+      overlayOpacity:     Number(row.hero_overlay_opacity),
+      primaryCTALabel:    row.hero_primary_cta_label,
+      primaryCTALink:     row.hero_primary_cta_link,
+      secondaryCTALabel:  row.hero_secondary_cta_label,
+      secondaryCTALink:   row.hero_secondary_cta_link,
+      featuredRideId:     row.hero_featured_ride_id,
+    },
+    brandLogos: {
+      tvsNepalLogoUrl: row.tvs_nepal_logo_url  ?? null,
+      aogLogoUrl:      row.aog_logo_url         ?? null,
+      cultLogoUrl:     row.cult_logo_url         ?? null,
+    } satisfies BrandLogos,
+    marqueeRideIds:          row.marquee_ride_ids         ?? [],
+    featuredUpcomingRideIds: row.featured_upcoming_ride_ids ?? [],
+    showWeatherWidget:       row.show_weather_widget,
+    showSponsorShowcase:     row.show_sponsor_showcase,
+    updatedAt:               row.updated_at,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// UserProfile
+// ---------------------------------------------------------------------------
+
+export interface DbProfile {
+  id:              string;
+  full_name:       string;
+  email:           string | null;
+  community:       string | null;
+  chapter:         string | null;
+  phone:           string | null;
+  avatar_url:      string | null;
+  address:         string | null;
+  bike_model:      string | null;
+  date_of_birth:   string | null;
+  license_number:  string | null;
+  member_status:   string;
+  admin_notes:     string | null;
+  approved_at:     string | null;
+  rejected_at:     string | null;
+  created_at:      string;
+  updated_at:      string;
+}
+
+export function mapProfile(row: DbProfile): UserProfile {
+  return {
+    id:            row.id,
+    fullName:      row.full_name,
+    email:         row.email        ?? "",
+    community:     (row.community   as MemberCommunity) ?? null,
+    chapter:       row.chapter      ?? null,
+    phone:         row.phone        ?? null,
+    avatarUrl:     row.avatar_url   ?? null,
+    address:       row.address      ?? null,
+    bikeModel:     row.bike_model   ?? null,
+    dateOfBirth:   row.date_of_birth ?? null,
+    licenseNumber: row.license_number ?? null,
+    memberStatus:  (row.member_status as MemberRegistrationStatus) ?? "pending",
+    adminNotes:    row.admin_notes  ?? null,
+    approvedAt:    row.approved_at  ?? null,
+    rejectedAt:    row.rejected_at  ?? null,
+    createdAt:     row.created_at,
+    updatedAt:     row.updated_at,
+  };
+}
