@@ -85,7 +85,12 @@ export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
               </div>
             )}
             <div className="hidden sm:block">
-              <span className="text-white font-bold text-sm leading-none">{APP_META.name}</span>
+              <span className="text-white font-bold text-sm leading-none block">
+                {APP_META.name}
+              </span>
+              <span className="text-tvs-charcoal-400 text-[10px] leading-none block mt-0.5 font-medium tracking-widest uppercase">
+                {APP_META.motto}
+              </span>
             </div>
           </Link>
 

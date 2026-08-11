@@ -191,8 +191,8 @@ export const getHomepageContent = cache(async (): Promise<HomepageContent> => {
     if (error) console.error("[queries] getHomepageContent:", error.message);
     return {
       heroBanner: {
-        title:              "Ride the Himalaya. Together.",
-        subtitle:           "Ride planning and operations for the Himalayan Drift community.",
+        title:              "Grit. Brotherhood. Adventure.",
+        subtitle:           "Riding the raw side of Nepal, together.",
         backgroundImageUrl: null,
         overlayOpacity:     0.6,
         primaryCTALabel:    "View Calendar",
@@ -279,7 +279,7 @@ export const getCardSettings = cache(async (): Promise<CardSettings> => {
     .maybeSingle();
   if (!data) {
     return {
-      tagline:            "RIDE THE HIMALAYA",
+      tagline:            "GRIT · BROTHERHOOD · ADVENTURE",
       disclaimer:         "If found, please return to the original owner or contact Himalayan Drift.",
       validityYears:      2,
       showBloodGroup:     true,
