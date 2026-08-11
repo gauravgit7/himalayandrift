@@ -64,6 +64,9 @@ create table if not exists marshals (
   phone             text,
   avatar_url        text,
   role              text not null default 'Ride Marshal',
+  -- Optional badge art for the role (e.g. the Marshal-Head / Marshal-Navigator
+  -- stickers). Falls back to the role text when unset.
+  role_icon_url     text,
   specialty         text,          -- comma-separated tags, shown as chips
   bio               text,
   total_rides_led   integer not null default 0,

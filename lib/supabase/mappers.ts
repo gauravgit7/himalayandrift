@@ -22,6 +22,7 @@ export interface DbMarshal {
   phone:            string | null;
   avatar_url:       string | null;
   role:             string;
+  role_icon_url:    string | null;
   specialty:        string | null;
   bio:              string | null;
   total_rides_led:  number;
@@ -101,6 +102,7 @@ export function mapMarshal(row: DbMarshal): Marshal {
     phone:         row.phone,
     avatarUrl:     row.avatar_url,
     role:          row.role          ?? "Ride Marshal",
+    roleIconUrl:   row.role_icon_url ?? null,
     specialty:     row.specialty     ?? null,
     bio:           row.bio           ?? null,
     totalRidesLed:   row.total_rides_led ?? 0,

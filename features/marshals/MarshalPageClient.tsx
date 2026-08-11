@@ -37,7 +37,24 @@ function parseSpecialties(specialty: string | null): string[] {
 // Role badge - colour-coded by tier
 // ---------------------------------------------------------------------------
 
-function RoleBadge({ role }: { role: string }) {
+/**
+ * Shows the uploaded role badge art when there is one, and falls back to the
+ * role name as a coloured chip when there isn't. Roles are free text, so the
+ * chip colour is keyed off the tier helper rather than an exhaustive map.
+ */
+function RoleBadge({ role, iconUrl }: { role: string; iconUrl?: string | null }) {
+  if (iconUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={iconUrl}
+        alt={role}
+        title={role}
+        className="size-6 rounded-full object-contain shrink-0"
+      />
+    );
+  }
+
   const tier = getRoleTier(role);
   return (
     <span className={cn(
@@ -101,7 +118,7 @@ function HeadMarshalCard({ marshal, origin }: { marshal: Marshal; origin: string
       <div className="flex-1 text-center sm:text-left min-w-0 overflow-hidden">
         <div className="flex items-center gap-2 mb-1 justify-center sm:justify-start flex-wrap">
           <h2 className="text-2xl font-black text-hd-ink-50 truncate">{marshal.name}</h2>
-          <RoleBadge role={marshal.role} />
+          <RoleBadge role={marshal.role} iconUrl={marshal.roleIconUrl} />
         </div>
 
         {specialties.length > 0 && (
@@ -285,7 +302,7 @@ function MarshalCard({
           <h3 className="font-bold text-hd-ink-50 text-xs sm:text-sm leading-tight truncate min-w-0">
             {marshal.name}
           </h3>
-          <RoleBadge role={marshal.role} />
+          <RoleBadge role={marshal.role} iconUrl={marshal.roleIconUrl} />
         </div>
 
         {/* Specialty chips */}

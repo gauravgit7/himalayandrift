@@ -76,6 +76,8 @@ export interface Marshal {
   avatarUrl: string | null;
   /** Tier role: "Head Marshal" | "Senior Marshal" | "Ride Marshal" | custom */
   role: string;
+  /** Optional badge art for the role. Falls back to the role text when null. */
+  roleIconUrl: string | null;
   /** Comma-separated specialty tags, e.g. "Navigation, Route Planning, High Altitude" */
   specialty: string | null;
   bio: string | null;

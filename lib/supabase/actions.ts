@@ -239,6 +239,7 @@ export interface MarshalPayload {
   phone:         string | null;
   avatarUrl:     string | null;
   role:          string;
+  roleIconUrl:   string | null;
   /** Comma-separated specialty tags: "Navigation, Route Planning" */
   specialty:     string | null;
   bio:           string | null;
@@ -258,6 +259,7 @@ export async function saveMarshal(
     phone:           payload.phone?.trim()   || null,
     avatar_url:      payload.avatarUrl       || null,
     role:            payload.role.trim()     || "Ride Marshal",
+    role_icon_url:   payload.roleIconUrl     || null,
     specialty:       payload.specialty?.trim() || null,
     bio:             payload.bio?.trim()     || null,
     total_rides_led:  payload.totalRidesLed   ?? 0,

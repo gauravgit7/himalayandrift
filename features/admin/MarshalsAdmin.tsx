@@ -52,7 +52,7 @@ const ROLE_BADGE: Record<string, string> = {
 
 const EMPTY: MarshalPayload = {
   name: "", phone: null, avatarUrl: null,
-  role: "Ride Marshal", specialty: null, bio: null,
+  role: "Ride Marshal", roleIconUrl: null, specialty: null, bio: null,
   totalRidesLed: 0, isActive: true, instagramHandle: null,
 };
 
@@ -148,6 +148,20 @@ function MarshalModal({
               <input type="text" value={customRole} onChange={(e) => { setCustomRole(e.target.value); set("role", e.target.value); }} className={inputCls} placeholder="e.g. Technical Lead, Route Planner…" />
             </div>
           )}
+
+          <div>
+            <FieldLabel>Role Badge (optional)</FieldLabel>
+            <ImageUpload
+              bucket="rider-avatars"
+              currentUrl={form.roleIconUrl}
+              onUpload={(url) => set("roleIconUrl", url)}
+              cropAspect={1}
+              compressMaxPx={256}
+            />
+            <p className="mt-1 text-[10px] text-hd-ink-600">
+              Square badge art for this role. Falls back to the role name when empty.
+            </p>
+          </div>
 
           <div>
             <FieldLabel>Specialties</FieldLabel>
@@ -350,7 +364,7 @@ export function MarshalsAdmin({ initialMarshals }: { initialMarshals: Marshal[] 
       )}
       {editing && (
         <MarshalModal
-          initial={{ id: editing.id, name: editing.name, phone: editing.phone, avatarUrl: editing.avatarUrl, role: editing.role, specialty: editing.specialty, bio: editing.bio, totalRidesLed: editing.totalRidesLed, isActive: editing.isActive, instagramHandle: editing.instagramHandle }}
+          initial={{ id: editing.id, name: editing.name, phone: editing.phone, avatarUrl: editing.avatarUrl, role: editing.role, roleIconUrl: editing.roleIconUrl, specialty: editing.specialty, bio: editing.bio, totalRidesLed: editing.totalRidesLed, isActive: editing.isActive, instagramHandle: editing.instagramHandle }}
           title={`Edit — ${editing.name}`}
           onClose={() => setEditing(null)}
           onSaved={onSaved}
