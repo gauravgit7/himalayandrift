@@ -14,11 +14,6 @@ import {
 } from "@/lib/supabase/actions";
 import type { UserProfile, MemberRegistrationStatus } from "@/types";
 
-const CHAPTERS = [
-  "Bagmati","Narayani","Gandaki","Lumbini",
-  "Rapti","Bheri","Mahakali","Koshi","Mechi",
-] as const;
-
 type FilterStatus = MemberRegistrationStatus | "all";
 
 const STATUS_LABELS: Record<MemberRegistrationStatus, string> = {
@@ -47,7 +42,6 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
   const [editBike,     setEditBike]     = useState(member.bikeModel ?? "");
   const [editDob,      setEditDob]      = useState(member.dateOfBirth ?? "");
   const [editLicense,  setEditLicense]  = useState(member.licenseNumber ?? "");
-  const [editChapter,  setEditChapter]  = useState(member.chapter ?? "");
   const [editNotes,    setEditNotes]    = useState(member.adminNotes ?? "");
 
   const initials = member.fullName
@@ -82,7 +76,6 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
     setLoading(true); setError(null);
     const res = await updateRegistrationByAdmin(member.id, {
       fullName:     editName,
-      chapter:      editChapter   || null,
       phone:        editPhone     || null,
       address:      editAddress   || null,
       bikeModel:    editBike      || null,
@@ -132,11 +125,6 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-tvs-charcoal-100 truncate">{member.fullName}</p>
           <p className="text-xs text-tvs-charcoal-500 truncate">{member.email}</p>
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            {member.chapter && (
-              <span className="text-[10px] text-tvs-charcoal-500">{member.chapter}</span>
-            )}
-          </div>
         </div>
 
         {/* Status + expand */}
@@ -194,14 +182,6 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase tracking-wide text-tvs-charcoal-500">Address</label>
                   <input type="text" value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="City / District" className={inputClass} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wide text-tvs-charcoal-500">Chapter</label>
-                  <select value={editChapter} onChange={(e) => setEditChapter(e.target.value)}
-                    className={cn(inputClass, "cursor-pointer")}>
-                    <option value="">Not selected</option>
-                    {CHAPTERS.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
                 </div>
               </div>
 
@@ -269,7 +249,6 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
                 <Detail icon={<Phone className="size-3" />} label="Phone" value={member.phone} />
                 <Detail icon={<Bike className="size-3" />} label="TVS Model" value={member.bikeModel} />
                 <Detail icon={<Home className="size-3" />} label="Address" value={member.address} />
-                <Detail icon={<MapPin className="size-3" />} label="Chapter" value={member.chapter} />
                 <Detail icon={<Calendar className="size-3" />} label="Registered" value={fmtDate(member.createdAt)} />
                 {member.approvedAt && <Detail icon={<CheckCircle2 className="size-3 text-emerald-400" />} label="Approved" value={fmtDate(member.approvedAt)} />}
               </div>
@@ -352,8 +331,7 @@ export function UserRegistrationsAdmin({ initialMembers }: Props) {
       const q = search.toLowerCase();
       list = list.filter((m) =>
         m.fullName.toLowerCase().includes(q) ||
-        m.email.toLowerCase().includes(q) ||
-        (m.chapter ?? "").toLowerCase().includes(q)
+        m.email.toLowerCase().includes(q)
       );
     }
     return list;
@@ -407,7 +385,7 @@ export function UserRegistrationsAdmin({ initialMembers }: Props) {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search name, email, chapter…"
+            placeholder="Search name or email…"
             className="w-full h-9 pl-8 pr-3 rounded-xl bg-tvs-charcoal-900 border border-tvs-charcoal-700 text-sm text-tvs-charcoal-200 placeholder:text-tvs-charcoal-600 focus:outline-none focus:border-tvs-red-600"
           />
         </div>

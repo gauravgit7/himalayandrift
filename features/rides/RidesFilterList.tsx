@@ -119,7 +119,7 @@ export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) 
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-tvs-charcoal-500" />
           <input
             type="text"
-            placeholder="Search rides, chapters…"
+            placeholder="Search rides, locations…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className={cn(

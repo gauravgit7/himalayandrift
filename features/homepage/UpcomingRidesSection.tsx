@@ -45,7 +45,7 @@ export function UpcomingRidesSection({ rides, brandLogos }: UpcomingRidesSection
             Upcoming Rides
           </h2>
           <p className="mt-1.5 text-sm text-tvs-charcoal-400">
-            Next rides across all 9 chapters and communities.
+            What&apos;s next on the Himalayan Drift calendar.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">

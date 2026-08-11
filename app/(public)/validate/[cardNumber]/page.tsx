@@ -87,7 +87,7 @@ export default async function ValidatePage({ params }: PageProps) {
             </div>
             <div>
               <p className="font-black text-tvs-charcoal-50 text-lg leading-tight">{card.fullName}</p>
-              <p className="text-xs text-tvs-charcoal-500 mt-0.5">{card.chapter} Chapter</p>
+              <p className="text-xs text-tvs-charcoal-500 mt-0.5">{card.cardNumber}</p>
             </div>
           </div>
 

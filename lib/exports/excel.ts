@@ -3,12 +3,12 @@
 // Generates a branded .xlsx workbook with 3 sheets:
 //   1. All Rides  - full operational table, auto-filter, frozen header
 //   2. Monthly Summary - rides × type by month + totals row
-//   3. Chapter Summary - rides × type per chapter
+//   3. Location Summary - rides × type per location
 // =============================================================================
 
 import ExcelJS from "exceljs";
 import type { Ride } from "@/types";
-import { MONTHS, CHAPTERS } from "@/lib/constants";
+import { MONTHS, APP_META } from "@/lib/constants";
 import { formatRideDateRange } from "@/utils/date";
 
 // ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ function cap(s: string): string {
 
 export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator   = "TVS Nepal Ride Operations";
+  wb.creator   = APP_META.name;
   wb.created   = new Date();
   wb.modified  = new Date();
 
@@ -101,7 +101,7 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
     { header: "Date",          key: "date",          width: 22 },
     { header: "Title",         key: "title",         width: 36 },
     { header: "Type",          key: "type",          width: 12 },
-    { header: "Chapter",       key: "chapter",       width: 12 },
+    { header: "Location",      key: "location",      width: 16 },
     { header: "Status",        key: "status",        width: 12 },
     { header: "Priority",      key: "priority",      width: 10 },
     { header: "Exp. Riders",   key: "riders",        width: 12 },
@@ -118,7 +118,7 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
       date:         formatRideDateRange(ride.startDate, ride.endDate),
       title:        ride.title,
       type:         cap(ride.rideType),
-      chapter:      ride.location,
+      location:     ride.location,
       status:       cap(ride.status),
       priority:     cap(ride.priority),
       riders:       ride.expectedRiders,
@@ -228,18 +228,18 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
   totRow2.getCell("month").alignment = { vertical: "middle", horizontal: "left" };
 
   // =========================================================================
-  // Sheet 3 - Chapter Summary
+  // Sheet 3 - Location Summary
+  // Locations are free text, so the rows are whatever the rides actually use,
+  // ordered by ride count.
   // =========================================================================
 
-  const ws3 = wb.addWorksheet("Chapter Summary", {
+  const ws3 = wb.addWorksheet("Location Summary", {
     views: [{ state: "frozen", ySplit: 1 }],
     properties: { defaultRowHeight: 18 },
   });
 
   ws3.columns = [
-    { header: "Chapter",   key: "chapter",   width: 14 },
-    { header: "Region",    key: "region",    width: 26 },
-    { header: "Priority",  key: "priority",  width: 11 },
+    { header: "Location",  key: "location",  width: 26 },
     { header: "Day",       key: "day",       width:  9 },
     { header: "Overnight", key: "overnight", width: 12 },
     { header: "Multi-Day", key: "multiday",  width: 12 },
@@ -249,13 +249,18 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
 
   styleHeaderRow(ws3.getRow(1));
 
-  CHAPTERS.forEach((ch, idx) => {
-    const cr = rides.filter((r) => r.location === ch.name);
+  const locations = [...new Set(rides.map((r) => r.location).filter(Boolean))]
+    .sort((a, b) =>
+      rides.filter((r) => r.location === b).length -
+      rides.filter((r) => r.location === a).length ||
+      a.localeCompare(b)
+    );
+
+  locations.forEach((loc, idx) => {
+    const cr = rides.filter((r) => r.location === loc);
 
     const row = ws3.addRow({
-      chapter:   ch.name,
-      region:    ch.region,
-      priority:  ch.isPriority ? "Priority" : "Standard",
+      location:  loc,
       day:       cr.filter((r) => r.rideType === "day").length,
       overnight: cr.filter((r) => r.rideType === "overnight").length,
       multiday:  cr.filter((r) => r.rideType === "multiday").length,
@@ -271,22 +276,13 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
       cell.font      = { size: 9.5, name: "Calibri" };
       cell.alignment = { vertical: "middle", horizontal: "center" };
     });
-    row.getCell("chapter").alignment = { vertical: "middle", horizontal: "left" };
-    row.getCell("region").alignment  = { vertical: "middle", horizontal: "left" };
-    row.getCell("total").font        = { bold: true, size: 9.5, name: "Calibri" };
-
-    if (ch.isPriority) {
-      row.getCell("priority").font = {
-        bold: true, color: C.red(), size: 9.5, name: "Calibri",
-      };
-    }
+    row.getCell("location").alignment = { vertical: "middle", horizontal: "left" };
+    row.getCell("total").font         = { bold: true, size: 9.5, name: "Calibri" };
   });
 
   // Totals row
   const totRow3 = ws3.addRow({
-    chapter:   "ALL CHAPTERS",
-    region:    "",
-    priority:  "",
+    location:  "ALL LOCATIONS",
     day:       rides.filter((r) => r.rideType === "day").length,
     overnight: rides.filter((r) => r.rideType === "overnight").length,
     multiday:  rides.filter((r) => r.rideType === "multiday").length,
@@ -294,7 +290,7 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
     total:     rides.length,
   });
   styleTotalsRow(totRow3);
-  totRow3.getCell("chapter").alignment = { vertical: "middle", horizontal: "left" };
+  totRow3.getCell("location").alignment = { vertical: "middle", horizontal: "left" };
 
   // =========================================================================
   // Return Buffer

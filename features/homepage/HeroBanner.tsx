@@ -21,8 +21,7 @@ import type { Ride, HomepageContent, BrandLogos } from "@/types";
 
 interface HeroBannerStats {
   totalRides:    number;
-  totalChapters: number;
-  totalRiders:   number;
+  upcomingRides: number;
   marqueeCount:  number;
   year:          number;
 }
@@ -222,12 +221,8 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
                   label: stats?.year ? `Rides in ${stats.year}` : "Total Rides",
                 },
                 {
-                  value: stats ? String(stats.totalChapters) : "-",
-                  label: "Active Chapters",
-                },
-                {
-                  value: stats ? `${stats.totalRiders}+` : "-",
-                  label: "Community Riders",
+                  value: stats ? String(stats.upcomingRides) : "-",
+                  label: "Upcoming Rides",
                 },
                 {
                   value: stats ? String(stats.marqueeCount) : "-",
@@ -349,7 +344,7 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
             </div>
             <div className="flex items-center gap-2 text-xs text-tvs-charcoal-300">
               <MapPin className="size-3.5 text-tvs-red-500 shrink-0" />
-              <span>{ride.chapter} Chapter</span>
+              <span>{ride.location}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-tvs-charcoal-300">
               <Users className="size-3.5 text-tvs-red-500 shrink-0" />

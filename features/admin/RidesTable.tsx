@@ -231,7 +231,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
                   {(RIDE_TYPE_STYLES[ride.rideType] ?? RIDE_TYPE_STYLE_FALLBACK).label}
                 </span>
               </div>
-              {/* Chapter */}
+              {/* Location */}
               <div className="px-3 py-3 text-xs text-tvs-charcoal-300">{ride.location}</div>
               {/* Date */}
               <div className="px-3 py-3 text-xs text-tvs-charcoal-400">

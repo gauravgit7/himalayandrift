@@ -34,7 +34,7 @@ export async function GET(req: Request) {
 
     const { data: rides, error } = await supabase
       .from("rides")
-      .select("id, title, slug, start_date, chapter")
+      .select("id, title, slug, start_date, location")
       .eq("start_date", target)
       .in("status", ["confirmed", "tentative"]);
 
@@ -56,7 +56,7 @@ export async function GET(req: Request) {
             },
             body: JSON.stringify({
               title: `🏍️ Ride in 3 days — ${ride.title}`,
-              body:  `The ${ride.chapter} chapter ride starts on ${ride.start_date}. Gear up!`,
+              body:  `Rolling out from ${ride.location} on ${ride.start_date}. Gear up!`,
               url:   `/rides/${ride.slug}`,
             }),
           }

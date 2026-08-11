@@ -12,11 +12,11 @@ import { ImageUpload }  from "@/components/ui/ImageUpload";
 import { RouteBuilder } from "@/features/admin/RouteBuilder";
 import { cn }          from "@/utils/cn";
 import {
-  ROUTES, CHAPTERS, RIDE_TYPES, RIDE_STATUSES, RIDE_PRIORITIES,
+  ROUTES, RIDE_TYPES, RIDE_STATUSES, RIDE_PRIORITIES,
 } from "@/lib/constants";
 import { saveRide }  from "@/lib/supabase/actions";
 import type {
-  Ride, RideType, RideStatus, RidePriority, ChapterName, Marshal, RouteData,
+  Ride, RideType, RideStatus, RidePriority, Marshal, RouteData,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -35,7 +35,7 @@ interface RideFormProps {
 interface FormState {
   title:            string;
   rideType:         RideType;
-  chapter:          ChapterName;
+  location:         string;
   startDate:        string;
   endDate:          string;
   status:           RideStatus;
@@ -57,7 +57,7 @@ function toFormState(data?: Partial<Ride>): FormState {
   return {
     title:            data?.title            ?? "",
     rideType:         data?.rideType         ?? "day",
-    chapter:          data?.chapter          ?? "Bagmati",
+    location:         data?.location         ?? "",
     startDate:        data?.startDate        ?? "",
     endDate:          data?.endDate          ?? "",
     status:           data?.status           ?? "planned",
@@ -158,7 +158,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
       {
         title:            form.title,
         rideType:         form.rideType,
-        chapter:          form.chapter,
+        location:         form.location,
         startDate:        form.startDate,
         endDate:          form.endDate,
         status:           form.status,
@@ -234,18 +234,14 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
             </select>
           </FieldGroup>
 
-          <FieldGroup label="Chapter" required>
-            <select
-              value={form.chapter}
-              onChange={(e) => set("chapter", e.target.value as ChapterName)}
-              className={selectClass}
-            >
-              {CHAPTERS.map((c) => (
-                <option key={c.name} value={c.name} className="bg-tvs-charcoal-900">
-                  {c.name}{c.isPriority ? " ★" : ""} - {c.region}
-                </option>
-              ))}
-            </select>
+          <FieldGroup label="Location" required>
+            <input
+              type="text"
+              value={form.location}
+              onChange={(e) => set("location", e.target.value)}
+              placeholder="e.g. Kathmandu, Pokhara, Mustang"
+              className={inputClass}
+            />
           </FieldGroup>
 
           <FieldGroup label="Priority" required>
@@ -366,7 +362,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               <option value="" className="bg-tvs-charcoal-900">- Select Marshal -</option>
               {marshals.map((m) => (
                 <option key={m.id} value={m.id} className="bg-tvs-charcoal-900">
-                  {m.name} ({m.chapter})
+                  {m.name} ({m.role})
                 </option>
               ))}
             </select>

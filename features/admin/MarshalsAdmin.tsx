@@ -1,6 +1,6 @@
 // =============================================================================
 // MarshalsAdmin — standalone marshal management page
-// All tiers in one place. Chapter hidden for Head Marshal (national-level).
+// All tiers in one place. Roles are free text with a few suggested defaults.
 // =============================================================================
 
 "use client";
@@ -15,7 +15,6 @@ import { cn }                                from "@/utils/cn";
 import { saveMarshal, deleteMarshal }        from "@/lib/supabase/actions";
 import type { Marshal }                      from "@/types";
 import type { MarshalPayload }               from "@/lib/supabase/actions";
-import { CHAPTER_NAMES }                     from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -39,12 +38,12 @@ function Spinner() {
   return <span className="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />;
 }
 
-const PREDEFINED_ROLES = ["Head Marshal", "Senior Marshal", "Regional Marshal"] as const;
+const PREDEFINED_ROLES = ["Head Marshal", "Senior Marshal", "Ride Marshal"] as const;
 
 const ROLE_BADGE: Record<string, string> = {
   "Head Marshal":     "bg-tvs-red-900/60 text-tvs-red-400 border-tvs-red-800/40",
   "Senior Marshal":   "bg-amber-900/50 text-amber-400 border-amber-800/40",
-  "Regional Marshal": "bg-blue-900/40 text-blue-400 border-blue-800/30",
+  "Ride Marshal": "bg-blue-900/40 text-blue-400 border-blue-800/30",
 };
 
 // ---------------------------------------------------------------------------
@@ -52,8 +51,8 @@ const ROLE_BADGE: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 const EMPTY: MarshalPayload = {
-  name: "", phone: null, avatarUrl: null, chapter: null,
-  role: "Regional Marshal", specialty: null, bio: null,
+  name: "", phone: null, avatarUrl: null,
+  role: "Ride Marshal", specialty: null, bio: null,
   totalRidesLed: 0, isActive: true, instagramHandle: null,
 };
 
@@ -66,7 +65,7 @@ function MarshalModal({
   onClose:  () => void;
   onSaved:  () => void;
 }) {
-  const initRole       = initial.role ?? "Regional Marshal";
+  const initRole       = initial.role ?? "Ride Marshal";
   const isPredefined   = (PREDEFINED_ROLES as readonly string[]).includes(initRole);
   const [form,         setForm]         = useState<MarshalPayload>({ ...EMPTY, ...initial });
   const [isCustomRole, setIsCustomRole] = useState(!isPredefined);
@@ -77,8 +76,6 @@ function MarshalModal({
   const set = <K extends keyof MarshalPayload>(k: K, v: MarshalPayload[K]) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  const isHeadMarshal = (isCustomRole ? customRole : form.role) === "Head Marshal";
-
   const handleRoleSelect = (val: string) => {
     if (val === "__custom__") {
       setIsCustomRole(true);
@@ -86,15 +83,12 @@ function MarshalModal({
     } else {
       setIsCustomRole(false);
       set("role", val);
-      // Clear chapter when switching to Head Marshal
-      if (val === "Head Marshal") set("chapter", null);
     }
   };
 
   const handleSave = async () => {
     if (!form.name.trim()) { setError("Name is required"); return; }
-    if (!isHeadMarshal && !form.chapter) { setError("Chapter is required"); return; }
-    const effectiveRole = isCustomRole ? (customRole.trim() || "Regional Marshal") : form.role;
+    const effectiveRole = isCustomRole ? (customRole.trim() || "Ride Marshal") : form.role;
     setSaving(true); setError(null);
     const { error: err } = await saveMarshal({ ...form, role: effectiveRole });
     setSaving(false);
@@ -152,24 +146,6 @@ function MarshalModal({
             <div>
               <FieldLabel>Custom Role Title</FieldLabel>
               <input type="text" value={customRole} onChange={(e) => { setCustomRole(e.target.value); set("role", e.target.value); }} className={inputCls} placeholder="e.g. Technical Lead, Route Planner…" />
-            </div>
-          )}
-
-          {/* Chapter — hidden for Head Marshal */}
-          {!isHeadMarshal && (
-            <div>
-              <FieldLabel>Chapter *</FieldLabel>
-              <select value={form.chapter ?? ""} onChange={(e) => set("chapter", e.target.value || null)} className={cn(inputCls, "appearance-none")}>
-                <option value="" className="bg-tvs-charcoal-900">— Select chapter —</option>
-                {CHAPTER_NAMES.map((c) => (
-                  <option key={c} value={c} className="bg-tvs-charcoal-900">{c}</option>
-                ))}
-              </select>
-            </div>
-          )}
-          {isHeadMarshal && (
-            <div className="px-3 py-2 rounded-lg bg-tvs-charcoal-800/60 border border-tvs-charcoal-700/40 text-xs text-tvs-charcoal-500">
-              Head Marshal is national-level — not tied to a specific chapter.
             </div>
           )}
 
@@ -279,7 +255,6 @@ function MarshalRow({ marshal, onEdit, onDelete }: { marshal: Marshal; onEdit: (
           {!marshal.isActive && <span className="text-[9px] px-1.5 py-0.5 rounded border bg-tvs-charcoal-800 text-tvs-charcoal-600 border-tvs-charcoal-700">Inactive</span>}
         </div>
         <div className="flex items-center gap-3 mt-0.5 text-[10px] text-tvs-charcoal-500 flex-wrap">
-          <span>{marshal.chapter ?? "National"}</span>
           {marshal.totalRidesLed > 0 && <span className="flex items-center gap-1"><Bike className="size-2.5" />{marshal.totalRidesLed} rides</span>}
           {marshal.phone && <span className="flex items-center gap-1"><Phone className="size-2.5" />{marshal.phone}</span>}
           {marshal.instagramHandle && <span className="flex items-center gap-1"><AtSign className="size-2.5" />{marshal.instagramHandle}</span>}
@@ -337,8 +312,8 @@ export function MarshalsAdmin({ initialMarshals }: { initialMarshals: Marshal[] 
 
   const head     = initialMarshals.filter((m) => m.role === "Head Marshal");
   const senior   = initialMarshals.filter((m) => m.role === "Senior Marshal");
-  const regional = initialMarshals.filter((m) => m.role === "Regional Marshal");
-  const other    = initialMarshals.filter((m) => !["Head Marshal","Senior Marshal","Regional Marshal"].includes(m.role));
+  const regional = initialMarshals.filter((m) => m.role === "Ride Marshal");
+  const other    = initialMarshals.filter((m) => !["Head Marshal","Senior Marshal","Ride Marshal"].includes(m.role));
 
   return (
     <>
@@ -361,7 +336,7 @@ export function MarshalsAdmin({ initialMarshals }: { initialMarshals: Marshal[] 
       <div className="space-y-8 max-w-2xl">
         <TierSection label="Head Marshal"     color="bg-tvs-red-600"   marshals={head}     onEdit={setEditing} onDelete={setDeleting} />
         <TierSection label="Senior Marshals"  color="bg-amber-600"     marshals={senior}   onEdit={setEditing} onDelete={setDeleting} />
-        <TierSection label="Regional Marshals"color="bg-blue-600"      marshals={regional} onEdit={setEditing} onDelete={setDeleting} />
+        <TierSection label="Ride Marshals"color="bg-blue-600"      marshals={regional} onEdit={setEditing} onDelete={setDeleting} />
         <TierSection label="Other Marshals"   color="bg-tvs-charcoal-500" marshals={other} onEdit={setEditing} onDelete={setDeleting} />
         {initialMarshals.length === 0 && (
           <p className="text-sm text-tvs-charcoal-600 text-center py-12">
@@ -375,7 +350,7 @@ export function MarshalsAdmin({ initialMarshals }: { initialMarshals: Marshal[] 
       )}
       {editing && (
         <MarshalModal
-          initial={{ id: editing.id, name: editing.name, phone: editing.phone, avatarUrl: editing.avatarUrl, chapter: editing.chapter, role: editing.role, specialty: editing.specialty, bio: editing.bio, totalRidesLed: editing.totalRidesLed, isActive: editing.isActive, instagramHandle: editing.instagramHandle }}
+          initial={{ id: editing.id, name: editing.name, phone: editing.phone, avatarUrl: editing.avatarUrl, role: editing.role, specialty: editing.specialty, bio: editing.bio, totalRidesLed: editing.totalRidesLed, isActive: editing.isActive, instagramHandle: editing.instagramHandle }}
           title={`Edit — ${editing.name}`}
           onClose={() => setEditing(null)}
           onSaved={onSaved}

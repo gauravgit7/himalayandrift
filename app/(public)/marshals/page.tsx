@@ -1,15 +1,13 @@
 // =============================================================================
-// Public Marshals Page - hierarchical display of all TVS Nepal marshals
-// Head Marshal → Senior Marshals → Regional Marshals
+// Public Marshals Page - hierarchical display of all Himalayan Drift marshals
+// Head Marshal → Senior Marshals → Ride Marshals
 // ISR: 1 hour revalidation
 // =============================================================================
 
 import type { Metadata }          from "next";
 import { getMarshals }            from "@/lib/supabase/queries";
-import { CHAPTER_NAMES }          from "@/lib/constants";
 import { AnimateIn }              from "@/components/shared/AnimateIn";
 import { MarshalPageClient }      from "@/features/marshals/MarshalPageClient";
-import type { ChapterName }       from "@/types";
 
 export const metadata: Metadata = {
   title:       "Marshals | Himalayan Drift",
@@ -21,9 +19,8 @@ export const revalidate = 3600; // 1 hour
 export default async function MarshalsPage() {
   const marshals = await getMarshals();
 
-  // Only show chapters that have at least one active marshal
-  const chapterSet        = new Set(marshals.map((m) => m.chapter));
-  const activeChapters    = CHAPTER_NAMES.filter((c) => chapterSet.has(c)) as ChapterName[];
+  // Roles are free text, so the filter offers whatever is actually in use
+  const activeRoles = [...new Set(marshals.map((m) => m.role).filter(Boolean))].sort();
 
   const headCount    = marshals.filter((m) => m.role === "Head Marshal").length;
   const seniorCount  = marshals.filter((m) => m.role === "Senior Marshal").length;
@@ -50,8 +47,7 @@ export default async function MarshalsPage() {
           Experienced riders leading Himalayan Drift on the road.
           {marshals.length > 0 && (
             <span className="block mt-1 text-tvs-charcoal-500">
-              {marshals.length} active marshal{marshals.length !== 1 ? "s" : ""} across{" "}
-              {activeChapters.length} chapter{activeChapters.length !== 1 ? "s" : ""}.
+              {marshals.length} active marshal{marshals.length !== 1 ? "s" : ""}.
             </span>
           )}
         </p>
@@ -82,7 +78,7 @@ export default async function MarshalsPage() {
       </AnimateIn>
 
       {/* ── Client component (filter + cards) ── */}
-      <MarshalPageClient marshals={marshals} activeChapters={activeChapters} />
+      <MarshalPageClient marshals={marshals} activeRoles={activeRoles} />
 
     </main>
   );

@@ -98,7 +98,7 @@ export function ListView({ rides, year, brandLogos, dateMode = "ad" }: ListViewP
         <span className="text-4xl">🏍️</span>
         <h3 className="text-lg font-bold text-tvs-charcoal-200">No rides match your filters</h3>
         <p className="text-sm text-tvs-charcoal-500 max-w-xs">
-          Adjust the filters above to see rides from other chapters or communities.
+          Adjust the filters above to see rides of other types.
         </p>
       </div>
     );

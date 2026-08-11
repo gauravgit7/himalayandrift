@@ -15,7 +15,6 @@ import { rideIsUpcoming }       from "@/utils/date";
 import {
   getHomepageContent,
   getRides,
-  getChapters,
   getSponsors,
 } from "@/lib/supabase/queries";
 
@@ -28,7 +27,6 @@ import { HeroBanner }           from "@/features/homepage/HeroBanner";
 import { YearStats }            from "@/features/homepage/YearStats";
 import { MarqueeHighlight }     from "@/features/homepage/MarqueeHighlight";
 import { UpcomingRidesSection } from "@/features/homepage/UpcomingRidesSection";
-import { ChapterHighlights }    from "@/features/homepage/ChapterHighlights";
 import { WeatherWidget }        from "@/features/homepage/WeatherWidget";
 import { SponsorShowcase }      from "@/features/homepage/SponsorShowcase";
 import { InstallPrompt }        from "@/components/shared/InstallPrompt";
@@ -40,10 +38,9 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   // Parallel data fetching
-  const [homepage, allRides, chapters, sponsors] = await Promise.all([
+  const [homepage, allRides, sponsors] = await Promise.all([
     getHomepageContent(),
     getRides(),
-    getChapters(),
     getSponsors(),
   ]);
 
@@ -52,8 +49,7 @@ export default async function HomePage() {
     ? allRides.find((r) => r.id === heroContent.featuredRideId) ?? null
     : null;
 
-  const stats       = computeRideStats(allRides);
-  const totalRiders = chapters.reduce((s, c) => s + c.memberCount, 0);
+  const stats = computeRideStats(allRides);
 
   const marqueeRides = allRides.filter((r) => r.rideType === "marquee");
 
@@ -77,9 +73,7 @@ export default async function HomePage() {
   ).slice(0, 3);
 
   // Fetch live weather for the 3 upcoming ride destinations (server-side, cached 30 min)
-  const weatherResults = await fetchWeatherForRides(
-    weatherRides.map((r) => ({ id: r.id, chapter: r.location }))
-  );
+  const weatherResults = await fetchWeatherForRides(weatherRides);
   const weatherItems: WeatherItem[] = weatherRides.map((ride, i) => ({
     ride,
     weather: weatherResults[i] ?? null,
@@ -94,8 +88,7 @@ export default async function HomePage() {
         nextRide={nextRide}
         stats={{
           totalRides:    stats.total,
-          totalChapters: chapters.filter((c) => c.isActive).length,
-          totalRiders:   totalRiders,
+          upcomingRides: stats.upcoming,
           marqueeCount:  stats.marqueeCount,
           year:          DEFAULT_CALENDAR_YEAR,
         }}
@@ -107,16 +100,12 @@ export default async function HomePage() {
         totalRides={stats.total}
         completedRides={stats.completed}
         upcomingRides={stats.upcoming}
-        activeChapters={chapters.length}
-        totalRiders={totalRiders}
         marqueeCount={stats.marqueeCount}
       />
 
       <MarqueeHighlight rides={marqueeRides} brandLogos={homepage.brandLogos} />
 
       <UpcomingRidesSection rides={upcoming} brandLogos={homepage.brandLogos} />
-
-      <ChapterHighlights chapters={chapters} />
 
       <WeatherWidget items={weatherItems} />
 

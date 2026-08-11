@@ -25,8 +25,6 @@ interface YearStatsProps {
   totalRides:     number;
   completedRides: number;
   upcomingRides:  number;
-  activeChapters: number;
-  totalRiders:    number;
   marqueeCount:   number;
 }
 
@@ -97,8 +95,6 @@ export function YearStats({
   totalRides,
   completedRides,
   upcomingRides,
-  activeChapters,
-  totalRiders,
   marqueeCount,
 }: YearStatsProps) {
   const ref    = useRef<HTMLDivElement>(null);
@@ -122,19 +118,6 @@ export function YearStats({
       value:  upcomingRides,
       label:  "Rides Upcoming",
       color:  "text-tvs-steel-400",
-    },
-    {
-      icon:   <Map className="size-6" />,
-      value:  activeChapters,
-      label:  "Active Chapters",
-      color:  "text-tvs-charcoal-300",
-    },
-    {
-      icon:   <Users className="size-6" />,
-      value:  totalRiders,
-      suffix: "+",
-      label:  "Community Riders",
-      color:  "text-amber-400",
     },
     {
       icon:   <Star className="size-6" />,

@@ -133,7 +133,6 @@ export function CardSettingsAdmin({ initial }: { initial: CardSettings }) {
           <Toggle checked={form.showBloodGroup}     onChange={(v) => set("showBloodGroup", v)}     label="Blood Group (back)" />
           <Toggle checked={form.showDob}            onChange={(v) => set("showDob", v)}            label="Date of Birth (back)" />
           <Toggle checked={form.showEmergencyPhone} onChange={(v) => set("showEmergencyPhone", v)} label="Emergency Phone (back)" />
-          <Toggle checked={form.showChapter}        onChange={(v) => set("showChapter", v)}        label="Chapter Name (front)" />
         </div>
       </div>
 

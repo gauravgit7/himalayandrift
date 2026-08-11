@@ -18,7 +18,7 @@ import {
 import { getRide, getBrandLogos } from "@/lib/supabase/queries";
 import {
   fetchRideWeather,
-  getChapterCoords,
+  getRideCoords,
   CONDITION_META,
   owIconUrl,
 } from "@/lib/weather/openweather";
@@ -100,15 +100,13 @@ export default async function RideDetailPage({ params }: PageProps) {
   // Live weather for upcoming rides
   let weather = null;
   if (isUpcoming) {
-    const coords = getChapterCoords(ride.location);
-    if (coords) {
-      weather = await fetchRideWeather(
-        ride.id,
-        coords[1], // lat
-        coords[0], // lng
-        `${ride.location}, Nepal`,
-      );
-    }
+    const { coordinates, label } = getRideCoords(ride);
+    weather = await fetchRideWeather(
+      ride.id,
+      coordinates[1], // lat
+      coordinates[0], // lng
+      `${label}, Nepal`,
+    );
   }
 
   const heroKey       = ride.rideType === "marquee" ? "marquee" : "standard";
@@ -286,7 +284,7 @@ export default async function RideDetailPage({ params }: PageProps) {
             rideTitle={ride.title}
             adDateLabel={adDateLabel}
             bsDateLabel={bsDateLabel}
-            chapter={ride.location}
+            location={ride.location}
             shortDescription={ride.shortDescription}
             registrationLink={ride.registrationLink}
             slug={ride.slug}

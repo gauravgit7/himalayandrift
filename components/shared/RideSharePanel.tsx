@@ -17,7 +17,7 @@ export interface RideSharePanelProps {
   rideTitle:        string;
   adDateLabel:      string;   // e.g. "Apr 18–25, 2026"
   bsDateLabel:      string;   // e.g. "2083 Baisakh 5–12"
-  chapter:          string;
+  location:          string;
   shortDescription?: string | null;
   registrationLink?: string | null;
   slug:             string;
@@ -28,12 +28,12 @@ export interface RideSharePanelProps {
 // ---------------------------------------------------------------------------
 
 function buildWhatsAppText(props: RideSharePanelProps, pageUrl: string): string {
-  const { rideTitle, adDateLabel, bsDateLabel, chapter, shortDescription, registrationLink } = props;
+  const { rideTitle, adDateLabel, bsDateLabel, location, shortDescription, registrationLink } = props;
   const lines: string[] = [];
   lines.push(`🏍️ *${rideTitle}*`);
   lines.push(`📅 ${adDateLabel}`);
   lines.push(`   ${bsDateLabel}`);
-  lines.push(`📍 ${chapter}`);
+  lines.push(`📍 ${location}`);
   if (shortDescription) {
     lines.push("");
     lines.push(shortDescription);

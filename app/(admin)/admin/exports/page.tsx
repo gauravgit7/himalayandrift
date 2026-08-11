@@ -230,7 +230,7 @@ export default function ExportsPage() {
           bullets={[
             "Sheet 1 - All Rides: sortable, auto-filter, 12 columns",
             "Sheet 2 - Monthly Summary: counts by community and type",
-            "Sheet 3 - Chapter Summary: per-chapter breakdown",
+            "Sheet 3 - Location Summary: per-location breakdown",
             "Color-coded community and status columns",
             "Registration hyperlinks preserved",
           ]}

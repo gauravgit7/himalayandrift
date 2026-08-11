@@ -130,7 +130,7 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
             </div>
             <div className="flex items-center gap-1.5 text-xs text-tvs-charcoal-300">
               <MapPin className="size-3.5 text-violet-400 shrink-0" />
-              <span>{ride.chapter}</span>
+              <span>{ride.location}</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-tvs-charcoal-300">
               <Users className="size-3.5 text-violet-400 shrink-0" />

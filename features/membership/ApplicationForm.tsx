@@ -10,7 +10,7 @@ import { useRouter }              from "next/navigation";
 import { ImageUpload }            from "@/components/ui/ImageUpload";
 import { cn }                     from "@/utils/cn";
 import { submitMemberCard }       from "@/lib/supabase/actions";
-import { BLOOD_GROUPS, CHAPTER_NAMES, ROUTES } from "@/lib/constants";
+import { BLOOD_GROUPS, ROUTES } from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,13 +48,12 @@ interface FormState {
   bloodGroup:      string;
   emergencyPhone:  string;
   licenseNumber:   string;
-  chapter:         string;
   consentAccepted: boolean;
 }
 
 const INITIAL: FormState = {
   photoUrl: "", fullName: "", dateOfBirth: "", bloodGroup: "",
-  emergencyPhone: "", licenseNumber: "", chapter: "",
+  emergencyPhone: "", licenseNumber: "",
   consentAccepted: false,
 };
 
@@ -76,7 +75,6 @@ export function ApplicationForm() {
     if (!form.bloodGroup)      e.bloodGroup      = "Blood group is required";
     if (!form.emergencyPhone.trim()) e.emergencyPhone = "Emergency contact is required";
     if (!form.licenseNumber.trim())  e.licenseNumber  = "License number is required";
-    if (!form.chapter)         e.chapter         = "Select your chapter";
     if (!form.consentAccepted) e.consentAccepted = "You must accept the terms to apply";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -94,7 +92,6 @@ export function ApplicationForm() {
       bloodGroup:      form.bloodGroup,
       emergencyPhone:  form.emergencyPhone,
       licenseNumber:   form.licenseNumber,
-      chapter:         form.chapter,
       consentAccepted: form.consentAccepted,
     });
 
@@ -197,22 +194,6 @@ export function ApplicationForm() {
           Stored securely for verification — not shown on your card.
         </p>
         <FieldError msg={errors.licenseNumber} />
-      </div>
-
-      {/* Chapter */}
-      <div>
-        <FieldLabel required>Your Chapter</FieldLabel>
-        <select
-          value={form.chapter}
-          onChange={(e) => set("chapter", e.target.value)}
-          className={selectCls}
-        >
-          <option value="">Select chapter</option>
-          {CHAPTER_NAMES.map((ch) => (
-            <option key={ch} value={ch}>{ch}</option>
-          ))}
-        </select>
-        <FieldError msg={errors.chapter} />
       </div>
 
       {/* Consent */}

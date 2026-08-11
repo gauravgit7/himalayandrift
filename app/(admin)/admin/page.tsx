@@ -3,28 +3,32 @@
 // =============================================================================
 
 import type { Metadata }  from "next";
-import { getRides, getChapters, getBrandLogos } from "@/lib/supabase/queries";
+import { getRides, getAllMarshals, getBrandLogos } from "@/lib/supabase/queries";
 import { computeRideStats, sortRidesByDate } from "@/utils/ride";
 import { rideIsUpcoming } from "@/utils/date";
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
+import { APP_META } from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Dashboard | TVS Nepal Admin" };
+export const metadata: Metadata = { title: `Dashboard | ${APP_META.name} Admin` };
 
 export default async function AdminDashboardPage() {
-  const [rides, chapters, brandLogos] = await Promise.all([getRides(), getChapters(), getBrandLogos()]);
+  const [rides, marshals, brandLogos] = await Promise.all([
+    getRides(),
+    getAllMarshals(),
+    getBrandLogos(),
+  ]);
 
-  const stats        = computeRideStats(rides);
+  const stats         = computeRideStats(rides);
   const upcomingRides = sortRidesByDate(rides.filter((r) => rideIsUpcoming(r.startDate)));
   const recentRides   = sortRidesByDate(rides).slice(-8).reverse();
-  const totalRiders   = chapters.reduce((s, c) => s + c.memberCount, 0);
+  const activeMarshals = marshals.filter((m) => m.isActive).length;
 
   return (
     <AdminDashboard
       stats={stats}
       recentRides={recentRides}
       upcomingRides={upcomingRides}
-      chapters={chapters}
-      totalRiders={totalRiders}
+      activeMarshals={activeMarshals}
       brandLogos={brandLogos}
     />
   );

@@ -12,7 +12,7 @@ export default async function AdminMarshalsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-black text-tvs-charcoal-50">Marshals</h1>
         <p className="text-sm text-tvs-charcoal-400 mt-0.5">
-          All ride marshals — Head Marshal is national-level, others are chapter-assigned
+          Everyone who leads rides. Roles are free text — use whatever titles fit.
         </p>
       </div>
       <MarshalsAdmin initialMarshals={marshals} />

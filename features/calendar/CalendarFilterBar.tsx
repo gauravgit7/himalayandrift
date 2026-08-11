@@ -1,6 +1,6 @@
 // =============================================================================
 // CalendarFilterBar - Phase 4 · Horizontal filter controls
-// Ride-type pills + dropdowns for chapter, status + search
+// Ride-type pills + a status dropdown + search
 // =============================================================================
 
 "use client";
@@ -9,11 +9,10 @@ import { Search, X, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/utils/cn";
 import {
-  CHAPTERS,
   RIDE_TYPES,
   RIDE_STATUSES,
 } from "@/lib/constants";
-import type { CalendarFilters, ChapterName, RideType, RideStatus } from "@/types";
+import type { CalendarFilters, RideType, RideStatus } from "@/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,7 +45,6 @@ export function CalendarFilterBar({
   const [expanded, setExpanded] = useState(false);
 
   const activeCount = [
-    filters.chapter   !== "all",
     filters.rideType  !== "all",
     filters.status    !== "all",
     !!filters.searchQuery,
@@ -134,17 +132,6 @@ export function CalendarFilterBar({
       {/* ── Expanded filter row ── */}
       {expanded && (
         <div className="flex flex-wrap gap-2 pt-3">
-          {/* Chapter */}
-          <Select
-            label="Chapter"
-            value={filters.chapter as string}
-            onChange={(v) => onUpdate("chapter", v === "all" ? "all" : (v as ChapterName))}
-            options={[
-              { value: "all", label: "All Chapters" },
-              ...CHAPTERS.map((c) => ({ value: c.name, label: c.name + (c.isPriority ? " ★" : "") })),
-            ]}
-          />
-
           {/* Status */}
           <Select
             label="Status"

@@ -15,7 +15,7 @@ import { formatRideDateRange } from "@/utils/date";
 import { ROUTES, APP_META, RIDE_TYPE_STYLES, RIDE_TYPE_STYLE_FALLBACK } from "@/lib/constants";
 import type { BrandLogos } from "@/types";
 import { StatusBadge }    from "@/components/shared/StatusBadge";
-import type { Ride, Chapter } from "@/types";
+import type { Ride } from "@/types";
 import type { RideStats }  from "@/utils/ride";
 
 // ---------------------------------------------------------------------------
@@ -25,10 +25,9 @@ import type { RideStats }  from "@/utils/ride";
 interface AdminDashboardProps {
   stats:         RideStats;
   recentRides:   Ride[];
-  upcomingRides: Ride[];
-  chapters:      Chapter[];
-  totalRiders:   number;
-  brandLogos?:   BrandLogos | null;
+  upcomingRides:  Ride[];
+  activeMarshals: number;
+  brandLogos?:    BrandLogos | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -113,8 +112,7 @@ export function AdminDashboard({
   stats,
   recentRides,
   upcomingRides,
-  chapters,
-  totalRiders,
+  activeMarshals,
   brandLogos,
 }: AdminDashboardProps) {
   const pendingReview = stats.byStatus.tentative + stats.byStatus.planned;
@@ -162,17 +160,11 @@ export function AdminDashboard({
       </div>
 
       {/* ── Secondary stats ── */}
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
-        <StatCard
-          icon={<Map className="size-4" />}
-          label="Active Chapters"
-          value={chapters.filter((c) => c.isActive).length}
-          accent="border-tvs-charcoal-700"
-        />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <StatCard
           icon={<Users className="size-4" />}
-          label="Total Riders"
-          value={`${totalRiders}+`}
+          label="Active Marshals"
+          value={activeMarshals}
           accent="border-tvs-charcoal-700"
         />
         <StatCard
@@ -194,7 +186,7 @@ export function AdminDashboard({
             href={ROUTES.adminRides + "/new"}
             icon={<Plus className="size-4" />}
             label="Add New Ride"
-            description="Create a ride for any chapter"
+            description="Add a ride to the calendar"
             accent
           />
           <QuickAction
@@ -241,56 +233,29 @@ export function AdminDashboard({
           </div>
         </div>
 
-        {/* Chapter overview */}
+        {/* Recently added */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-tvs-charcoal-400 uppercase tracking-wider">
-              Chapter Activity
+              Recently Added
             </h2>
             <Link
-              href={ROUTES.adminChapters}
+              href={ROUTES.adminRides}
               className="text-xs text-tvs-charcoal-500 hover:text-tvs-red-400 transition-colors flex items-center gap-1"
             >
               Manage <ArrowRight className="size-3" />
             </Link>
           </div>
           <div className="space-y-2">
-            {[...chapters]
-              .sort((a, b) => b.totalRidesThisYear - a.totalRidesThisYear)
-              .map((chapter) => (
-                <div
-                  key={chapter.id}
-                  className="flex items-center gap-3 p-3 rounded-lg gradient-card border border-tvs-charcoal-700/60"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-semibold text-tvs-charcoal-100">
-                        {chapter.name}
-                      </span>
-                      {chapter.isPriority && (
-                        <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-tvs-red-900/50 text-tvs-red-400 border border-tvs-red-800/40">
-                          ★
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-tvs-charcoal-500">{chapter.region}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-tvs-charcoal-50">{chapter.totalRidesThisYear}</p>
-                    <p className="text-[10px] text-tvs-charcoal-500">rides</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-tvs-charcoal-50">{chapter.memberCount}</p>
-                    <p className="text-[10px] text-tvs-charcoal-500">riders</p>
-                  </div>
-                  <div
-                    className={cn(
-                      "size-2 rounded-full shrink-0",
-                      chapter.isActive ? "bg-emerald-500" : "bg-tvs-charcoal-600"
-                    )}
-                  />
-                </div>
-              ))}
+            {recentRides.length === 0 ? (
+              <p className="text-xs text-tvs-charcoal-600 p-3 rounded-lg gradient-card border border-tvs-charcoal-700/60">
+                No rides yet — add your first one to get started.
+              </p>
+            ) : (
+              recentRides.slice(0, 6).map((ride) => (
+                <RideRow key={ride.id} ride={ride} brandLogos={brandLogos} />
+              ))
+            )}
           </div>
         </div>
       </div>

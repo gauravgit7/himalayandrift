@@ -141,15 +141,13 @@ function CardFront({
           </p>
         )}
 
-        {/* Chapter */}
-        {settings.showChapter && (
-          <p className="text-center text-[9px] font-bold tracking-[0.2em] uppercase mb-3"
-            style={{ color: `${t.accent}cc` }}>
-            {card.chapter} Chapter
-          </p>
-        )}
+        {/* Motto */}
+        <p className="text-center text-[9px] font-bold tracking-[0.2em] uppercase mb-3"
+          style={{ color: `${t.accent}cc` }}>
+          {settings.tagline}
+        </p>
 
-        {/* Blood group + Member Since — fills the gap between chapter and QR */}
+        {/* Blood group + Member Since — fills the gap above the QR */}
         <div className="flex items-center justify-center gap-3 mb-3">
           {card.bloodGroup && (
             <div

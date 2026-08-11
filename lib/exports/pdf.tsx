@@ -55,7 +55,7 @@ const COL = {
   date:      100,
   title:     175,
   type:       58,
-  chapter:    76,
+  location:   76,
   status:     50,
 } as const;
 
@@ -310,7 +310,7 @@ const S = StyleSheet.create({
   colDate:      { width: COL.date      },
   colTitle:     { width: COL.title     },
   colType:      { width: COL.type      },
-  colChapter:   { width: COL.chapter   },
+  colLocation:  { width: COL.location  },
   colStatus:    { width: COL.status    },
 });
 
@@ -424,7 +424,7 @@ function TableHeaderRow() {
       <Text style={[S.tableHeaderCell, S.colDate]}>DATE</Text>
       <Text style={[S.tableHeaderCell, S.colTitle]}>TITLE</Text>
       <Text style={[S.tableHeaderCell, S.colType]}>TYPE</Text>
-      <Text style={[S.tableHeaderCell, S.colChapter]}>CHAPTER</Text>
+      <Text style={[S.tableHeaderCell, S.colLocation]}>LOCATION</Text>
       <Text style={[S.tableHeaderCell, S.colStatus]}>STATUS</Text>
     </View>
   );
@@ -444,7 +444,7 @@ function RideRow({ ride, idx }: { ride: Ride; idx: number }) {
       <Text style={[S.cellGray, S.colType]}>
         {ride.rideType.charAt(0).toUpperCase() + ride.rideType.slice(1)}
       </Text>
-      <Text style={[S.cellGray, S.colChapter]}>
+      <Text style={[S.cellGray, S.colLocation]}>
         {ride.location}
       </Text>
       <Text style={[S.cellBold, S.colStatus, { color: statusColor }]}>

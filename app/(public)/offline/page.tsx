@@ -41,7 +41,7 @@ export default function OfflinePage() {
           {[
             { label: "Ride Calendar",   href: "/calendar"  },
             { label: "Our Marshals",    href: "/marshals"  },
-            { label: "Chapters",        href: "/chapters"  },
+            { label: "Marshals",        href: "/marshals"  },
           ].map(({ label, href }) => (
             <Link
               key={href}

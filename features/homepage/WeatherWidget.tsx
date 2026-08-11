@@ -182,7 +182,7 @@ export function WeatherWidget({ items }: WeatherWidgetProps) {
 
           {hasRealData && (
             <p className="mt-4 text-[10px] text-tvs-charcoal-600 text-center">
-              Powered by OpenWeather · Coordinates based on chapter HQ
+              Powered by OpenWeather · Coordinates from each ride&apos;s route start
             </p>
           )}
         </div>

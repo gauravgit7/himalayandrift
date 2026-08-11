@@ -1,6 +1,6 @@
 // =============================================================================
-// MarshalPageClient - public Marshals page display + chapter filter
-// 'use client' - chapter filter state is client-side
+// MarshalPageClient - public Marshals page display + role filter
+// 'use client' - role filter state is client-side
 // Marshals sorted by tier: Head Marshal → Senior Marshal → Regional Marshal
 // =============================================================================
 
@@ -15,16 +15,16 @@ import {
   StaggerItem,
 } from "@/components/shared/AnimateIn";
 import { cn }        from "@/utils/cn";
-import type { Marshal, ChapterName } from "@/types";
+import type { Marshal } from "@/types";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function getRoleTier(role: string): 0 | 1 | 2 | 3 {
-  if (role === "Head Marshal")     return 0;
-  if (role === "Senior Marshal")   return 1;
-  if (role === "Regional Marshal") return 2;
+  if (role === "Head Marshal")   return 0;
+  if (role === "Senior Marshal") return 1;
+  if (role === "Ride Marshal")   return 2;
   return 3;
 }
 
@@ -103,8 +103,6 @@ function HeadMarshalCard({ marshal, origin }: { marshal: Marshal; origin: string
           <h2 className="text-2xl font-black text-tvs-charcoal-50 truncate">{marshal.name}</h2>
           <RoleBadge role={marshal.role} />
         </div>
-
-        <p className="text-xs text-tvs-charcoal-500 mb-3">{marshal.chapter} Chapter</p>
 
         {specialties.length > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap mb-3 justify-center sm:justify-start">
@@ -290,11 +288,6 @@ function MarshalCard({
           <RoleBadge role={marshal.role} />
         </div>
 
-        {/* Chapter */}
-        <p className="text-[9px] sm:text-[10px] text-tvs-charcoal-500 mb-1.5 truncate">
-          {marshal.chapter} Chapter
-        </p>
-
         {/* Specialty chips */}
         {specialties.length > 0 && (
           <div className="flex items-center gap-1 flex-wrap mb-1.5">
@@ -369,21 +362,22 @@ function MarshalCard({
 // ---------------------------------------------------------------------------
 
 interface MarshalPageClientProps {
-  marshals:       Marshal[];
-  activeChapters: ChapterName[];
+  marshals:    Marshal[];
+  /** Distinct roles actually in use - roles are free text, not a fixed list. */
+  activeRoles: string[];
 }
 
-export function MarshalPageClient({ marshals, activeChapters }: MarshalPageClientProps) {
-  const [selectedChapter, setSelectedChapter] = useState<ChapterName | "all">("all");
+export function MarshalPageClient({ marshals, activeRoles }: MarshalPageClientProps) {
+  const [selectedRole, setSelectedRole] = useState<string>("all");
 
   // Resolve window.location.origin once on mount (avoids SSR mismatch)
   const [origin, setOrigin] = useState("");
   useEffect(() => { setOrigin(window.location.origin); }, []);
 
   const filtered =
-    selectedChapter === "all"
+    selectedRole === "all"
       ? marshals
-      : marshals.filter((m) => m.chapter === selectedChapter);
+      : marshals.filter((m) => m.role === selectedRole);
 
   const sorted = [...filtered].sort((a, b) => {
     const diff = getRoleTier(a.role) - getRoleTier(b.role);
@@ -399,31 +393,35 @@ export function MarshalPageClient({ marshals, activeChapters }: MarshalPageClien
   return (
     <div className="space-y-10">
 
-      {/* ── Chapter filter chips ── */}
-      <div className="flex flex-wrap gap-2">
-        {(["all", ...activeChapters] as const).map((ch) => (
-          <button
-            key={ch}
-            type="button"
-            onClick={() => setSelectedChapter(ch as ChapterName | "all")}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-150",
-              selectedChapter === ch
-                ? "bg-tvs-red-600 text-white shadow-glow-red"
-                : "bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-tvs-charcoal-400 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-700"
-            )}
-          >
-            {ch === "all" ? `All (${marshals.length})` : ch}
-          </button>
-        ))}
-      </div>
+      {/* ── Role filter chips ── */}
+      {activeRoles.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {["all", ...activeRoles].map((role) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => setSelectedRole(role)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-150",
+                selectedRole === role
+                  ? "bg-tvs-red-600 text-white shadow-glow-red"
+                  : "bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-tvs-charcoal-400 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-700"
+              )}
+            >
+              {role === "all" ? `All (${marshals.length})` : role}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Empty state ── */}
       {sorted.length === 0 && (
         <div className="py-20 text-center">
           <Shield className="size-12 mx-auto mb-4 text-tvs-charcoal-700" />
           <p className="text-sm text-tvs-charcoal-500">
-            No active marshals in {selectedChapter} chapter yet.
+            {selectedRole === "all"
+              ? "No active marshals yet."
+              : `No active ${selectedRole}s yet.`}
           </p>
         </div>
       )}

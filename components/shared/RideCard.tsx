@@ -36,17 +36,15 @@ function LogoOverlay({ brandLogos }: { brandLogos?: BrandLogos | null }) {
 
 // Priority → visual accent
 const PRIORITY_ACCENT: Record<string, string> = {
-  marquee:  "border-violet-700/60  hover:border-violet-500/80",
-  national: "border-tvs-red-800/50 hover:border-tvs-red-600/70",
-  chapter:  "border-tvs-charcoal-700 hover:border-tvs-charcoal-500",
-  local:    "border-tvs-charcoal-800 hover:border-tvs-charcoal-600",
+  marquee:   "border-violet-700/60  hover:border-violet-500/80",
+  signature: "border-tvs-red-800/50 hover:border-tvs-red-600/70",
+  standard:  "border-tvs-charcoal-800 hover:border-tvs-charcoal-600",
 };
 
 const PRIORITY_TOP_STRIPE: Record<string, string> = {
-  marquee:  "bg-gradient-to-r from-violet-600 to-tvs-red-600",
-  national: "bg-tvs-red-600",
-  chapter:  "bg-tvs-charcoal-600",
-  local:    "bg-tvs-charcoal-700",
+  marquee:   "bg-gradient-to-r from-violet-600 to-tvs-red-600",
+  signature: "bg-tvs-red-600",
+  standard:  "bg-tvs-charcoal-700",
 };
 
 interface RideCardProps {

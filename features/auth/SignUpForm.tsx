@@ -7,11 +7,6 @@ import { cn }           from "@/utils/cn";
 import { signUpPublic } from "@/lib/supabase/actions";
 import { ROUTES, APP_META } from "@/lib/constants";
 
-const CHAPTERS = [
-  "Bagmati","Narayani","Gandaki","Lumbini",
-  "Rapti","Bheri","Mahakali","Koshi","Mechi",
-] as const;
-
 export function SignUpForm() {
   const [fullName,       setFullName]       = useState("");
   const [email,          setEmail]          = useState("");
@@ -21,7 +16,6 @@ export function SignUpForm() {
   const [licenseNumber,  setLicenseNumber]  = useState("");
   const [address,        setAddress]        = useState("");
   const [bikeModel,      setBikeModel]      = useState("");
-  const [chapter,        setChapter]        = useState("");
   const [phone,          setPhone]          = useState("");
   const [loading,        setLoading]        = useState(false);
   const [error,          setError]          = useState<string | null>(null);
@@ -37,7 +31,6 @@ export function SignUpForm() {
       fullName,
       email,
       password,
-      chapter:       chapter       || null,
       phone:         phone         || null,
       address:       address       || null,
       bikeModel:     bikeModel     || null,
@@ -181,23 +174,10 @@ export function SignUpForm() {
         </div>
 
         <div className="border-t border-tvs-charcoal-800 pt-3">
-          <p className="text-[11px] uppercase tracking-widest text-tvs-charcoal-500 mb-3">Chapter & Contact</p>
-
-          {/* Chapter */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label htmlFor="chapter" className={labelClass}>Chapter</label>
-              <select id="chapter" value={chapter} disabled={loading}
-                onChange={(e) => setChapter(e.target.value)}
-                className={selectClass}>
-                <option value="">Select…</option>
-                {CHAPTERS.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
+          <p className="text-[11px] uppercase tracking-widest text-tvs-charcoal-500 mb-3">Contact</p>
 
           {/* Phone */}
-          <div className="space-y-1 mt-3">
+          <div className="space-y-1">
             <label htmlFor="phone" className={labelClass}>Phone</label>
             <input id="phone" type="tel" value={phone}
               onChange={(e) => setPhone(e.target.value)}

@@ -11,11 +11,6 @@ import { ImageUpload }   from "@/components/ui/ImageUpload";
 import { APP_META }      from "@/lib/constants";
 import type { UserProfileWithEmail, MemberRegistrationStatus } from "@/types";
 
-const CHAPTERS = [
-  "Bagmati","Narayani","Gandaki","Lumbini",
-  "Rapti","Bheri","Mahakali","Koshi","Mechi",
-] as const;
-
 interface Props {
   profile: UserProfileWithEmail;
 }
@@ -59,7 +54,6 @@ function StatusBadge({ status, adminNotes }: { status: MemberRegistrationStatus;
 
 export function ProfileClient({ profile }: Props) {
   const [fullName,       setFullName]       = useState(profile.fullName);
-  const [chapter,        setChapter]        = useState(profile.chapter ?? "");
   const [phone,          setPhone]          = useState(profile.phone ?? "");
   const [address,        setAddress]        = useState(profile.address ?? "");
   const [bikeModel,      setBikeModel]      = useState(profile.bikeModel ?? "");
@@ -81,7 +75,6 @@ export function ProfileClient({ profile }: Props) {
     setSaving(true); setError(null); setSaved(false);
     const result = await updateProfile({
       fullName,
-      chapter:       chapter       || null,
       phone:         phone         || null,
       avatarUrl,
       address:       address       || null,
@@ -93,7 +86,7 @@ export function ProfileClient({ profile }: Props) {
     if (result.error) { setError(result.error); return; }
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  }, [fullName, chapter, phone, avatarUrl, address, bikeModel, dateOfBirth, licenseNumber]);
+  }, [fullName, phone, avatarUrl, address, bikeModel, dateOfBirth, licenseNumber]);
 
   const inputClass = cn(
     "w-full h-10 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm transition-colors",
@@ -153,12 +146,6 @@ export function ProfileClient({ profile }: Props) {
             <p className="text-[10px] uppercase tracking-widest text-tvs-charcoal-500 mb-0.5">Email</p>
             <p className="text-sm font-medium text-tvs-charcoal-200">{profile.email}</p>
           </div>
-          {profile.chapter && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-tvs-red-800/40 bg-tvs-red-950/30 text-tvs-red-400">
-              <Shield className="size-3" />
-              {profile.chapter}
-            </div>
-          )}
           {profile.approvedAt && (
             <div>
               <p className="text-[10px] uppercase tracking-widest text-tvs-charcoal-500 mb-0.5">Approved</p>
@@ -237,19 +224,6 @@ export function ProfileClient({ profile }: Props) {
             onChange={(e) => setAddress(e.target.value)}
             placeholder="City / District" disabled={saving} className={inputClass}
           />
-        </div>
-
-        {/* Chapter */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className={labelClass}><MapPin className="size-3" /> Chapter</label>
-            <select value={chapter} disabled={saving}
-              onChange={(e) => setChapter(e.target.value)}
-              className={cn(inputClass, "cursor-pointer")}>
-              <option value="">Not selected</option>
-              {CHAPTERS.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
         </div>
 
         {/* Phone */}
