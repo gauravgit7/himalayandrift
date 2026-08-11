@@ -664,7 +664,7 @@ export async function signUpPublic(
   // Insert profile via service role so it works regardless of email-confirm setting
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const admin = createAdminClient();
-  await admin.from("profiles").upsert({
+  const { error: profileError } = await admin.from("profiles").upsert({
     id:             data.user.id,
     full_name:      payload.fullName.trim(),
     email:          payload.email.trim(),
@@ -675,6 +675,13 @@ export async function signUpPublic(
     license_number: payload.licenseNumber?.trim() ?? null,
     member_status:  "pending",
   });
+
+  // The auth user exists at this point, so failing the sign-up would strand the
+  // account. Log loudly instead: the rider can still sign in, and saving their
+  // profile page recreates the row (updateProfile upserts for exactly this case).
+  if (profileError) {
+    console.error("[signUpPublic] profile row not created:", profileError.message);
+  }
 
   // Email confirmation required — no session yet
   if (!data.session) {
@@ -732,9 +739,15 @@ export async function updateProfile(data: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
 
+  // Upsert, not update: getProfile() renders a default for a signed-in user with
+  // no row yet, so an update here would silently affect zero rows and still
+  // report success. The approval columns are deliberately absent - a rider must
+  // not set their own status, and the DB trigger freezes them regardless.
   const { error } = await supabase
     .from("profiles")
-    .update({
+    .upsert({
+      id:             user.id,
+      email:          user.email ?? null,
       full_name:      data.fullName.trim(),
       phone:          data.phone?.trim()   ?? null,
       avatar_url:     data.avatarUrl       ?? null,
@@ -743,8 +756,7 @@ export async function updateProfile(data: {
       date_of_birth:  data.dateOfBirth     ?? null,
       license_number: data.licenseNumber?.trim() ?? null,
       updated_at:     new Date().toISOString(),
-    })
-    .eq("id", user.id);
+    });
 
   if (error) return { error: error.message };
   revalidatePath(ROUTES.profile);

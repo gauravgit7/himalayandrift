@@ -266,6 +266,44 @@ create trigger profiles_updated_at
   before update on profiles
   for each row execute function set_updated_at();
 
+-- Riders may edit their own profile row (RLS below allows it), but the approval
+-- columns are not theirs to touch. Without this a pending member could PATCH
+-- member_status = 'approved' straight to PostgREST with the public anon key and
+-- approve themselves. Row-level security cannot express "all columns except
+-- these", so the restriction is enforced here instead.
+--
+-- Writes that carry no PostgREST JWT (the SQL editor, psql, migrations) and
+-- writes made with the service-role key are left alone - that is how the admin
+-- actions approve, reject and annotate.
+create or replace function public.guard_profile_approval_columns()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  claims text := current_setting('request.jwt.claims', true);
+begin
+  if claims is null or claims = '' then
+    return new;  -- direct database connection, not a PostgREST request
+  end if;
+  if (claims::jsonb ->> 'role') = 'service_role' then
+    return new;  -- admin client
+  end if;
+
+  new.member_status := old.member_status;
+  new.admin_notes   := old.admin_notes;
+  new.approved_at   := old.approved_at;
+  new.rejected_at   := old.rejected_at;
+  new.email         := old.email;  -- authoritative copy lives in auth.users
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_guard_approval on profiles;
+create trigger profiles_guard_approval
+  before update on profiles
+  for each row execute function public.guard_profile_approval_columns();
+
 -- ---------------------------------------------------------------------------
 -- Membership cards
 -- ---------------------------------------------------------------------------
