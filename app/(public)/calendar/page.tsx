@@ -10,7 +10,7 @@ export const revalidate = 3600; // 1 hour
 
 import type { Metadata }          from "next";
 import { APP_META, DEFAULT_CALENDAR_YEAR } from "@/lib/constants";
-import { getRidesForYear }         from "@/lib/supabase/queries";
+import { getRidesForYear, getSeries } from "@/lib/supabase/queries";
 import { CalendarShell }           from "@/features/calendar/CalendarShell";
 
 export const metadata: Metadata = {
@@ -19,6 +19,15 @@ export const metadata: Metadata = {
 };
 
 export default async function CalendarPage() {
-  const rides = await getRidesForYear(DEFAULT_CALENDAR_YEAR);
-  return <CalendarShell allRides={rides} initialYear={DEFAULT_CALENDAR_YEAR} />;
+  const [rides, series] = await Promise.all([
+    getRidesForYear(DEFAULT_CALENDAR_YEAR),
+    getSeries(),
+  ]);
+  return (
+    <CalendarShell
+      allRides={rides}
+      initialYear={DEFAULT_CALENDAR_YEAR}
+      series={series}
+    />
+  );
 }

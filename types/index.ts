@@ -88,6 +88,25 @@ export interface Marshal {
 }
 
 // ---------------------------------------------------------------------------
+// Ride series
+// ---------------------------------------------------------------------------
+
+/**
+ * A named series that releases in volumes, e.g. "Drift in the Mist — Vol III".
+ *
+ * Deliberately a separate axis from RideType: one volume might be an overnight
+ * and the next a multi-day. Adding a second series is data, not code.
+ */
+export interface Series {
+  id:          string;
+  name:        string;
+  slug:        string;
+  description: string | null;
+  bannerUrl:   string | null;
+  createdAt:   string;
+}
+
+// ---------------------------------------------------------------------------
 // Core Ride Object
 // ---------------------------------------------------------------------------
 
@@ -110,6 +129,10 @@ export interface Ride {
   routeData: RouteData | null;
   itinerary: ItineraryDay[];
   marshal: Marshal | null;
+  /** The series this ride is a volume of, if any. */
+  series: Series | null;
+  /** Volume number within `series`. Null unless the ride belongs to a series. */
+  volume: number | null;
   sponsors: Sponsor[];
   tags: string[];
   isFeatured: boolean;
@@ -258,6 +281,8 @@ export interface WeatherForecastDay {
 
 export interface CalendarFilters {
   rideType: RideType | "all";
+  /** Series id, or "all". */
+  series: string | "all";
   status: RideStatus | "all";
   priority: RidePriority | "all";
   dateRange: { start: string | null; end: string | null };

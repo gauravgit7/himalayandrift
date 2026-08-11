@@ -11,7 +11,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { applyCalendarFilters, sortRidesByDate, computeRideStats } from "@/utils/ride";
 import { useDateMode }       from "@/hooks/useDateMode";
 import { adYearToBsYear, getBsYearAdRange, adToBs } from "@/utils/nepali-date";
-import type { CalendarFilters, CalendarView, Ride } from "@/types";
+import type { CalendarFilters, CalendarView, Ride, Series } from "@/types";
 import { CalendarToolbar }   from "./CalendarToolbar";
 import { CalendarFilterBar } from "./CalendarFilterBar";
 import { CalendarExportBar } from "./CalendarExportBar";
@@ -33,6 +33,7 @@ const DEFAULT_MONTH = new Date().getMonth(); // 0-indexed
 
 const DEFAULT_FILTERS: CalendarFilters = {
   rideType:   "all",
+  series:     "all",
   status:     "all",
   priority:   "all",
   dateRange:  { start: null, end: null },
@@ -46,13 +47,14 @@ const DEFAULT_FILTERS: CalendarFilters = {
 interface CalendarShellProps {
   allRides:    Ride[];
   initialYear: number;
+  series:      Series[];
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export function CalendarShell({ allRides, initialYear }: CalendarShellProps) {
+export function CalendarShell({ allRides, initialYear, series }: CalendarShellProps) {
   // ── AD calendar state ─────────────────────────────────────────────────────
   const [view,    setView]    = useState<CalendarView>("year");
   const [adYear,  setAdYear]  = useState(initialYear);
@@ -230,6 +232,7 @@ export function CalendarShell({ allRides, initialYear }: CalendarShellProps) {
         />
         <CalendarFilterBar
           filters={filters}
+          series={series}
           onUpdate={updateFilter}
           onClear={clearFilters}
           isFiltered={isFiltered}

@@ -9,7 +9,7 @@
 import { useState, useEffect }  from "react";
 import Link                     from "next/link";
 import { usePathname }          from "next/navigation";
-import { Menu, X, Calendar, Map, BookOpen,
+import { Menu, X, Calendar, Map, BookOpen, Layers,
          Shield, CreditCard, LogOut, User } from "lucide-react";
 import { cn }                   from "@/utils/cn";
 import { ROUTES, APP_META }     from "@/lib/constants";
@@ -23,6 +23,7 @@ const NAV_LINKS = [
   { href: ROUTES.calendar,   label: "Calendar",   icon: Calendar   },
   { href: ROUTES.marshals,   label: "Marshals",   icon: Shield     },
   { href: ROUTES.rides,      label: "Rides",      icon: BookOpen   },
+  { href: ROUTES.series,     label: "Series",     icon: Layers     },
   { href: ROUTES.membership, label: "Membership", icon: CreditCard },
 ] as const;
 

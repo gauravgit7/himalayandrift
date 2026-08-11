@@ -8,7 +8,7 @@ import Link                      from "next/link";
 import { notFound }              from "next/navigation";
 import { ArrowLeft }             from "lucide-react";
 import { ROUTES }                from "@/lib/constants";
-import { getRide, getMarshals }  from "@/lib/supabase/queries";
+import { getRide, getMarshals, getSeries } from "@/lib/supabase/queries";
 import { RideForm }              from "@/features/admin/RideForm";
 
 interface Props {
@@ -24,7 +24,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EditRidePage({ params }: Props) {
   const { id } = await params;
 
-  const [ride, marshals] = await Promise.all([getRide(id), getMarshals()]);
+  const [ride, marshals, series] = await Promise.all([
+    getRide(id), getMarshals(), getSeries(),
+  ]);
   if (!ride) notFound();
 
   return (
@@ -46,7 +48,7 @@ export default async function EditRidePage({ params }: Props) {
         <h1 className="text-2xl font-black text-hd-ink-50">Edit Ride</h1>
         <p className="text-sm text-hd-ink-400 mt-0.5">{ride.slug}</p>
       </div>
-      <RideForm mode="edit" initialData={ride} rideId={ride.id} marshals={marshals} />
+      <RideForm mode="edit" initialData={ride} rideId={ride.id} marshals={marshals} series={series} />
     </div>
   );
 }

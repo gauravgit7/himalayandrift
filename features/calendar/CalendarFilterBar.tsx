@@ -12,7 +12,7 @@ import {
   RIDE_TYPES,
   RIDE_STATUSES,
 } from "@/lib/constants";
-import type { CalendarFilters, RideType, RideStatus } from "@/types";
+import type { CalendarFilters, RideType, RideStatus, Series } from "@/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,6 +20,8 @@ import type { CalendarFilters, RideType, RideStatus } from "@/types";
 
 interface CalendarFilterBarProps {
   filters:    CalendarFilters;
+  /** Series available to filter by. Empty until the owner creates one. */
+  series:     Series[];
   onUpdate:   <K extends keyof CalendarFilters>(key: K, val: CalendarFilters[K]) => void;
   onClear:    () => void;
   isFiltered: boolean;
@@ -38,6 +40,7 @@ const PILL_ACTIVE = "bg-hd-ink-700 border-hd-ink-600 text-hd-ink-50";
 
 export function CalendarFilterBar({
   filters,
+  series,
   onUpdate,
   onClear,
   isFiltered,
@@ -46,6 +49,7 @@ export function CalendarFilterBar({
 
   const activeCount = [
     filters.rideType  !== "all",
+    filters.series    !== "all",
     filters.status    !== "all",
     !!filters.searchQuery,
   ].filter(Boolean).length;
@@ -132,6 +136,19 @@ export function CalendarFilterBar({
       {/* ── Expanded filter row ── */}
       {expanded && (
         <div className="flex flex-wrap gap-2 pt-3">
+          {/* Series - only worth showing once a series exists */}
+          {series.length > 0 && (
+            <Select
+              label="Series"
+              value={filters.series}
+              onChange={(v) => onUpdate("series", v)}
+              options={[
+                { value: "all", label: "All Series" },
+                ...series.map((s) => ({ value: s.id, label: s.name })),
+              ]}
+            />
+          )}
+
           {/* Status */}
           <Select
             label="Status"

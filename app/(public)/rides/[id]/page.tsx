@@ -32,6 +32,7 @@ import {
 } from "@/utils/date";
 import { formatBsDateRange } from "@/utils/nepali-date";
 import { StatusBadge }        from "@/components/shared/StatusBadge";
+import { SeriesBadge }        from "@/components/shared/SeriesBadge";
 import { RideSharePanel }       from "@/components/shared/RideSharePanel";
 import { RideQrCode, RideQrCodePrint } from "@/components/shared/RideQrCode";
 import { RideInterestButton }  from "@/components/shared/RideInterestButton";
@@ -176,6 +177,9 @@ export default async function RideDetailPage({ params }: PageProps) {
 
           {/* Badges — hidden on print */}
           <div className="print:hidden flex flex-wrap items-center gap-2 mb-4">
+            {ride.series && (
+              <SeriesBadge series={ride.series} volume={ride.volume} asLink />
+            )}
             <StatusBadge    status={ride.status} />
             <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-hd-ink-700 bg-hd-ink-800/60 text-hd-ink-400">
               {ride.rideType}

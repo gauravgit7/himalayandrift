@@ -6,13 +6,13 @@ import type { Metadata } from "next";
 import Link              from "next/link";
 import { ArrowLeft }     from "lucide-react";
 import { ROUTES }        from "@/lib/constants";
-import { getMarshals }   from "@/lib/supabase/queries";
+import { getMarshals, getSeries } from "@/lib/supabase/queries";
 import { RideForm }      from "@/features/admin/RideForm";
 
 export const metadata: Metadata = { title: "New Ride | Himalayan Drift Admin" };
 
 export default async function NewRidePage() {
-  const marshals = await getMarshals();
+  const [marshals, series] = await Promise.all([getMarshals(), getSeries()]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-3xl">
@@ -30,10 +30,10 @@ export default async function NewRidePage() {
       <div>
         <h1 className="text-2xl font-black text-hd-ink-50">Create New Ride</h1>
         <p className="text-sm text-hd-ink-400 mt-0.5">
-          Add a new ride to the 2026 schedule
+          Add a new ride to the calendar
         </p>
       </div>
-      <RideForm mode="create" marshals={marshals} />
+      <RideForm mode="create" marshals={marshals} series={series} />
     </div>
   );
 }

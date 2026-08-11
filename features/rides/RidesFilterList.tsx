@@ -15,10 +15,11 @@ import { useDateMode }           from "@/hooks/useDateMode";
 import { cn }                    from "@/utils/cn";
 import { rideIsUpcoming }        from "@/utils/date";
 import { ROUTES, RIDE_TYPES }    from "@/lib/constants";
-import type { Ride, RideType, BrandLogos } from "@/types";
+import type { Ride, RideType, BrandLogos, Series } from "@/types";
 
 interface RidesFilterListProps {
   allRides:    Ride[];
+  series:      Series[];
   brandLogos?: BrandLogos | null;
 }
 
@@ -59,16 +60,23 @@ function FilterChip<T extends string>({
   );
 }
 
-export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) {
+export function RidesFilterList({ allRides, series, brandLogos }: RidesFilterListProps) {
   const { mode: dateMode, toggle: toggleDateMode } = useDateMode();
-  const [search,    setSearch]    = useState("");
-  const [type,      setType]      = useState<TypeFilter>("all");
-  const [status,    setStatus]    = useState<StatusFilter>("all");
+  const [search,     setSearch]     = useState("");
+  const [type,       setType]       = useState<TypeFilter>("all");
+  const [status,     setStatus]     = useState<StatusFilter>("all");
+  const [seriesId,   setSeriesId]   = useState<string>("all");
+
+  const SERIES_OPTS = [
+    { value: "all", label: "All series" },
+    ...series.map((s) => ({ value: s.id, label: s.name })),
+  ];
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return allRides.filter((r) => {
       if (type !== "all" && r.rideType !== type) return false;
+      if (seriesId !== "all" && r.series?.id !== seriesId) return false;
       if (status === "upcoming"  && !rideIsUpcoming(r.startDate)) return false;
       if (status === "completed" && r.status !== "completed")     return false;
       if (q && !r.title.toLowerCase().includes(q) &&
@@ -136,6 +144,12 @@ export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) 
             <p className="text-[10px] text-hd-ink-600 mb-1.5 uppercase tracking-wide">Type</p>
             <FilterChip options={TYPE_OPTS} value={type} onChange={setType} />
           </div>
+          {series.length > 0 && (
+            <div>
+              <p className="text-[10px] text-hd-ink-600 mb-1.5 uppercase tracking-wide">Series</p>
+              <FilterChip options={SERIES_OPTS} value={seriesId} onChange={setSeriesId} />
+            </div>
+          )}
           <div>
             <p className="text-[10px] text-hd-ink-600 mb-1.5 uppercase tracking-wide">Status</p>
             <FilterChip options={STATUS_OPTS} value={status} onChange={setStatus} />
@@ -152,7 +166,7 @@ export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) 
         </p>
         {(search || type !== "all" || status !== "all") && (
           <button
-            onClick={() => { setSearch(""); setType("all"); setStatus("all"); }}
+            onClick={() => { setSearch(""); setType("all"); setStatus("all"); setSeriesId("all"); }}
             className="text-xs text-hd-ember-400 hover:text-hd-ember-300 transition-colors"
           >
             Clear filters
@@ -166,7 +180,7 @@ export function RidesFilterList({ allRides, brandLogos }: RidesFilterListProps) 
           <p className="text-2xl">🏍️</p>
           <p>No rides match your filters.</p>
           <button
-            onClick={() => { setSearch(""); setType("all"); setStatus("all"); }}
+            onClick={() => { setSearch(""); setType("all"); setStatus("all"); setSeriesId("all"); }}
             className="text-hd-ember-400 hover:text-hd-ember-300 text-xs underline underline-offset-2 transition-colors"
           >
             Clear all filters

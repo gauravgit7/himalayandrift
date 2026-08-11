@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Flag,
+  Layers,
   Calendar,
   Globe,
   Map,
@@ -35,6 +36,7 @@ import { signOut }  from "@/lib/supabase/actions";
 const NAV_ITEMS = [
   { href: ROUTES.admin,          label: "Dashboard", icon: LayoutDashboard, exact: true  },
   { href: ROUTES.adminRides,     label: "Rides",     icon: Flag,            exact: false },
+  { href: ROUTES.adminSeries,    label: "Series",    icon: Layers,          exact: false },
   { href: ROUTES.adminCalendar,  label: "Calendar",  icon: Calendar,        exact: false },
   { href: ROUTES.adminHomepage,  label: "Homepage",  icon: Globe,           exact: false },
   { href: ROUTES.adminMarshals,  label: "Marshals",  icon: Shield,          exact: false },

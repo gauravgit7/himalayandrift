@@ -10,6 +10,7 @@ import type { BrandLogos } from "@/types";
 const FOOTER_LINKS = [
   { href: ROUTES.home,     label: "Home"     },
   { href: ROUTES.calendar, label: "Calendar" },
+  { href: ROUTES.series,   label: "Series"   },
   { href: "/marshals",     label: "Marshals" },
   { href: "/rides",        label: "All Rides" },
 ];

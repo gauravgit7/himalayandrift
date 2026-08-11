@@ -16,7 +16,7 @@ import {
 } from "@/lib/constants";
 import { saveRide }  from "@/lib/supabase/actions";
 import type {
-  Ride, RideType, RideStatus, RidePriority, Marshal, RouteData,
+  Ride, RideType, RideStatus, RidePriority, Marshal, Series, RouteData,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -30,6 +30,7 @@ interface RideFormProps {
   initialData?: Partial<Ride>;
   rideId?:     string;
   marshals:    Marshal[];
+  series:      Series[];
 }
 
 interface FormState {
@@ -46,6 +47,8 @@ interface FormState {
   registrationLink: string;
   isFeatured:       boolean;
   marshalId:        string;
+  seriesId:         string;
+  volume:           string;
   bannerImageUrl:   string | null;
 }
 
@@ -68,6 +71,8 @@ function toFormState(data?: Partial<Ride>): FormState {
     registrationLink: data?.registrationLink ?? "",
     isFeatured:       data?.isFeatured       ?? false,
     marshalId:        data?.marshal?.id      ?? "",
+    seriesId:         data?.series?.id       ?? "",
+    volume:           data?.volume != null   ? String(data.volume) : "",
     bannerImageUrl:   data?.bannerImageUrl   ?? null,
   };
 }
@@ -112,7 +117,7 @@ const textareaClass = cn(
 // Main component
 // ---------------------------------------------------------------------------
 
-export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps) {
+export function RideForm({ mode, initialData, rideId, marshals, series }: RideFormProps) {
   const router = useRouter();
 
   const [form,        setForm]        = useState<FormState>(() => toFormState(initialData));
@@ -169,6 +174,8 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
         registrationLink: form.registrationLink || null,
         isFeatured:       form.isFeatured,
         marshalId:        form.marshalId || null,
+        seriesId:         form.seriesId  || null,
+        volume:           form.volume ? parseInt(form.volume, 10) || null : null,
         bannerImageUrl:   form.bannerImageUrl,
         routeData:        routeData,
       },
@@ -352,6 +359,35 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               className={inputClass}
             />
           </FieldGroup>
+
+          <FieldGroup label="Series">
+            <select
+              value={form.seriesId}
+              onChange={(e) => set("seriesId", e.target.value)}
+              className={selectClass}
+            >
+              <option value="" className="bg-hd-ink-900">- Standalone ride -</option>
+              {series.map((s) => (
+                <option key={s.id} value={s.id} className="bg-hd-ink-900">
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </FieldGroup>
+
+          {/* Volume only means something inside a series. */}
+          {form.seriesId && (
+            <FieldGroup label="Volume">
+              <input
+                type="number"
+                min={1}
+                value={form.volume}
+                onChange={(e) => set("volume", e.target.value)}
+                placeholder="e.g. 3"
+                className={inputClass}
+              />
+            </FieldGroup>
+          )}
 
           <FieldGroup label="Lead Marshal">
             <select

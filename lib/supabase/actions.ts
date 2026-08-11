@@ -62,6 +62,8 @@ export interface RidePayload {
   registrationLink: string | null;
   isFeatured:       boolean;
   marshalId:        string | null;
+  seriesId:         string | null;
+  volume:           number | null;
   bannerImageUrl:   string | null;
   routeData:        RouteData | null;
 }
@@ -90,6 +92,9 @@ export async function saveRide(
     registration_link: payload.registrationLink        || null,
     is_featured:       payload.isFeatured,
     marshal_id:        payload.marshalId               || null,
+    series_id:         payload.seriesId                || null,
+    // A volume number without a series is meaningless, and the DB enforces it.
+    volume:            payload.seriesId ? payload.volume ?? null : null,
     banner_image_url:  payload.bannerImageUrl          ?? null,
     route_data:        payload.routeData               ?? null,
     // Generate slug only when creating - preserve existing slug on edit
@@ -168,6 +173,77 @@ export async function saveHomepageContent(
 
   revalidatePath("/home");
   revalidatePath(ROUTES.adminHomepage);
+  return { error: null };
+}
+
+// ---------------------------------------------------------------------------
+// Series - Save (create or update)
+// ---------------------------------------------------------------------------
+
+export interface SeriesPayload {
+  id?:         string;
+  name:        string;
+  slug:        string;
+  description: string | null;
+  bannerUrl:   string | null;
+}
+
+export async function saveSeries(
+  payload: SeriesPayload,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  const slug = (payload.slug.trim() || payload.name)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  if (!payload.name.trim()) return { error: "Name is required" };
+  if (!slug)                return { error: "Could not build a slug from that name" };
+
+  const row = {
+    name:        payload.name.trim(),
+    slug,
+    description: payload.description?.trim() || null,
+    banner_url:  payload.bannerUrl           || null,
+  };
+
+  const { error } = payload.id
+    ? await supabase.from("series").update(row).eq("id", payload.id)
+    : await supabase.from("series").insert(row);
+
+  if (error) {
+    // 23505 = unique_violation on series.slug
+    if (error.code === "23505") {
+      return { error: `A series with the slug "${slug}" already exists.` };
+    }
+    return { error: error.message };
+  }
+
+  revalidatePath(ROUTES.adminSeries);
+  revalidatePath(ROUTES.series);
+  revalidatePath(ROUTES.calendar);
+  revalidatePath("/home");
+  return { error: null };
+}
+
+/**
+ * Deleting a series leaves its rides in place — rides.series_id is ON DELETE
+ * SET NULL, so the volumes simply become standalone rides rather than
+ * disappearing from the calendar.
+ */
+export async function deleteSeries(
+  id: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("series").delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  revalidatePath(ROUTES.adminSeries);
+  revalidatePath(ROUTES.series);
+  revalidatePath(ROUTES.calendar);
+  revalidatePath("/home");
   return { error: null };
 }
 

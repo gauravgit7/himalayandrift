@@ -25,6 +25,7 @@ export function getPriorityConfig(priority: RidePriority) {
 export function applyCalendarFilters(rides: Ride[], filters: CalendarFilters): Ride[] {
   return rides.filter((ride) => {
     if (filters.rideType  !== "all" && ride.rideType  !== filters.rideType)  return false;
+    if (filters.series    !== "all" && ride.series?.id !== filters.series)   return false;
     if (filters.status    !== "all" && ride.status    !== filters.status)     return false;
     if (filters.priority  !== "all" && ride.priority  !== filters.priority)   return false;
 
@@ -35,7 +36,8 @@ export function applyCalendarFilters(rides: Ride[], filters: CalendarFilters): R
       const q = filters.searchQuery.toLowerCase();
       if (
         !ride.title.toLowerCase().includes(q) &&
-        !ride.location.toLowerCase().includes(q)
+        !ride.location.toLowerCase().includes(q) &&
+        !(ride.series?.name ?? "").toLowerCase().includes(q)
       ) return false;
     }
 

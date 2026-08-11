@@ -5,7 +5,7 @@
 // =============================================================================
 
 import type {
-  Ride, Sponsor, Marshal, HomepageContent, BrandLogos,
+  Ride, Series, Sponsor, Marshal, HomepageContent, BrandLogos,
   MemberCard, CardSettings, UserProfile,
   RouteData, ItineraryDay, RecurringPattern,
   RideType, RideStatus, RidePriority,
@@ -42,6 +42,26 @@ export interface DbSponsor {
   created_at:  string;
 }
 
+export interface DbSeries {
+  id:          string;
+  name:        string;
+  slug:        string;
+  description: string | null;
+  banner_url:  string | null;
+  created_at:  string;
+}
+
+export function mapSeries(row: DbSeries): Series {
+  return {
+    id:          row.id,
+    name:        row.name,
+    slug:        row.slug,
+    description: row.description,
+    bannerUrl:   row.banner_url,
+    createdAt:   row.created_at,
+  };
+}
+
 export interface DbRide {
   id:                string;
   title:             string;
@@ -60,6 +80,8 @@ export interface DbRide {
   route_data:        RouteData | null;
   itinerary:         ItineraryDay[] | null;
   marshal_id:        string | null;
+  series_id:         string | null;
+  volume:            number | null;
   tags:              string[];
   is_featured:       boolean;
   is_recurring:      boolean;
@@ -69,6 +91,7 @@ export interface DbRide {
   updated_at:        string;
   // FK joins
   marshals?:         DbMarshal | null;
+  series?:           DbSeries | null;
   ride_sponsors?:    { sponsors: DbSponsor }[];
 }
 
@@ -141,6 +164,8 @@ export function mapRide(row: DbRide): Ride {
     routeData:        row.route_data,
     itinerary:        row.itinerary ?? [],
     marshal:          row.marshals ? mapMarshal(row.marshals) : null,
+    series:           row.series   ? mapSeries(row.series)    : null,
+    volume:           row.volume   ?? null,
     sponsors:         row.ride_sponsors?.map((rs) => mapSponsor(rs.sponsors)) ?? [],
     tags:             row.tags ?? [],
     isFeatured:       row.is_featured,

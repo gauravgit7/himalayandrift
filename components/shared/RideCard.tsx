@@ -12,6 +12,7 @@ import { formatRideDateRange, getRideDurationDays } from "@/utils/date";
 import { formatBsDateRange } from "@/utils/nepali-date";
 import { ROUTES, APP_META } from "@/lib/constants";
 import { StatusBadge } from "./StatusBadge";
+import { SeriesBadge } from "./SeriesBadge";
 import type { Ride, BrandLogos } from "@/types";
 import type { DateMode } from "@/hooks/useDateMode";
 
@@ -143,7 +144,10 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
         )}
 
         {/* Overlay badges */}
-        <div className="absolute top-2 left-2 flex gap-1.5">
+        <div className="absolute top-2 left-2 flex gap-1.5 max-w-[calc(100%-1rem)]">
+          {ride.series && (
+            <SeriesBadge series={ride.series} volume={ride.volume} size="xs" />
+          )}
           {isMarquee && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-black/60 text-yellow-400 border border-yellow-700/50">
               ★ MARQUEE

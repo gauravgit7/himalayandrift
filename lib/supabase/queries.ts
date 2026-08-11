@@ -8,14 +8,14 @@
 import { cache }               from "react";
 import { createClient }        from "@/lib/supabase/server";
 import {
-  mapRide, mapSponsor, mapMarshal, mapHomepageContent,
+  mapRide, mapSeries, mapSponsor, mapMarshal, mapHomepageContent,
   mapMemberCard, mapCardSettings, mapProfile,
-  type DbRide, type DbSponsor, type DbMarshal,
+  type DbRide, type DbSeries, type DbSponsor, type DbMarshal,
   type DbHomepageContent, type DbMemberCard, type DbCardSettings,
   type DbProfile,
 } from "@/lib/supabase/mappers";
 import type {
-  Ride, Sponsor, Marshal, HomepageContent, BrandLogos,
+  Ride, Series, Sponsor, Marshal, HomepageContent, BrandLogos,
   MemberCard, CardSettings,
 } from "@/types";
 
@@ -24,7 +24,7 @@ import type {
 // ---------------------------------------------------------------------------
 
 const RIDE_SELECT =
-  "*, marshals(*), ride_sponsors(sponsors(*))" as const;
+  "*, marshals(*), series(*), ride_sponsors(sponsors(*))" as const;
 
 
 // ---------------------------------------------------------------------------
@@ -115,6 +115,81 @@ export async function getRidesByIds(ids: string[]): Promise<Ride[]> {
   }
   const rowById = new Map((data as DbRide[]).map((r) => [r.id, mapRide(r)]));
   return ids.map((id) => rowById.get(id)).filter((r): r is Ride => !!r);
+}
+
+// ---------------------------------------------------------------------------
+// Series
+// ---------------------------------------------------------------------------
+
+/** All series, newest first. */
+export async function getSeries(): Promise<Series[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("series")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[queries] getSeries:", error.message);
+    return [];
+  }
+  return (data as DbSeries[]).map(mapSeries);
+}
+
+/** Single series by slug. */
+export async function getSeriesBySlug(slug: string): Promise<Series | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("series")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[queries] getSeriesBySlug:", error.message);
+    return null;
+  }
+  return data ? mapSeries(data as DbSeries) : null;
+}
+
+/**
+ * Every volume of one series, in chronological order.
+ * Volume number first so the reading order matches how the series is numbered,
+ * with the date as a tiebreaker for rides that have no volume set yet.
+ */
+export async function getRidesBySeries(seriesId: string): Promise<Ride[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("rides")
+    .select(RIDE_SELECT)
+    .eq("series_id", seriesId)
+    .order("volume",     { ascending: true, nullsFirst: false })
+    .order("start_date", { ascending: true });
+
+  if (error) {
+    console.error("[queries] getRidesBySeries:", error.message);
+    return [];
+  }
+  return (data as DbRide[]).map(mapRide);
+}
+
+/** Ride counts per series id, for the series index. */
+export async function getSeriesRideCounts(): Promise<Record<string, number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("rides")
+    .select("series_id")
+    .not("series_id", "is", null);
+
+  if (error) {
+    console.error("[queries] getSeriesRideCounts:", error.message);
+    return {};
+  }
+  const counts: Record<string, number> = {};
+  for (const row of (data ?? []) as { series_id: string }[]) {
+    counts[row.series_id] = (counts[row.series_id] ?? 0) + 1;
+  }
+  return counts;
 }
 
 // ---------------------------------------------------------------------------
