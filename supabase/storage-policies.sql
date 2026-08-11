@@ -1,107 +1,102 @@
 -- =============================================================================
--- Storage Buckets + RLS Policies
--- Run once in Supabase SQL Editor (Dashboard → SQL Editor → New query)
+-- Himalayan Drift — storage buckets + policies
+--
+-- Run ONCE in: Supabase Dashboard → SQL Editor, AFTER schema.sql.
+-- Creates every bucket the app uploads to and its access policies, so there is
+-- nothing to click through in the Storage UI.
+--
+-- Safe to re-run.
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
--- 1. Create buckets (public = files are readable without auth)
+-- 1. Buckets
+--
+-- All are public-read: uploaded images are served straight to the browser and
+-- next/image is configured for *.supabase.co.
+--
+-- Size limits are generous but finite so a stray 40 MB phone photo fails at the
+-- edge rather than filling the project's storage quota.
 -- ---------------------------------------------------------------------------
 
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES
-  ('ride-banners',   'ride-banners',   true, 10485760, ARRAY['image/jpeg','image/png','image/webp','image/gif']),
-  ('hero-banners',   'hero-banners',   true, 10485760, ARRAY['image/jpeg','image/png','image/webp','image/gif']),
-  ('sponsor-logos',  'sponsor-logos',  true,  5242880, ARRAY['image/jpeg','image/png','image/webp','image/svg+xml']),
-  ('rider-avatars',  'rider-avatars',  true,  5242880, ARRAY['image/jpeg','image/png','image/webp']),
-  ('brand-logos',    'brand-logos',    true,  5242880, ARRAY['image/jpeg','image/png','image/webp','image/svg+xml'])
-ON CONFLICT (id) DO NOTHING;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  ('ride-banners',  'ride-banners',  true, 10485760, array['image/jpeg','image/png','image/webp','image/gif']),
+  ('hero-banners',  'hero-banners',  true, 10485760, array['image/jpeg','image/png','image/webp','image/gif']),
+  ('brand-logos',   'brand-logos',   true,  5242880, array['image/jpeg','image/png','image/webp','image/svg+xml']),
+  ('sponsor-logos', 'sponsor-logos', true,  5242880, array['image/jpeg','image/png','image/webp','image/svg+xml']),
+  ('rider-avatars', 'rider-avatars', true,  5242880, array['image/jpeg','image/png','image/webp']),
+  ('member-photos', 'member-photos', true,  5242880, array['image/jpeg','image/png','image/webp']),
+  ('pwa-icons',     'pwa-icons',     true,  2097152, array['image/png','image/webp'])
+on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
--- 2. Storage RLS policies — public SELECT, authenticated INSERT/UPDATE/DELETE
---    Applied per-bucket so each bucket is independently controlled.
+-- 2. Policies
+--
+-- Two shapes:
+--   admin buckets  — public read, authenticated write
+--   member-photos  — public read, ANON write
+--
+-- member-photos is the exception on purpose. Membership applications come from
+-- signed-out visitors, so the applicant's identity photo is uploaded with the
+-- anon key. Restricting it to authenticated would break public applications.
 -- ---------------------------------------------------------------------------
 
--- ── ride-banners ────────────────────────────────────────────────────────────
-CREATE POLICY "Public read ride-banners"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'ride-banners');
+do $$
+declare
+  admin_bucket text;
+begin
+  foreach admin_bucket in array array[
+    'ride-banners', 'hero-banners', 'brand-logos',
+    'sponsor-logos', 'rider-avatars', 'pwa-icons'
+  ] loop
+    execute format('drop policy if exists %I on storage.objects', 'public_read_'   || admin_bucket);
+    execute format('drop policy if exists %I on storage.objects', 'auth_upload_'   || admin_bucket);
+    execute format('drop policy if exists %I on storage.objects', 'auth_update_'   || admin_bucket);
+    execute format('drop policy if exists %I on storage.objects', 'auth_delete_'   || admin_bucket);
 
-CREATE POLICY "Auth upload ride-banners"
-  ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'ride-banners' AND auth.role() = 'authenticated');
+    execute format(
+      'create policy %I on storage.objects for select using (bucket_id = %L)',
+      'public_read_' || admin_bucket, admin_bucket);
 
-CREATE POLICY "Auth update ride-banners"
-  ON storage.objects FOR UPDATE
-  USING (bucket_id = 'ride-banners' AND auth.role() = 'authenticated');
+    execute format(
+      'create policy %I on storage.objects for insert to authenticated with check (bucket_id = %L)',
+      'auth_upload_' || admin_bucket, admin_bucket);
 
-CREATE POLICY "Auth delete ride-banners"
-  ON storage.objects FOR DELETE
-  USING (bucket_id = 'ride-banners' AND auth.role() = 'authenticated');
+    execute format(
+      'create policy %I on storage.objects for update to authenticated using (bucket_id = %L)',
+      'auth_update_' || admin_bucket, admin_bucket);
 
--- ── hero-banners ────────────────────────────────────────────────────────────
-CREATE POLICY "Public read hero-banners"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'hero-banners');
+    execute format(
+      'create policy %I on storage.objects for delete to authenticated using (bucket_id = %L)',
+      'auth_delete_' || admin_bucket, admin_bucket);
+  end loop;
+end $$;
 
-CREATE POLICY "Auth upload hero-banners"
-  ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'hero-banners' AND auth.role() = 'authenticated');
+-- ── member-photos: anon upload, public read ────────────────────────────────
+drop policy if exists "public_read_member-photos"   on storage.objects;
+drop policy if exists "public_upload_member-photos" on storage.objects;
+drop policy if exists "auth_delete_member-photos"   on storage.objects;
 
-CREATE POLICY "Auth update hero-banners"
-  ON storage.objects FOR UPDATE
-  USING (bucket_id = 'hero-banners' AND auth.role() = 'authenticated');
+create policy "public_read_member-photos"
+  on storage.objects for select
+  using (bucket_id = 'member-photos');
 
-CREATE POLICY "Auth delete hero-banners"
-  ON storage.objects FOR DELETE
-  USING (bucket_id = 'hero-banners' AND auth.role() = 'authenticated');
+-- Applicants are signed out when they submit.
+create policy "public_upload_member-photos"
+  on storage.objects for insert
+  to anon, authenticated
+  with check (bucket_id = 'member-photos');
 
--- ── sponsor-logos ───────────────────────────────────────────────────────────
-CREATE POLICY "Public read sponsor-logos"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'sponsor-logos');
+-- Only admins clean up; applicants cannot delete someone else's photo.
+create policy "auth_delete_member-photos"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'member-photos');
 
-CREATE POLICY "Auth upload sponsor-logos"
-  ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'sponsor-logos' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Auth update sponsor-logos"
-  ON storage.objects FOR UPDATE
-  USING (bucket_id = 'sponsor-logos' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Auth delete sponsor-logos"
-  ON storage.objects FOR DELETE
-  USING (bucket_id = 'sponsor-logos' AND auth.role() = 'authenticated');
-
--- ── rider-avatars ───────────────────────────────────────────────────────────
-CREATE POLICY "Public read rider-avatars"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'rider-avatars');
-
-CREATE POLICY "Auth upload rider-avatars"
-  ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'rider-avatars' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Auth update rider-avatars"
-  ON storage.objects FOR UPDATE
-  USING (bucket_id = 'rider-avatars' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Auth delete rider-avatars"
-  ON storage.objects FOR DELETE
-  USING (bucket_id = 'rider-avatars' AND auth.role() = 'authenticated');
-
--- ── brand-logos ─────────────────────────────────────────────────────────────
-CREATE POLICY "Public read brand-logos"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'brand-logos');
-
-CREATE POLICY "Auth upload brand-logos"
-  ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'brand-logos' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Auth update brand-logos"
-  ON storage.objects FOR UPDATE
-  USING (bucket_id = 'brand-logos' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Auth delete brand-logos"
-  ON storage.objects FOR DELETE
-  USING (bucket_id = 'brand-logos' AND auth.role() = 'authenticated');
+-- =============================================================================
+-- Done. Remaining setup is in .env.local.example:
+--   Supabase URL + anon key + service-role key
+--   ADMIN_EMAILS  (full address, including the domain)
+--   auth redirect URL for /auth/callback
+--   VAPID keys, if you want push notifications
+-- =============================================================================
