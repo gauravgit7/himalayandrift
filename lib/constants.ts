@@ -224,13 +224,20 @@ export const RIDING_CONDITIONS = {
 // Supabase storage bucket names
 // ---------------------------------------------------------------------------
 
+/**
+ * Every bucket the app uploads to. All are public-read.
+ * Keep this in sync with the `bucket=` props on <ImageUpload> — the setup docs
+ * tell the owner to create exactly what is listed here.
+ */
 export const STORAGE_BUCKETS = {
-  rideBanners:   "ride-banners",
-  heroBanners:   "hero-banners",
-  sponsorLogos:  "sponsor-logos",
-  riderAvatars:  "rider-avatars",
-  documents:     "ride-documents",
-  memberPhotos:  "member-photos",
+  rideBanners:   "ride-banners",   // RideForm
+  heroBanners:   "hero-banners",   // HomepageEditor
+  brandLogos:    "brand-logos",    // HomepageEditor - the brand mark
+  sponsorLogos:  "sponsor-logos",  // SponsorsManager
+  riderAvatars:  "rider-avatars",  // MarshalsAdmin + ProfileClient
+  memberPhotos:  "member-photos",  // membership ApplicationForm
+  pwaIcons:      "pwa-icons",      // PwaSettingsAdmin
+  documents:     "ride-documents", // reserved: GPX / route PDFs, no uploader yet
 } as const;
 
 // ---------------------------------------------------------------------------
