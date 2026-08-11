@@ -83,7 +83,7 @@ function ExportCard({
   };
 
   return (
-    <div className="gradient-card rounded-2xl border border-tvs-charcoal-700/50 p-6 flex flex-col gap-5">
+    <div className="gradient-card rounded-2xl border border-hd-ink-700/50 p-6 flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-start gap-4">
         <div
@@ -94,7 +94,7 @@ function ExportCard({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-base font-bold text-tvs-charcoal-50">{title}</h3>
+            <h3 className="text-base font-bold text-hd-ink-50">{title}</h3>
             <span
               className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md"
               style={{
@@ -106,14 +106,14 @@ function ExportCard({
               {badge}
             </span>
           </div>
-          <p className="text-sm text-tvs-charcoal-400">{description}</p>
+          <p className="text-sm text-hd-ink-400">{description}</p>
         </div>
       </div>
 
       {/* Contents list */}
       <ul className="space-y-1.5">
         {bullets.map((b, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-tvs-charcoal-400">
+          <li key={i} className="flex items-start gap-2 text-sm text-hd-ink-400">
             <span className="mt-1.5 size-1.5 rounded-full shrink-0" style={{ backgroundColor: accentColor }} />
             {b}
           </li>
@@ -130,7 +130,7 @@ function ExportCard({
           "disabled:cursor-not-allowed disabled:opacity-60",
           state === "done"  && "bg-emerald-600/20 border border-emerald-700/40 text-emerald-400",
           state === "error" && "bg-red-900/20 border border-red-800/40 text-red-400",
-          state === "loading" && "bg-tvs-charcoal-800/50 border border-tvs-charcoal-700/40 text-tvs-charcoal-400",
+          state === "loading" && "bg-hd-ink-800/50 border border-hd-ink-700/40 text-hd-ink-400",
           state === "idle"  && "text-white border",
         )}
         style={state === "idle" ? {
@@ -164,36 +164,36 @@ export default function ExportsPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <FileDown className="size-5 text-tvs-red-500" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-tvs-red-500">
+          <FileDown className="size-5 text-hd-ember-500" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-hd-ember-500">
             Exports
           </span>
         </div>
-        <h1 className="text-2xl font-black text-tvs-charcoal-50">Download Reports</h1>
-        <p className="text-sm text-tvs-charcoal-400 mt-1">
+        <h1 className="text-2xl font-black text-hd-ink-50">Download Reports</h1>
+        <p className="text-sm text-hd-ink-400 mt-1">
           Generate branded PDF calendars and operational Excel spreadsheets for any year.
         </p>
       </div>
 
       {/* Year selector */}
-      <div className="flex items-center gap-3 p-4 rounded-xl border border-tvs-charcoal-700/50 gradient-card w-fit">
-        <span className="text-sm font-semibold text-tvs-charcoal-300">Calendar Year</span>
+      <div className="flex items-center gap-3 p-4 rounded-xl border border-hd-ink-700/50 gradient-card w-fit">
+        <span className="text-sm font-semibold text-hd-ink-300">Calendar Year</span>
         <div className="relative">
           <select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
             className={cn(
-              "appearance-none pl-4 pr-9 py-2 rounded-lg text-sm font-bold text-tvs-charcoal-50 cursor-pointer",
-              "bg-tvs-charcoal-800 border border-tvs-charcoal-600/60",
-              "hover:border-tvs-red-700/60 transition-colors",
-              "focus:outline-none focus:ring-1 focus:ring-tvs-red-600/40",
+              "appearance-none pl-4 pr-9 py-2 rounded-lg text-sm font-bold text-hd-ink-50 cursor-pointer",
+              "bg-hd-ink-800 border border-hd-ink-600/60",
+              "hover:border-hd-ember-700/60 transition-colors",
+              "focus:outline-none focus:ring-1 focus:ring-hd-ember-600/40",
             )}
           >
             {YEAR_OPTIONS.map((y) => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
-          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-tvs-charcoal-400 pointer-events-none" />
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-hd-ink-400 pointer-events-none" />
         </div>
       </div>
 
@@ -204,8 +204,8 @@ export default function ExportsPage() {
           icon={<FileText className="size-6" />}
           title="Branded PDF Calendar"
           badge="PDF"
-          badgeColor="#DC2626"
-          accentColor="#DC2626"
+          badgeColor="#F09020"
+          accentColor="#F09020"
           description={`A4 document with cover page and monthly ride tables for ${year}.`}
           bullets={[
             "Cover page with Himalayan Drift branding and year stats",
@@ -215,7 +215,7 @@ export default function ExportsPage() {
             "Page headers and auto page numbers",
           ]}
           apiPath="/api/export/pdf"
-          filename={(y) => `tvs-nepal-calendar-${y}.pdf`}
+          filename={(y) => `HimalayanDrift-calendar-${y}.pdf`}
           buttonLabel={`Download ${year} Calendar PDF`}
         />
 
@@ -235,13 +235,13 @@ export default function ExportsPage() {
             "Registration hyperlinks preserved",
           ]}
           apiPath="/api/export/excel"
-          filename={(y) => `tvs-nepal-rides-${y}.xlsx`}
+          filename={(y) => `HimalayanDrift-rides-${y}.xlsx`}
           buttonLabel={`Download ${year} Rides Spreadsheet`}
         />
       </div>
 
       {/* Info note */}
-      <p className="text-xs text-tvs-charcoal-600 text-center">
+      <p className="text-xs text-hd-ink-600 text-center">
         Exports pull live data from Supabase at the moment of download - always up to date.
       </p>
     </div>

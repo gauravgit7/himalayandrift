@@ -85,14 +85,14 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
           className={cn(
             "absolute inset-0",
             isEven
-              ? "bg-gradient-to-br from-[#1a0a2e] via-tvs-crimson-950 to-tvs-charcoal-950"
-              : "bg-gradient-to-br from-tvs-crimson-950 via-[#1a0a2e] to-tvs-charcoal-950"
+              ? "bg-gradient-to-br from-[#1a0a2e] via-hd-clay-950 to-hd-ink-950"
+              : "bg-gradient-to-br from-hd-clay-950 via-[#1a0a2e] to-hd-ink-950"
           )}
         />
         {/* Glow overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-violet-950/20 pointer-events-none" />
         {/* Violet top accent line */}
-        <div className="relative h-0.5 w-full bg-gradient-to-r from-violet-600 via-tvs-red-600 to-violet-800 shrink-0" />
+        <div className="relative h-0.5 w-full bg-gradient-to-r from-violet-600 via-hd-ember-600 to-violet-800 shrink-0" />
 
         <div className="relative flex flex-col h-full p-6 gap-5">
 
@@ -108,11 +108,11 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
 
           {/* Title & description */}
           <div>
-            <h3 className="text-xl font-black text-white leading-tight group-hover:text-tvs-red-100 transition-colors duration-200">
+            <h3 className="text-xl font-black text-white leading-tight group-hover:text-hd-ember-100 transition-colors duration-200">
               {ride.title}
             </h3>
             {ride.description && (
-              <p className="mt-2 text-sm text-tvs-charcoal-300 line-clamp-3 leading-relaxed">
+              <p className="mt-2 text-sm text-hd-ink-300 line-clamp-3 leading-relaxed">
                 {ride.description}
               </p>
             )}
@@ -120,19 +120,19 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
 
           {/* Meta row */}
           <div className="flex flex-wrap gap-x-4 gap-y-2">
-            <div className="flex items-center gap-1.5 text-xs text-tvs-charcoal-300">
+            <div className="flex items-center gap-1.5 text-xs text-hd-ink-300">
               <Calendar className="size-3.5 text-violet-400 shrink-0" />
               <span>{dateLabel}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-tvs-charcoal-300">
+            <div className="flex items-center gap-1.5 text-xs text-hd-ink-300">
               <Clock className="size-3.5 text-violet-400 shrink-0" />
               <span>{duration} days</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-tvs-charcoal-300">
+            <div className="flex items-center gap-1.5 text-xs text-hd-ink-300">
               <MapPin className="size-3.5 text-violet-400 shrink-0" />
               <span>{ride.location}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-tvs-charcoal-300">
+            <div className="flex items-center gap-1.5 text-xs text-hd-ink-300">
               <Users className="size-3.5 text-violet-400 shrink-0" />
               <span>{ride.expectedRiders} riders</span>
             </div>
@@ -141,7 +141,7 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
           {/* Route waypoints */}
           {waypoints.length > 0 && (
             <div className="pt-4 border-t border-white/10">
-              <p className="text-[9px] uppercase tracking-widest text-tvs-charcoal-500 mb-2.5">
+              <p className="text-[9px] uppercase tracking-widest text-hd-ink-500 mb-2.5">
                 Route - {ride.routeData?.totalDistanceKm} km
               </p>
               <div className="flex items-center gap-1 flex-wrap">
@@ -150,13 +150,13 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
                     <span
                       className={cn(
                         "text-xs font-semibold",
-                        wp.isStop ? "text-tvs-charcoal-100" : "text-tvs-charcoal-400"
+                        wp.isStop ? "text-hd-ink-100" : "text-hd-ink-400"
                       )}
                     >
                       {wp.name}
                     </span>
                     {i < waypoints.length - 1 && (
-                      <ArrowRight className="size-2.5 text-tvs-charcoal-600 shrink-0" />
+                      <ArrowRight className="size-2.5 text-hd-ink-600 shrink-0" />
                     )}
                   </span>
                 ))}
@@ -173,15 +173,15 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
                     {day.day}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="font-medium text-tvs-charcoal-200">{day.title}</span>
+                    <span className="font-medium text-hd-ink-200">{day.title}</span>
                     {day.estimatedKm != null && day.estimatedKm > 0 && (
-                      <span className="ml-1.5 text-tvs-charcoal-500">{day.estimatedKm} km</span>
+                      <span className="ml-1.5 text-hd-ink-500">{day.estimatedKm} km</span>
                     )}
                   </div>
                 </div>
               ))}
               {ride.itinerary.length > 3 && (
-                <p className="text-[10px] text-tvs-charcoal-500 pl-6.5">
+                <p className="text-[10px] text-hd-ink-500 pl-6.5">
                   +{ride.itinerary.length - 3} more days →
                 </p>
               )}
@@ -195,19 +195,19 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
                 <span
                   className={cn(
                     "text-2xl font-black tabular-nums",
-                    daysUntil <= 30 ? "text-tvs-red-400" : "text-violet-300"
+                    daysUntil <= 30 ? "text-hd-ember-400" : "text-violet-300"
                   )}
                 >
                   {daysUntil}
                 </span>
-                <span className="text-xs text-tvs-charcoal-400 leading-tight">
+                <span className="text-xs text-hd-ink-400 leading-tight">
                   days
                   <br />
                   away
                 </span>
               </div>
             ) : (
-              <span className="text-xs text-tvs-charcoal-500">Completed</span>
+              <span className="text-xs text-hd-ink-500">Completed</span>
             )}
 
             <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ function MarqueeCard({ ride, index, brandLogos }: { ride: Ride; index: number; b
                   Register
                 </button>
               )}
-              <span className="flex items-center gap-1 text-xs text-tvs-charcoal-400 group-hover:text-tvs-charcoal-200 transition-colors duration-200">
+              <span className="flex items-center gap-1 text-xs text-hd-ink-400 group-hover:text-hd-ink-200 transition-colors duration-200">
                 Full details
                 <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform duration-200" />
               </span>
@@ -246,7 +246,7 @@ export function MarqueeHighlight({ rides, brandLogos }: MarqueeHighlightProps) {
   return (
     // dark-surface re-pins charcoal vars to their dark values in light mode,
     // making this section always render as a premium dark panel regardless of theme.
-    <section className="dark-surface bg-tvs-charcoal-950 py-16">
+    <section className="dark-surface bg-hd-ink-950 py-16">
       <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         {/* Section header */}
         <motion.div
@@ -263,10 +263,10 @@ export function MarqueeHighlight({ rides, brandLogos }: MarqueeHighlightProps) {
                 Flagship Expeditions
               </span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-tvs-charcoal-50">
+            <h2 className="text-3xl sm:text-4xl font-black text-hd-ink-50">
               Marquee Rides
             </h2>
-            <p className="mt-1.5 text-sm text-tvs-charcoal-400 max-w-md">
+            <p className="mt-1.5 text-sm text-hd-ink-400 max-w-md">
               Our flagship expeditions - the highest-tier rides of the year.
             </p>
           </div>

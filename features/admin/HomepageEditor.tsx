@@ -29,14 +29,14 @@ interface HomepageEditorProps {
 // ---------------------------------------------------------------------------
 
 const inputCls = cn(
-  "w-full h-9 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm",
-  "text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-  "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors"
+  "w-full h-9 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm",
+  "text-hd-ink-100 placeholder:text-hd-ink-600",
+  "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors"
 );
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-xs font-semibold text-tvs-charcoal-400 uppercase tracking-wide mb-1">
+    <label className="block text-xs font-semibold text-hd-ink-400 uppercase tracking-wide mb-1">
       {children}
     </label>
   );
@@ -44,8 +44,8 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-4 p-5 rounded-xl gradient-card border border-tvs-charcoal-700/60">
-      <h3 className="text-sm font-bold text-tvs-charcoal-50">{title}</h3>
+    <div className="space-y-4 p-5 rounded-xl gradient-card border border-hd-ink-700/60">
+      <h3 className="text-sm font-bold text-hd-ink-50">{title}</h3>
       {children}
     </div>
   );
@@ -76,17 +76,17 @@ function RideSelector({
         onChange={(e) => onChange(e.target.value || null)}
         className={cn(inputCls, "appearance-none")}
       >
-        <option value="" className="bg-tvs-charcoal-900">- None -</option>
+        <option value="" className="bg-hd-ink-900">- None -</option>
         {rides.map((r) => (
-          <option key={r.id} value={r.id} className="bg-tvs-charcoal-900">
+          <option key={r.id} value={r.id} className="bg-hd-ink-900">
             {r.title} ({r.startDate})
           </option>
         ))}
       </select>
       {selected && (
-        <div className="mt-2 flex items-center gap-2 p-2 rounded-lg bg-tvs-charcoal-800/60 border border-tvs-charcoal-700/40">
-          <span className="text-xs text-tvs-charcoal-200 truncate">{selected.title}</span>
-          <span className="text-xs text-tvs-charcoal-500 ml-auto">{selected.startDate}</span>
+        <div className="mt-2 flex items-center gap-2 p-2 rounded-lg bg-hd-ink-800/60 border border-hd-ink-700/40">
+          <span className="text-xs text-hd-ink-200 truncate">{selected.title}</span>
+          <span className="text-xs text-hd-ink-500 ml-auto">{selected.startDate}</span>
         </div>
       )}
     </div>
@@ -144,7 +144,7 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
     <div className="space-y-6">
       {/* ── Server error ── */}
       {serverError && (
-        <div className="flex items-start gap-3 p-3 rounded-xl bg-tvs-red-950/60 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+        <div className="flex items-start gap-3 p-3 rounded-xl bg-hd-ember-950/60 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
           <AlertCircle className="size-4 shrink-0 mt-px" />
           {serverError}
         </div>
@@ -230,7 +230,7 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
 
       {/* ── Featured rides section ── */}
       <Section title="🏍️ Featured Upcoming Rides">
-        <p className="text-xs text-tvs-charcoal-500 -mt-2">
+        <p className="text-xs text-hd-ink-500 -mt-2">
           Up to 4 ride IDs shown in the &quot;upcoming rides&quot; homepage section.
         </p>
         <div className="grid sm:grid-cols-2 gap-3">
@@ -267,7 +267,7 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
                 onClick={() => setTop(key, !content[key])}
                 className={cn(
                   "relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0",
-                  content[key] ? "bg-tvs-red-600" : "bg-tvs-charcoal-700"
+                  content[key] ? "bg-hd-ember-600" : "bg-hd-ink-700"
                 )}
               >
                 <span
@@ -278,10 +278,10 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
                 />
               </button>
               <div>
-                <p className="text-sm font-medium text-tvs-charcoal-200 group-hover:text-tvs-charcoal-50 transition-colors">
+                <p className="text-sm font-medium text-hd-ink-200 group-hover:text-hd-ink-50 transition-colors">
                   {label}
                 </p>
-                <p className="text-xs text-tvs-charcoal-600">{sub}</p>
+                <p className="text-xs text-hd-ink-600">{sub}</p>
               </div>
             </label>
           ))}
@@ -290,9 +290,9 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
 
       {/* ── Banner image + overlay opacity ── */}
       <Section title="🖼️ Hero Background Image">
-        <p className="text-xs text-tvs-charcoal-500 -mt-2">
+        <p className="text-xs text-hd-ink-500 -mt-2">
           Full-viewport background shown behind the hero text. Stored in{" "}
-          <code className="text-tvs-charcoal-400">hero-banners</code> bucket.
+          <code className="text-hd-ink-400">hero-banners</code> bucket.
         </p>
         <ImageUpload
           bucket="hero-banners"
@@ -305,15 +305,15 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
         <div className="mt-4">
           <FieldLabel>
             Photo Overlay Darkness -{" "}
-            <span className="text-tvs-charcoal-300 font-mono">
+            <span className="text-hd-ink-300 font-mono">
               {Math.round(content.heroBanner.overlayOpacity * 100)}%
             </span>
           </FieldLabel>
-          <p className="text-[11px] text-tvs-charcoal-600 mb-2">
+          <p className="text-[11px] text-hd-ink-600 mb-2">
             Higher = darker overlay, better text contrast over bright photos.
           </p>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] text-tvs-charcoal-600">0%</span>
+            <span className="text-[10px] text-hd-ink-600">0%</span>
             <input
               type="range"
               min={0}
@@ -321,19 +321,19 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
               step={0.05}
               value={content.heroBanner.overlayOpacity}
               onChange={(e) => setHero("overlayOpacity", parseFloat(e.target.value))}
-              className="flex-1 h-2 rounded-full appearance-none cursor-pointer accent-tvs-red-600"
+              className="flex-1 h-2 rounded-full appearance-none cursor-pointer accent-hd-ember-600"
             />
-            <span className="text-[10px] text-tvs-charcoal-600">90%</span>
+            <span className="text-[10px] text-hd-ink-600">90%</span>
           </div>
         </div>
       </Section>
 
       {/* ── Brand logo ── */}
       <Section title="🏷️ Brand Logo">
-        <p className="text-xs text-tvs-charcoal-500 -mt-2">
+        <p className="text-xs text-hd-ink-500 -mt-2">
           The uploaded logo appears in the navbar, hero, footer, membership cards and
           exports. Leave empty to use the default text/icon fallback. Stored in the{" "}
-          <code className="text-tvs-charcoal-400">brand-logos</code> bucket.
+          <code className="text-hd-ink-400">brand-logos</code> bucket.
         </p>
         <div>
           <FieldLabel>{APP_META.name} Logo</FieldLabel>
@@ -351,7 +351,7 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
         <Link
           href={ROUTES.home}
           target="_blank"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-tvs-charcoal-700 hover:border-tvs-charcoal-500 text-tvs-charcoal-300 hover:text-tvs-charcoal-50 text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-300 hover:text-hd-ink-50 text-sm font-medium transition-colors"
         >
           <Eye className="size-4" />
           Preview Homepage
@@ -362,8 +362,8 @@ export function HomepageEditor({ initialContent, allRides }: HomepageEditorProps
           className={cn(
             "flex items-center gap-2 px-6 py-2.5 rounded-lg text-white font-semibold text-sm transition-all",
             saving || saved
-              ? "bg-tvs-charcoal-700 text-tvs-charcoal-400 cursor-not-allowed"
-              : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red"
+              ? "bg-hd-ink-700 text-hd-ink-400 cursor-not-allowed"
+              : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember"
           )}
         >
           <Save className="size-4" />

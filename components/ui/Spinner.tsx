@@ -22,7 +22,7 @@ export function Spinner({ size = "md", className }: SpinnerProps) {
       role="status"
       aria-label="Loading"
       className={cn(
-        "inline-block rounded-full border-tvs-charcoal-500 border-t-tvs-red-500 animate-spin",
+        "inline-block rounded-full border-hd-ink-500 border-t-hd-ember-500 animate-spin",
         SIZE_STYLES[size],
         className
       )}

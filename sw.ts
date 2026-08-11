@@ -1,5 +1,5 @@
 // =============================================================================
-// Service Worker — TVS Nepal Ride Operations Platform
+// Service Worker — Himalayan Drift
 // Powered by Serwist. All imports from "serwist" only — no workbox-* needed.
 // =============================================================================
 

@@ -42,10 +42,10 @@ function RoleBadge({ role }: { role: string }) {
   return (
     <span className={cn(
       "text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0",
-      tier === 0 && "bg-tvs-red-900/60 text-tvs-red-400 border-tvs-red-800/40",
+      tier === 0 && "bg-hd-ember-900/60 text-hd-ember-400 border-hd-ember-800/40",
       tier === 1 && "bg-amber-900/50  text-amber-400  border-amber-800/40",
       tier === 2 && "bg-blue-900/40   text-blue-400   border-blue-800/30",
-      tier === 3 && "bg-tvs-charcoal-800 text-tvs-charcoal-400 border-tvs-charcoal-700",
+      tier === 3 && "bg-hd-ink-800 text-hd-ink-400 border-hd-ink-700",
     )}>
       {role}
     </span>
@@ -59,7 +59,7 @@ function RoleBadge({ role }: { role: string }) {
 function AvatarPlaceholder({ name, className }: { name: string; className?: string }) {
   const initials = name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div className={cn("flex items-center justify-center font-black text-tvs-charcoal-400", className)}>
+    <div className={cn("flex items-center justify-center font-black text-hd-ink-400", className)}>
       {initials}
     </div>
   );
@@ -77,9 +77,9 @@ function HeadMarshalCard({ marshal, origin }: { marshal: Marshal; origin: string
     : origin ? `${origin}/marshals` : "";
 
   return (
-    <div className="relative flex flex-col sm:flex-row gap-6 p-6 rounded-2xl bg-gradient-to-br from-tvs-charcoal-900 via-tvs-charcoal-900 to-tvs-red-950/20 border border-tvs-red-800/40 shadow-cinematic overflow-hidden">
+    <div className="relative flex flex-col sm:flex-row gap-6 p-6 rounded-2xl bg-gradient-to-br from-hd-ink-900 via-hd-ink-900 to-hd-ember-950/20 border border-hd-ember-800/40 shadow-cinematic overflow-hidden">
       {/* Accent line */}
-      <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-tvs-red-600/50 to-transparent" />
+      <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-hd-ember-600/50 to-transparent" />
 
       {/* Photo — size-40 sm:size-48 */}
       <div className="shrink-0 mx-auto sm:mx-0">
@@ -88,10 +88,10 @@ function HeadMarshalCard({ marshal, origin }: { marshal: Marshal; origin: string
           <img
             src={marshal.avatarUrl}
             alt={marshal.name}
-            className="size-40 sm:size-48 rounded-2xl object-cover object-top border-2 border-tvs-red-800/50"
+            className="size-40 sm:size-48 rounded-2xl object-cover object-top border-2 border-hd-ember-800/50"
           />
         ) : (
-          <div className="size-40 sm:size-48 rounded-2xl bg-tvs-charcoal-800 border-2 border-tvs-red-800/40">
+          <div className="size-40 sm:size-48 rounded-2xl bg-hd-ink-800 border-2 border-hd-ember-800/40">
             <AvatarPlaceholder name={marshal.name} className="size-full text-5xl rounded-2xl" />
           </div>
         )}
@@ -100,7 +100,7 @@ function HeadMarshalCard({ marshal, origin }: { marshal: Marshal; origin: string
       {/* Details */}
       <div className="flex-1 text-center sm:text-left min-w-0 overflow-hidden">
         <div className="flex items-center gap-2 mb-1 justify-center sm:justify-start flex-wrap">
-          <h2 className="text-2xl font-black text-tvs-charcoal-50 truncate">{marshal.name}</h2>
+          <h2 className="text-2xl font-black text-hd-ink-50 truncate">{marshal.name}</h2>
           <RoleBadge role={marshal.role} />
         </div>
 
@@ -109,7 +109,7 @@ function HeadMarshalCard({ marshal, origin }: { marshal: Marshal; origin: string
             {specialties.map((s) => (
               <span
                 key={s}
-                className="text-[10px] px-2 py-0.5 rounded-full bg-tvs-red-950/60 text-tvs-red-400 border border-tvs-red-900/40 font-medium"
+                className="text-[10px] px-2 py-0.5 rounded-full bg-hd-ember-950/60 text-hd-ember-400 border border-hd-ember-900/40 font-medium"
               >
                 {s}
               </span>
@@ -118,15 +118,15 @@ function HeadMarshalCard({ marshal, origin }: { marshal: Marshal; origin: string
         )}
 
         {marshal.bio && (
-          <p className="text-sm text-tvs-charcoal-300 leading-relaxed mb-3 max-w-prose">
+          <p className="text-sm text-hd-ink-300 leading-relaxed mb-3 max-w-prose">
             {marshal.bio}
           </p>
         )}
 
         {marshal.totalRidesLed > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-tvs-charcoal-400 justify-center sm:justify-start">
-            <Bike className="size-3.5 text-tvs-charcoal-500" />
-            <strong className="text-tvs-charcoal-200">{marshal.totalRidesLed}</strong>
+          <div className="flex items-center gap-1.5 text-xs text-hd-ink-400 justify-center sm:justify-start">
+            <Bike className="size-3.5 text-hd-ink-500" />
+            <strong className="text-hd-ink-200">{marshal.totalRidesLed}</strong>
             &nbsp;rides led
           </div>
         )}
@@ -146,7 +146,7 @@ function HeadMarshalCard({ marshal, origin }: { marshal: Marshal; origin: string
               level="M"
             />
           </div>
-          <p className="text-[9px] text-tvs-charcoal-500 leading-none text-center truncate max-w-[90px]">
+          <p className="text-[9px] text-hd-ink-500 leading-none text-center truncate max-w-[90px]">
             {marshal.instagramHandle ? `@${marshal.instagramHandle}` : "marshals"}
           </p>
         </div>
@@ -196,9 +196,9 @@ const VARIANT_STYLES = {
     alwaysShowBio: false,
   },
   other: {
-    card:          "border-tvs-charcoal-700 hover:border-tvs-charcoal-500",
-    line:          "bg-gradient-to-r from-transparent via-tvs-charcoal-600/30 to-transparent",
-    chip:          "bg-tvs-charcoal-800 text-tvs-charcoal-400 border-tvs-charcoal-700",
+    card:          "border-hd-ink-700 hover:border-hd-ink-500",
+    line:          "bg-gradient-to-r from-transparent via-hd-ink-600/30 to-transparent",
+    chip:          "bg-hd-ink-800 text-hd-ink-400 border-hd-ink-700",
     padding:       "p-3",
     gap:           "gap-2 sm:gap-3",
     photoSize:     "size-25",
@@ -251,7 +251,7 @@ function MarshalCard({
         {marshal.avatarUrl ? (
           <div className={cn(
             s.photoSize,
-            "overflow-hidden rounded-lg border border-tvs-charcoal-700 shrink-0"
+            "overflow-hidden rounded-lg border border-hd-ink-700 shrink-0"
           )}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -263,7 +263,7 @@ function MarshalCard({
         ) : (
           <div className={cn(
             s.photoSize,
-            "overflow-hidden rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 flex items-center justify-center"
+            "overflow-hidden rounded-lg bg-hd-ink-800 border border-hd-ink-700 flex items-center justify-center"
           )}>
             <AvatarPlaceholder
               name={marshal.name}
@@ -282,7 +282,7 @@ function MarshalCard({
       <div className="flex-1 min-w-0 py-0.5">
         {/* Name + role badge */}
         <div className="flex items-center gap-1.5 mb-0.5 min-w-0">
-          <h3 className="font-bold text-tvs-charcoal-50 text-xs sm:text-sm leading-tight truncate min-w-0">
+          <h3 className="font-bold text-hd-ink-50 text-xs sm:text-sm leading-tight truncate min-w-0">
             {marshal.name}
           </h3>
           <RoleBadge role={marshal.role} />
@@ -303,7 +303,7 @@ function MarshalCard({
               </span>
             ))}
             {specialties.length > 2 && (
-              <span className="text-[8px] sm:text-[9px] text-tvs-charcoal-600">
+              <span className="text-[8px] sm:text-[9px] text-hd-ink-600">
                 +{specialties.length - 2}
               </span>
             )}
@@ -312,16 +312,16 @@ function MarshalCard({
 
         {/* Bio */}
         {showBio && (
-          <p className="text-[9px] sm:text-[10px] text-tvs-charcoal-400 leading-relaxed line-clamp-2 mb-1.5">
+          <p className="text-[9px] sm:text-[10px] text-hd-ink-400 leading-relaxed line-clamp-2 mb-1.5">
             {marshal.bio}
           </p>
         )}
 
         {/* Rides led */}
         {marshal.totalRidesLed > 0 && (
-          <div className="flex items-center gap-1 text-[9px] sm:text-[10px] text-tvs-charcoal-500">
+          <div className="flex items-center gap-1 text-[9px] sm:text-[10px] text-hd-ink-500">
             <Bike className="size-2.5 sm:size-3 shrink-0" />
-            <strong className="text-tvs-charcoal-300">{marshal.totalRidesLed}</strong>
+            <strong className="text-hd-ink-300">{marshal.totalRidesLed}</strong>
             <span>rides led</span>
           </div>
         )}
@@ -346,7 +346,7 @@ function MarshalCard({
             />
           </div>
           <p className={cn(
-            "text-[7px] sm:text-[8px] text-tvs-charcoal-500 leading-none text-center w-full truncate",
+            "text-[7px] sm:text-[8px] text-hd-ink-500 leading-none text-center w-full truncate",
             s.qrLabelMaxW,
           )}>
             {marshal.instagramHandle ? `@${marshal.instagramHandle}` : "marshals"}
@@ -404,8 +404,8 @@ export function MarshalPageClient({ marshals, activeRoles }: MarshalPageClientPr
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-150",
                 selectedRole === role
-                  ? "bg-tvs-red-600 text-white shadow-glow-red"
-                  : "bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-tvs-charcoal-400 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-700"
+                  ? "bg-hd-ember-600 text-white shadow-glow-ember"
+                  : "bg-hd-ink-800 border border-hd-ink-700 text-hd-ink-400 hover:text-hd-ink-100 hover:bg-hd-ink-700"
               )}
             >
               {role === "all" ? `All (${marshals.length})` : role}
@@ -417,8 +417,8 @@ export function MarshalPageClient({ marshals, activeRoles }: MarshalPageClientPr
       {/* ── Empty state ── */}
       {sorted.length === 0 && (
         <div className="py-20 text-center">
-          <Shield className="size-12 mx-auto mb-4 text-tvs-charcoal-700" />
-          <p className="text-sm text-tvs-charcoal-500">
+          <Shield className="size-12 mx-auto mb-4 text-hd-ink-700" />
+          <p className="text-sm text-hd-ink-500">
             {selectedRole === "all"
               ? "No active marshals yet."
               : `No active ${selectedRole}s yet.`}
@@ -430,8 +430,8 @@ export function MarshalPageClient({ marshals, activeRoles }: MarshalPageClientPr
       {headMarshal && (
         <AnimateIn>
           <div className="flex items-center gap-2 mb-4">
-            <span className="block w-3 h-px bg-tvs-red-600 rounded-full" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-tvs-red-400">
+            <span className="block w-3 h-px bg-hd-ember-600 rounded-full" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-hd-ember-400">
               Head Marshal
             </span>
           </div>

@@ -44,7 +44,7 @@ export function CalendarExportBar({ year }: CalendarExportBarProps) {
     try {
       await triggerDownload(
         `/api/export/pdf?year=${year}`,
-        `tvs-nepal-calendar-${year}.pdf`,
+        `HimalayanDrift-calendar-${year}.pdf`,
       );
       setState("done");
       setTimeout(() => setState("idle"), 3000);
@@ -55,13 +55,13 @@ export function CalendarExportBar({ year }: CalendarExportBarProps) {
   };
 
   return (
-    <div className="border-t border-tvs-charcoal-800/60 bg-tvs-charcoal-950/80 backdrop-blur-sm">
+    <div className="border-t border-hd-ink-800/60 bg-hd-ink-950/80 backdrop-blur-sm">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         {/* Info */}
-        <div className="flex items-center gap-2.5 text-sm text-tvs-charcoal-400">
-          <FileText className="size-4 text-tvs-charcoal-600 shrink-0" />
+        <div className="flex items-center gap-2.5 text-sm text-hd-ink-400">
+          <FileText className="size-4 text-hd-ink-600 shrink-0" />
           <span>
-            Download the full <span className="text-tvs-charcoal-200 font-semibold">{year}</span> ride calendar as a branded PDF
+            Download the full <span className="text-hd-ink-200 font-semibold">{year}</span> ride calendar as a branded PDF
           </span>
         </div>
 
@@ -75,8 +75,8 @@ export function CalendarExportBar({ year }: CalendarExportBarProps) {
             "disabled:cursor-not-allowed disabled:opacity-60",
             state === "done"  && "bg-emerald-600/15 border-emerald-700/40 text-emerald-400",
             state === "error" && "bg-red-900/20 border-red-800/40 text-red-400",
-            state === "loading" && "bg-tvs-charcoal-800/50 border-tvs-charcoal-700/40 text-tvs-charcoal-400",
-            state === "idle"  && "bg-tvs-red-600/10 border-tvs-red-700/40 text-tvs-red-400 hover:bg-tvs-red-600/20 hover:border-tvs-red-600/60",
+            state === "loading" && "bg-hd-ink-800/50 border-hd-ink-700/40 text-hd-ink-400",
+            state === "idle"  && "bg-hd-ember-600/10 border-hd-ember-700/40 text-hd-ember-400 hover:bg-hd-ember-600/20 hover:border-hd-ember-600/60",
           )}
         >
           {state === "loading" && <Loader2 className="size-3.5 animate-spin" />}

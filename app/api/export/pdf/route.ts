@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type":        "application/pdf",
-        "Content-Disposition": `attachment; filename="tvs-nepal-calendar-${year}.pdf"`,
+        "Content-Disposition": `attachment; filename="HimalayanDrift-calendar-${year}.pdf"`,
         "Cache-Control":       "no-store",
       },
     });

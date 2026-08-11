@@ -26,16 +26,16 @@ export default async function MembershipPage() {
       {/* Header */}
       <AnimateIn className="mb-10 text-center">
         <div className="flex items-center justify-center gap-2 mb-3">
-          <span className="block w-8 h-px bg-tvs-red-600 rounded-full" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-tvs-red-400">
+          <span className="block w-8 h-px bg-hd-ember-600 rounded-full" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-hd-ember-400">
             Community
           </span>
-          <span className="block w-8 h-px bg-tvs-red-600 rounded-full" />
+          <span className="block w-8 h-px bg-hd-ember-600 rounded-full" />
         </div>
-        <h1 className="text-4xl sm:text-5xl font-black text-tvs-charcoal-50 mb-3">
+        <h1 className="text-4xl sm:text-5xl font-black text-hd-ink-50 mb-3">
           Membership Card
         </h1>
-        <p className="text-sm sm:text-base text-tvs-charcoal-400 max-w-lg mx-auto leading-relaxed">
+        <p className="text-sm sm:text-base text-hd-ink-400 max-w-lg mx-auto leading-relaxed">
           Official digital ID for Himalayan Drift members.
           Free to apply — approved by the Himalayan Drift team.
         </p>
@@ -45,8 +45,8 @@ export default async function MembershipPage() {
       {settings.benefits.length > 0 && (
         <AnimateIn className="mb-10">
           <div className="flex items-center gap-2 mb-4">
-            <span className="block w-3 h-px bg-tvs-red-600 rounded-full" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-tvs-red-400">
+            <span className="block w-3 h-px bg-hd-ember-600 rounded-full" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-hd-ember-400">
               Member Benefits
             </span>
           </div>
@@ -54,10 +54,10 @@ export default async function MembershipPage() {
             {settings.benefits.map((benefit, i) => (
               <div
                 key={i}
-                className="flex items-start gap-3 p-4 rounded-xl gradient-card border border-tvs-charcoal-700/60"
+                className="flex items-start gap-3 p-4 rounded-xl gradient-card border border-hd-ink-700/60"
               >
-                <CheckCircle2 className="size-4 text-tvs-red-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-tvs-charcoal-200 leading-relaxed">{benefit}</span>
+                <CheckCircle2 className="size-4 text-hd-ember-500 shrink-0 mt-0.5" />
+                <span className="text-sm text-hd-ink-200 leading-relaxed">{benefit}</span>
               </div>
             ))}
           </div>

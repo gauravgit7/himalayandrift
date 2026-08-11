@@ -67,13 +67,13 @@ export function RideQrCode({
 
   return (
     <div className={cn(
-      "p-4 rounded-xl gradient-card border border-tvs-charcoal-700/60 space-y-3",
+      "p-4 rounded-xl gradient-card border border-hd-ink-700/60 space-y-3",
       className
     )}>
       {/* Header */}
       <div className="flex items-center gap-2">
-        <QrCode className="size-4 text-tvs-charcoal-400 shrink-0" />
-        <h3 className="text-sm font-bold text-tvs-charcoal-50">{label}</h3>
+        <QrCode className="size-4 text-hd-ink-400 shrink-0" />
+        <h3 className="text-sm font-bold text-hd-ink-50">{label}</h3>
       </div>
 
       {/* QR code — centred, white bg for contrast */}
@@ -93,7 +93,7 @@ export function RideQrCode({
 
       {/* URL hint */}
       <p
-        className="text-[10px] text-tvs-charcoal-600 text-center leading-tight break-all"
+        className="text-[10px] text-hd-ink-600 text-center leading-tight break-all"
         title={resolvedUrl}
       >
         {displayUrl}
@@ -103,7 +103,7 @@ export function RideQrCode({
       <div className="flex gap-2">
         <button
           onClick={handleDownload}
-          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-tvs-charcoal-800/60 border border-tvs-charcoal-700/40 text-xs font-semibold text-tvs-charcoal-300 hover:bg-tvs-charcoal-700/60 hover:text-tvs-charcoal-100 transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-hd-ink-800/60 border border-hd-ink-700/40 text-xs font-semibold text-hd-ink-300 hover:bg-hd-ink-700/60 hover:text-hd-ink-100 transition-colors"
           title="Download QR code as PNG"
         >
           <Download className="size-3.5" />
@@ -113,7 +113,7 @@ export function RideQrCode({
           href={resolvedUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-tvs-charcoal-800/60 border border-tvs-charcoal-700/40 text-xs font-semibold text-tvs-charcoal-300 hover:bg-tvs-charcoal-700/60 hover:text-tvs-charcoal-100 transition-colors"
+          className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-hd-ink-800/60 border border-hd-ink-700/40 text-xs font-semibold text-hd-ink-300 hover:bg-hd-ink-700/60 hover:text-hd-ink-100 transition-colors"
           title="Open link"
         >
           <ExternalLink className="size-3.5" />
@@ -158,7 +158,7 @@ export function RideQrCodeInline({
           includeMargin={false}
         />
       </div>
-      <p className="text-[9px] text-tvs-charcoal-500 leading-none">{label}</p>
+      <p className="text-[9px] text-hd-ink-500 leading-none">{label}</p>
     </div>
   );
 }

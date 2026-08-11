@@ -18,14 +18,14 @@ import type { PushOptInSettings }    from "@/components/shared/PushOptIn";
 // ---------------------------------------------------------------------------
 
 const inputCls = cn(
-  "w-full h-9 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm",
-  "text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-  "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors"
+  "w-full h-9 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm",
+  "text-hd-ink-100 placeholder:text-hd-ink-600",
+  "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors"
 );
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-xs font-semibold text-tvs-charcoal-400 uppercase tracking-wide mb-1">
+    <label className="block text-xs font-semibold text-hd-ink-400 uppercase tracking-wide mb-1">
       {children}
     </label>
   );
@@ -44,7 +44,7 @@ function Toggle({ checked, onChange, label, sub }: {
         onClick={() => onChange(!checked)}
         className={cn(
           "relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0",
-          checked ? "bg-tvs-red-600" : "bg-tvs-charcoal-700"
+          checked ? "bg-hd-ember-600" : "bg-hd-ink-700"
         )}
       >
         <span className={cn(
@@ -53,10 +53,10 @@ function Toggle({ checked, onChange, label, sub }: {
         )} />
       </button>
       <div>
-        <p className="text-sm font-medium text-tvs-charcoal-200 group-hover:text-tvs-charcoal-50 transition-colors">
+        <p className="text-sm font-medium text-hd-ink-200 group-hover:text-hd-ink-50 transition-colors">
           {label}
         </p>
-        {sub && <p className="text-xs text-tvs-charcoal-600">{sub}</p>}
+        {sub && <p className="text-xs text-hd-ink-600">{sub}</p>}
       </div>
     </label>
   );
@@ -129,22 +129,22 @@ export function PushNotificationsAdmin({
     <div className="space-y-6 max-w-2xl">
 
       {/* ── Subscriber count ── */}
-      <div className="flex items-center gap-4 p-4 rounded-xl gradient-card border border-tvs-charcoal-700/60">
-        <div className="size-10 rounded-xl bg-tvs-red-900/40 border border-tvs-red-800/40 flex items-center justify-center shrink-0">
-          <Users className="size-5 text-tvs-red-400" />
+      <div className="flex items-center gap-4 p-4 rounded-xl gradient-card border border-hd-ink-700/60">
+        <div className="size-10 rounded-xl bg-hd-ember-900/40 border border-hd-ember-800/40 flex items-center justify-center shrink-0">
+          <Users className="size-5 text-hd-ember-400" />
         </div>
         <div>
-          <p className="text-2xl font-black text-tvs-charcoal-50">{subscriberCount}</p>
-          <p className="text-xs text-tvs-charcoal-500">active push subscribers</p>
+          <p className="text-2xl font-black text-hd-ink-50">{subscriberCount}</p>
+          <p className="text-xs text-hd-ink-500">active push subscribers</p>
         </div>
       </div>
 
       {/* ── Settings ── */}
-      <div className="space-y-4 p-5 rounded-xl gradient-card border border-tvs-charcoal-700/60">
-        <h3 className="text-sm font-bold text-tvs-charcoal-50">Opt-In Prompt Settings</h3>
+      <div className="space-y-4 p-5 rounded-xl gradient-card border border-hd-ink-700/60">
+        <h3 className="text-sm font-bold text-hd-ink-50">Opt-In Prompt Settings</h3>
 
         {settingsErr && (
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-tvs-red-950/60 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
             <AlertCircle className="size-4 shrink-0 mt-px" />{settingsErr}
           </div>
         )}
@@ -169,8 +169,8 @@ export function PushNotificationsAdmin({
               onChange={(e) => set("promptStyle", e.target.value as "banner" | "modal")}
               className={cn(inputCls, "appearance-none")}
             >
-              <option value="banner" className="bg-tvs-charcoal-900">Bottom banner (subtle)</option>
-              <option value="modal"  className="bg-tvs-charcoal-900">Modal dialog</option>
+              <option value="banner" className="bg-hd-ink-900">Bottom banner (subtle)</option>
+              <option value="modal"  className="bg-hd-ink-900">Modal dialog</option>
             </select>
           </div>
 
@@ -181,16 +181,16 @@ export function PushNotificationsAdmin({
               onChange={(e) => set("promptPage", e.target.value as PushOptInSettings["promptPage"])}
               className={cn(inputCls, "appearance-none")}
             >
-              <option value="any"   className="bg-tvs-charcoal-900">Any page</option>
-              <option value="home"  className="bg-tvs-charcoal-900">Home page only</option>
-              <option value="rides" className="bg-tvs-charcoal-900">Rides pages only</option>
+              <option value="any"   className="bg-hd-ink-900">Any page</option>
+              <option value="home"  className="bg-hd-ink-900">Home page only</option>
+              <option value="rides" className="bg-hd-ink-900">Rides pages only</option>
             </select>
           </div>
 
           <div>
             <FieldLabel>
               Delay —{" "}
-              <span className="font-mono text-tvs-charcoal-300">
+              <span className="font-mono text-hd-ink-300">
                 {settings.promptDelaySecs}s
               </span>
             </FieldLabel>
@@ -201,9 +201,9 @@ export function PushNotificationsAdmin({
               step={1}
               value={settings.promptDelaySecs}
               onChange={(e) => set("promptDelaySecs", parseInt(e.target.value))}
-              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-tvs-red-600 mt-2"
+              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-hd-ember-600 mt-2"
             />
-            <div className="flex justify-between text-[10px] text-tvs-charcoal-600 mt-1">
+            <div className="flex justify-between text-[10px] text-hd-ink-600 mt-1">
               <span>0s (immediate)</span>
               <span>30s</span>
             </div>
@@ -216,8 +216,8 @@ export function PushNotificationsAdmin({
           className={cn(
             "flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-semibold transition-all",
             saving || saved
-              ? "bg-tvs-charcoal-700 text-tvs-charcoal-400 cursor-not-allowed"
-              : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red"
+              ? "bg-hd-ink-700 text-hd-ink-400 cursor-not-allowed"
+              : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember"
           )}
         >
           {saving ? (
@@ -231,10 +231,10 @@ export function PushNotificationsAdmin({
       </div>
 
       {/* ── Manual broadcast ── */}
-      <div className="space-y-4 p-5 rounded-xl gradient-card border border-tvs-charcoal-700/60">
+      <div className="space-y-4 p-5 rounded-xl gradient-card border border-hd-ink-700/60">
         <div>
-          <h3 className="text-sm font-bold text-tvs-charcoal-50">Send Notification</h3>
-          <p className="text-xs text-tvs-charcoal-500 mt-0.5">
+          <h3 className="text-sm font-bold text-hd-ink-50">Send Notification</h3>
+          <p className="text-xs text-hd-ink-500 mt-0.5">
             Broadcasts to all {subscriberCount} subscriber{subscriberCount !== 1 ? "s" : ""} immediately.
           </p>
         </div>
@@ -244,12 +244,12 @@ export function PushNotificationsAdmin({
             <CheckCircle2 className="size-4 shrink-0" />
             Sent to {sendResult.sent} subscriber{sendResult.sent !== 1 ? "s" : ""}
             {sendResult.failed > 0 && (
-              <span className="text-tvs-charcoal-500 ml-1">({sendResult.failed} failed)</span>
+              <span className="text-hd-ink-500 ml-1">({sendResult.failed} failed)</span>
             )}
           </div>
         )}
         {sendErr && (
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-tvs-red-950/60 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
             <AlertCircle className="size-4 shrink-0 mt-px" />{sendErr}
           </div>
         )}
@@ -295,8 +295,8 @@ export function PushNotificationsAdmin({
           className={cn(
             "flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-semibold transition-all",
             sending || !title.trim() || !body.trim() || subscriberCount === 0
-              ? "bg-tvs-charcoal-700 text-tvs-charcoal-400 cursor-not-allowed"
-              : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red"
+              ? "bg-hd-ink-700 text-hd-ink-400 cursor-not-allowed"
+              : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember"
           )}
         >
           {sending ? (

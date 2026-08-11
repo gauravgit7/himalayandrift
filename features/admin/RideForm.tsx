@@ -87,9 +87,9 @@ function FieldGroup({
 }) {
   return (
     <div className="space-y-1">
-      <label className="text-xs font-semibold text-tvs-charcoal-400 uppercase tracking-wide">
+      <label className="text-xs font-semibold text-hd-ink-400 uppercase tracking-wide">
         {label}
-        {required && <span className="text-tvs-red-400 ml-0.5">*</span>}
+        {required && <span className="text-hd-ember-400 ml-0.5">*</span>}
       </label>
       {children}
     </div>
@@ -97,15 +97,15 @@ function FieldGroup({
 }
 
 const inputClass = cn(
-  "w-full h-9 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700",
-  "text-sm text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-  "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors"
+  "w-full h-9 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700",
+  "text-sm text-hd-ink-100 placeholder:text-hd-ink-600",
+  "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors"
 );
 const selectClass   = cn(inputClass, "appearance-none cursor-pointer");
 const textareaClass = cn(
-  "w-full px-3 py-2 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700",
-  "text-sm text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600 resize-none",
-  "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors"
+  "w-full px-3 py-2 rounded-lg bg-hd-ink-800 border border-hd-ink-700",
+  "text-sm text-hd-ink-100 placeholder:text-hd-ink-600 resize-none",
+  "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors"
 );
 
 // ---------------------------------------------------------------------------
@@ -190,7 +190,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* ── Server error ── */}
       {serverError && (
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-tvs-red-950/60 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-hd-ember-950/60 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
           <AlertCircle className="size-4 shrink-0 mt-px" />
           <span>{serverError}</span>
         </div>
@@ -214,7 +214,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
                 value={form.title}
                 onChange={(e) => set("title", e.target.value)}
                 placeholder="e.g. Nagarkot Winter Sunrise Ride"
-                className={cn(inputClass, errors.title && "border-tvs-red-600")}
+                className={cn(inputClass, errors.title && "border-hd-ember-600")}
               />
               {errors.title && <ErrorMsg msg={errors.title} />}
             </FieldGroup>
@@ -227,7 +227,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               className={selectClass}
             >
               {RIDE_TYPES.map((t) => (
-                <option key={t.value} value={t.value} className="bg-tvs-charcoal-900">
+                <option key={t.value} value={t.value} className="bg-hd-ink-900">
                   {t.label}
                 </option>
               ))}
@@ -251,7 +251,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               className={selectClass}
             >
               {RIDE_PRIORITIES.map((p) => (
-                <option key={p.value} value={p.value} className="bg-tvs-charcoal-900">
+                <option key={p.value} value={p.value} className="bg-hd-ink-900">
                   {p.label}
                 </option>
               ))}
@@ -268,7 +268,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               type="date"
               value={form.startDate}
               onChange={(e) => handleStartDate(e.target.value)}
-              className={cn(inputClass, errors.startDate && "border-tvs-red-600")}
+              className={cn(inputClass, errors.startDate && "border-hd-ember-600")}
             />
             {errors.startDate && <ErrorMsg msg={errors.startDate} />}
           </FieldGroup>
@@ -279,7 +279,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               value={form.endDate}
               min={form.startDate}
               onChange={(e) => set("endDate", e.target.value)}
-              className={cn(inputClass, errors.endDate && "border-tvs-red-600")}
+              className={cn(inputClass, errors.endDate && "border-hd-ember-600")}
             />
             {errors.endDate && <ErrorMsg msg={errors.endDate} />}
           </FieldGroup>
@@ -291,7 +291,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               className={selectClass}
             >
               {RIDE_STATUSES.map((s) => (
-                <option key={s.value} value={s.value} className="bg-tvs-charcoal-900">
+                <option key={s.value} value={s.value} className="bg-hd-ink-900">
                   {s.label}
                 </option>
               ))}
@@ -313,7 +313,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
                 maxLength={120}
                 className={textareaClass}
               />
-              <p className="text-[10px] text-tvs-charcoal-600 text-right mt-1">
+              <p className="text-[10px] text-hd-ink-600 text-right mt-1">
                 {form.shortDescription.length}/120
               </p>
             </FieldGroup>
@@ -359,9 +359,9 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               onChange={(e) => set("marshalId", e.target.value)}
               className={selectClass}
             >
-              <option value="" className="bg-tvs-charcoal-900">- Select Marshal -</option>
+              <option value="" className="bg-hd-ink-900">- Select Marshal -</option>
               {marshals.map((m) => (
-                <option key={m.id} value={m.id} className="bg-tvs-charcoal-900">
+                <option key={m.id} value={m.id} className="bg-hd-ink-900">
                   {m.name} ({m.role})
                 </option>
               ))}
@@ -376,8 +376,8 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
               className={cn(
                 "relative inline-flex size-5 items-center justify-center rounded border-2 transition-colors",
                 form.isFeatured
-                  ? "bg-tvs-red-600 border-tvs-red-600"
-                  : "bg-transparent border-tvs-charcoal-600 group-hover:border-tvs-charcoal-400"
+                  ? "bg-hd-ember-600 border-hd-ember-600"
+                  : "bg-transparent border-hd-ink-600 group-hover:border-hd-ink-400"
               )}
             >
               {form.isFeatured && (
@@ -390,7 +390,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
                 className="sr-only"
               />
             </span>
-            <span className="text-sm text-tvs-charcoal-300 group-hover:text-tvs-charcoal-50 transition-colors">
+            <span className="text-sm text-hd-ink-300 group-hover:text-hd-ink-50 transition-colors">
               Featured on homepage
             </span>
           </label>
@@ -399,9 +399,9 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
 
       {/* ── Section: Banner image ── */}
       <Section title="Banner Image">
-        <p className="text-xs text-tvs-charcoal-500 -mt-2">
+        <p className="text-xs text-hd-ink-500 -mt-2">
           Displayed on the ride detail page and ride cards. Stored in{" "}
-          <code className="text-tvs-charcoal-400">ride-banners</code> bucket.
+          <code className="text-hd-ink-400">ride-banners</code> bucket.
         </p>
         <ImageUpload
           bucket="ride-banners"
@@ -415,7 +415,7 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
 
       {/* ── Section: Route ── */}
       <Section title="Route">
-        <p className="text-xs text-tvs-charcoal-500 -mt-2">
+        <p className="text-xs text-hd-ink-500 -mt-2">
           Search locations using OpenStreetMap · Fetches road-following route from OSRM (free, no API key needed).
         </p>
         <RouteBuilder
@@ -425,11 +425,11 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
       </Section>
 
       {/* ── Action bar ── */}
-      <div className="flex items-center gap-3 pt-4 border-t border-tvs-charcoal-800/60">
+      <div className="flex items-center gap-3 pt-4 border-t border-hd-ink-800/60">
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-tvs-charcoal-700 hover:border-tvs-charcoal-500 text-tvs-charcoal-300 hover:text-tvs-charcoal-50 text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-300 hover:text-hd-ink-50 text-sm font-medium transition-colors"
         >
           <ArrowLeft className="size-4" />
           Cancel
@@ -440,8 +440,8 @@ export function RideForm({ mode, initialData, rideId, marshals }: RideFormProps)
           className={cn(
             "flex items-center gap-2 px-6 py-2.5 rounded-lg text-white font-semibold text-sm transition-all",
             saving || saved
-              ? "bg-tvs-charcoal-700 text-tvs-charcoal-400 cursor-not-allowed"
-              : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red"
+              ? "bg-hd-ink-700 text-hd-ink-400 cursor-not-allowed"
+              : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember"
           )}
         >
           <Save className="size-4" />
@@ -466,10 +466,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-tvs-charcoal-500">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-hd-ink-500">
           {title}
         </h3>
-        <div className="flex-1 h-px bg-tvs-charcoal-800/60" />
+        <div className="flex-1 h-px bg-hd-ink-800/60" />
       </div>
       {children}
     </div>
@@ -478,7 +478,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function ErrorMsg({ msg }: { msg: string }) {
   return (
-    <p className="flex items-center gap-1 text-xs text-tvs-red-400 mt-1">
+    <p className="flex items-center gap-1 text-xs text-hd-ember-400 mt-1">
       <AlertCircle className="size-3 shrink-0" />
       {msg}
     </p>

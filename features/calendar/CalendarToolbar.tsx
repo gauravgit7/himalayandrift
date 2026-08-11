@@ -113,33 +113,33 @@ export function CalendarToolbar({
 
         {/* ── Page title ── */}
         <div className="flex items-center gap-2 mr-2">
-          <Calendar className="size-5 text-tvs-red-500 shrink-0" />
-          <h1 className="text-base font-black text-tvs-charcoal-50 tracking-tight whitespace-nowrap">
+          <Calendar className="size-5 text-hd-ember-500 shrink-0" />
+          <h1 className="text-base font-black text-hd-ink-50 tracking-tight whitespace-nowrap">
             Ride Calendar
           </h1>
         </div>
 
         {/* ── Year / month navigation ── */}
-        <div className="flex items-center gap-1 bg-tvs-charcoal-900 border border-tvs-charcoal-800 rounded-lg overflow-hidden">
+        <div className="flex items-center gap-1 bg-hd-ink-900 border border-hd-ink-800 rounded-lg overflow-hidden">
           <button
             onClick={handlePrev}
-            className="p-2 hover:bg-tvs-charcoal-800 text-tvs-charcoal-400 hover:text-tvs-charcoal-50 transition-colors"
+            className="p-2 hover:bg-hd-ink-800 text-hd-ink-400 hover:text-hd-ink-50 transition-colors"
             aria-label="Previous"
           >
             <ChevronLeft className="size-4" />
           </button>
           <div className="px-3 py-1 flex flex-col items-center min-w-[130px]">
-            <span className="text-sm font-bold text-tvs-charcoal-50 tabular-nums leading-tight flex items-center gap-1.5">
+            <span className="text-sm font-bold text-hd-ink-50 tabular-nums leading-tight flex items-center gap-1.5">
               {primaryNavLabel}
-              {isLoadingYear && <Loader2 className="size-3 animate-spin text-tvs-red-400" />}
+              {isLoadingYear && <Loader2 className="size-3 animate-spin text-hd-ember-400" />}
             </span>
-            <span className="text-[10px] text-tvs-charcoal-500 tabular-nums leading-tight">
+            <span className="text-[10px] text-hd-ink-500 tabular-nums leading-tight">
               {referenceNavLabel}
             </span>
           </div>
           <button
             onClick={handleNext}
-            className="p-2 hover:bg-tvs-charcoal-800 text-tvs-charcoal-400 hover:text-tvs-charcoal-50 transition-colors"
+            className="p-2 hover:bg-hd-ink-800 text-hd-ink-400 hover:text-hd-ink-50 transition-colors"
             aria-label="Next"
           >
             <ChevronRight className="size-4" />
@@ -150,7 +150,7 @@ export function CalendarToolbar({
         <DateModeToggle mode={dateMode} toggle={onToggleDateMode} size="sm" />
 
         {/* ── View switcher ── */}
-        <div className="flex items-center bg-tvs-charcoal-900 border border-tvs-charcoal-800 rounded-lg overflow-hidden">
+        <div className="flex items-center bg-hd-ink-900 border border-hd-ink-800 rounded-lg overflow-hidden">
           {VIEWS.map((v) => (
             <button
               key={v.id}
@@ -158,8 +158,8 @@ export function CalendarToolbar({
               className={cn(
                 "flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors",
                 view === v.id
-                  ? "bg-tvs-red-600 text-white"
-                  : "text-tvs-charcoal-400 hover:text-tvs-charcoal-50 hover:bg-tvs-charcoal-800"
+                  ? "bg-hd-ember-600 text-white"
+                  : "text-hd-ink-400 hover:text-hd-ink-50 hover:bg-hd-ink-800"
               )}
             >
               {v.icon}
@@ -169,16 +169,16 @@ export function CalendarToolbar({
         </div>
 
         {/* ── Ride count / filter status ── */}
-        <div className="ml-auto flex items-center gap-3 text-xs text-tvs-charcoal-400">
+        <div className="ml-auto flex items-center gap-3 text-xs text-hd-ink-400">
           {isFiltered ? (
             <span className="font-semibold">
-              <span className="text-tvs-red-400">{filteredCount}</span>
-              <span className="text-tvs-charcoal-600"> / {totalCount}</span>
+              <span className="text-hd-ember-400">{filteredCount}</span>
+              <span className="text-hd-ink-600"> / {totalCount}</span>
               <span className="ml-1">rides</span>
             </span>
           ) : (
             <span>
-              <span className="font-bold text-tvs-charcoal-200">{totalCount}</span>
+              <span className="font-bold text-hd-ink-200">{totalCount}</span>
               <span className="ml-1">rides in {year}</span>
             </span>
           )}

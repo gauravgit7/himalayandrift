@@ -37,14 +37,14 @@ function LogoOverlay({ brandLogos }: { brandLogos?: BrandLogos | null }) {
 // Priority → visual accent
 const PRIORITY_ACCENT: Record<string, string> = {
   marquee:   "border-violet-700/60  hover:border-violet-500/80",
-  signature: "border-tvs-red-800/50 hover:border-tvs-red-600/70",
-  standard:  "border-tvs-charcoal-800 hover:border-tvs-charcoal-600",
+  signature: "border-hd-ember-800/50 hover:border-hd-ember-600/70",
+  standard:  "border-hd-ink-800 hover:border-hd-ink-600",
 };
 
 const PRIORITY_TOP_STRIPE: Record<string, string> = {
-  marquee:   "bg-gradient-to-r from-violet-600 to-tvs-red-600",
-  signature: "bg-tvs-red-600",
-  standard:  "bg-tvs-charcoal-700",
+  marquee:   "bg-gradient-to-r from-violet-600 to-hd-ember-600",
+  signature: "bg-hd-ember-600",
+  standard:  "bg-hd-ink-700",
 };
 
 interface RideCardProps {
@@ -73,8 +73,8 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
         href={ROUTES.ride(ride.slug)}
         className={cn(
           "group flex items-center gap-3 p-3 rounded-lg",
-          "bg-tvs-charcoal-900 border border-tvs-charcoal-800",
-          "hover:bg-tvs-charcoal-800 hover:border-tvs-charcoal-700",
+          "bg-hd-ink-900 border border-hd-ink-800",
+          "hover:bg-hd-ink-800 hover:border-hd-ink-700",
           "transition-all duration-200",
           className
         )}
@@ -87,11 +87,11 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
           )}
         />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-tvs-charcoal-100 truncate group-hover:text-tvs-charcoal-50">
+          <p className="text-sm font-medium text-hd-ink-100 truncate group-hover:text-hd-ink-50">
             {ride.title}
           </p>
-          <p className="text-xs text-tvs-charcoal-300 mt-0.5 leading-tight">{primaryDate}</p>
-          <p className="text-[10px] text-tvs-charcoal-500 leading-tight">{referenceDate}</p>
+          <p className="text-xs text-hd-ink-300 mt-0.5 leading-tight">{primaryDate}</p>
+          <p className="text-[10px] text-hd-ink-500 leading-tight">{referenceDate}</p>
         </div>
         <StatusBadge status={ride.status} size="xs" />
       </Link>
@@ -113,7 +113,7 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
       <div className={cn("h-0.5 w-full shrink-0", PRIORITY_TOP_STRIPE[ride.priority])} />
 
       {/* Banner: photo → mini route map → gradient+logo */}
-      <div className="dark-surface relative h-36 shrink-0 overflow-hidden bg-tvs-charcoal-800">
+      <div className="dark-surface relative h-36 shrink-0 overflow-hidden bg-hd-ink-800">
         {ride.bannerImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -157,7 +157,7 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
 
         {/* Duration badge for multi-day */}
         {duration > 1 && (
-          <div className="absolute bottom-2 left-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-tvs-charcoal-200">
+          <div className="absolute bottom-2 left-2 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-hd-ink-200">
             {duration}D
           </div>
         )}
@@ -168,37 +168,37 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
         <div>
           <h3
             className={cn(
-              "font-semibold leading-snug line-clamp-2 group-hover:text-tvs-charcoal-50 transition-colors",
+              "font-semibold leading-snug line-clamp-2 group-hover:text-hd-ink-50 transition-colors",
               variant === "featured"
-                ? "text-base text-tvs-charcoal-50"
-                : "text-sm text-tvs-charcoal-100"
+                ? "text-base text-hd-ink-50"
+                : "text-sm text-hd-ink-100"
             )}
           >
             {ride.title}
           </h3>
           {ride.shortDescription && (
-            <p className="text-xs text-tvs-charcoal-400 mt-1 line-clamp-2">
+            <p className="text-xs text-hd-ink-400 mt-1 line-clamp-2">
               {ride.shortDescription}
             </p>
           )}
         </div>
 
         {/* Meta row */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-tvs-charcoal-300">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-hd-ink-300">
           <span className="flex items-center gap-1">
-            <Calendar className="size-3 shrink-0 text-tvs-charcoal-400" />
+            <Calendar className="size-3 shrink-0 text-hd-ink-400" />
             <span className="flex flex-col leading-tight">
-              <span className="text-tvs-charcoal-200">{primaryDate}</span>
-              <span className="text-[10px] text-tvs-charcoal-500">{referenceDate}</span>
+              <span className="text-hd-ink-200">{primaryDate}</span>
+              <span className="text-[10px] text-hd-ink-500">{referenceDate}</span>
             </span>
           </span>
           <span className="flex items-center gap-1">
-            <MapPin className="size-3 shrink-0 text-tvs-charcoal-400" />
+            <MapPin className="size-3 shrink-0 text-hd-ink-400" />
             {ride.location}
           </span>
           {ride.expectedRiders > 0 && (
             <span className="flex items-center gap-1">
-              <Users className="size-3 shrink-0 text-tvs-charcoal-400" />
+              <Users className="size-3 shrink-0 text-hd-ink-400" />
               {ride.expectedRiders}
             </span>
           )}
@@ -210,13 +210,13 @@ export function RideCard({ ride, variant = "default", className, brandLogos, dat
             {ride.tags.slice(0, 2).map((tag) => (
               <span
                 key={tag}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-tvs-charcoal-800 text-tvs-charcoal-400 border border-tvs-charcoal-700"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-hd-ink-800 text-hd-ink-400 border border-hd-ink-700"
               >
                 #{tag}
               </span>
             ))}
           </div>
-          <span className="text-tvs-red-500 group-hover:text-tvs-red-400 transition-colors">
+          <span className="text-hd-ember-500 group-hover:text-hd-ember-400 transition-colors">
             <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-transform" />
           </span>
         </div>

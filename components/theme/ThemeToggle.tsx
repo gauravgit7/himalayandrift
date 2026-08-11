@@ -26,15 +26,15 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       className={cn(
         "relative size-9 rounded-lg flex items-center justify-center",
         "border transition-all duration-200 cursor-pointer",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tvs-red-500 focus-visible:ring-offset-1",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hd-ember-500 focus-visible:ring-offset-1",
         isDark
           ? [
-              "border-tvs-charcoal-700 text-tvs-charcoal-300",
-              "hover:border-tvs-charcoal-500 hover:text-white hover:bg-tvs-charcoal-800",
+              "border-hd-ink-700 text-hd-ink-300",
+              "hover:border-hd-ink-500 hover:text-white hover:bg-hd-ink-800",
             ]
           : [
-              "border-tvs-charcoal-700 text-tvs-charcoal-400",
-              "hover:border-tvs-charcoal-500 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-800",
+              "border-hd-ink-700 text-hd-ink-400",
+              "hover:border-hd-ink-500 hover:text-hd-ink-100 hover:bg-hd-ink-800",
             ],
         className
       )}

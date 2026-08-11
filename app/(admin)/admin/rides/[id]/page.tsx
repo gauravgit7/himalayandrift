@@ -32,19 +32,19 @@ export default async function EditRidePage({ params }: Props) {
       <div className="flex items-center gap-3">
         <Link
           href={ROUTES.adminRides}
-          className="flex items-center gap-1.5 text-sm text-tvs-charcoal-400 hover:text-tvs-charcoal-100 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-hd-ink-400 hover:text-hd-ink-100 transition-colors"
         >
           <ArrowLeft className="size-4" />
           All Rides
         </Link>
-        <span className="text-tvs-charcoal-700">/</span>
-        <span className="text-sm text-tvs-charcoal-200 font-medium truncate max-w-[200px]">
+        <span className="text-hd-ink-700">/</span>
+        <span className="text-sm text-hd-ink-200 font-medium truncate max-w-[200px]">
           {ride.title}
         </span>
       </div>
       <div>
-        <h1 className="text-2xl font-black text-tvs-charcoal-50">Edit Ride</h1>
-        <p className="text-sm text-tvs-charcoal-400 mt-0.5">{ride.slug}</p>
+        <h1 className="text-2xl font-black text-hd-ink-50">Edit Ride</h1>
+        <p className="text-sm text-hd-ink-400 mt-0.5">{ride.slug}</p>
       </div>
       <RideForm mode="edit" initialData={ride} rideId={ride.id} marshals={marshals} />
     </div>

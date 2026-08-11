@@ -8,8 +8,9 @@ import { PwaSettingsAdmin }           from "@/features/admin/PwaSettingsAdmin";
 import { PushNotificationsAdmin }     from "@/features/admin/PushNotificationsAdmin";
 import { CardSettingsAdmin }          from "@/features/admin/CardSettingsAdmin";
 import { getCardSettings }            from "@/lib/supabase/queries";
+import { APP_META }                   from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Settings | TVS Nepal Admin" };
+export const metadata: Metadata = { title: "Settings | Himalayan Drift Admin" };
 
 // ---------------------------------------------------------------------------
 // Data fetching
@@ -24,8 +25,8 @@ async function getPwaSettings() {
     .single();
 
   return {
-    appName:   data?.app_name   ?? "TVS Nepal Ride Operations",
-    shortName: data?.short_name ?? "TVS Nepal",
+    appName:   data?.app_name   ?? APP_META.name,
+    shortName: data?.short_name ?? APP_META.shortName,
     iconUrl:   data?.icon_url   ?? null,
   };
 }
@@ -68,8 +69,8 @@ export default async function AdminSettingsPage() {
     <div className="p-4 sm:p-6 lg:p-8 space-y-10 max-w-3xl">
 
       <div>
-        <h1 className="text-2xl font-black text-tvs-charcoal-50">Settings</h1>
-        <p className="text-sm text-tvs-charcoal-400 mt-0.5">
+        <h1 className="text-2xl font-black text-hd-ink-50">Settings</h1>
+        <p className="text-sm text-hd-ink-400 mt-0.5">
           PWA app identity and push notification configuration
         </p>
       </div>
@@ -77,8 +78,8 @@ export default async function AdminSettingsPage() {
       {/* ── PWA Identity ── */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <span className="block w-3 h-px bg-tvs-red-600 rounded-full" />
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-tvs-red-400">
+          <span className="block w-3 h-px bg-hd-ember-600 rounded-full" />
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-hd-ember-400">
             App Identity
           </h2>
         </div>
@@ -88,8 +89,8 @@ export default async function AdminSettingsPage() {
       {/* ── Push Notifications ── */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <span className="block w-3 h-px bg-tvs-charcoal-500 rounded-full" />
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-tvs-charcoal-400">
+          <span className="block w-3 h-px bg-hd-ink-500 rounded-full" />
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-hd-ink-400">
             Push Notifications
           </h2>
         </div>
@@ -102,8 +103,8 @@ export default async function AdminSettingsPage() {
       {/* ── Membership Card ── */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <span className="block w-3 h-px bg-tvs-red-600 rounded-full" />
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-tvs-red-400">
+          <span className="block w-3 h-px bg-hd-ember-600 rounded-full" />
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-hd-ember-400">
             Membership Card
           </h2>
         </div>

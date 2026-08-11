@@ -1,5 +1,5 @@
 /* =============================================================================
-   TVS Nepal Ride Operations Platform - Global Styles
+   Himalayan Drift — Global Styles
    Tailwind v4 CSS-based configuration
    ============================================================================= */
 
@@ -20,53 +20,70 @@
   /* ── Typography ── */
   --font-family-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
 
-  /* ── TVS Brand Colors ── */
+  /* ── Himalayan Drift brand colours ──────────────────────────────────────
+     Sampled from public/brand/logo-primary.jpeg: a cream badge on a near-black
+     field, with orange for the crescent, the rocket flame and the two dashes.
+     Ember is the primary accent; ink is the neutral base and runs warm, because
+     the badge field is a warm black rather than a blue-grey one.
+     ---------------------------------------------------------------------- */
 
-  /* Deep Reds - primary brand identity */
-  --color-tvs-red-50:  #fef2f2;
-  --color-tvs-red-100: #fee2e2;
-  --color-tvs-red-200: #fecaca;
-  --color-tvs-red-300: #fca5a5;
-  --color-tvs-red-400: #f87171;
-  --color-tvs-red-500: #ef4444;
-  --color-tvs-red-600: #dc2626;
-  --color-tvs-red-700: #b91c1c;
-  --color-tvs-red-800: #991b1b;
-  --color-tvs-red-900: #7f1d1d;
-  --color-tvs-red-950: #450a0a;
+  /* Ember - primary accent. 500 is the logo orange, 700 the burnt orange
+     from the illustrated badge. */
+  --color-hd-ember-50:  #fef6ec;
+  --color-hd-ember-100: #fde9cd;
+  --color-hd-ember-200: #fbd19b;
+  --color-hd-ember-300: #f8b665;
+  --color-hd-ember-400: #f4a03c;
+  --color-hd-ember-500: #f09020;
+  --color-hd-ember-600: #d97a12;
+  --color-hd-ember-700: #c06008;
+  --color-hd-ember-800: #984c0c;
+  --color-hd-ember-900: #7a3f0f;
+  --color-hd-ember-950: #421f05;
 
-  /* Dark Crimson - premium accent */
-  --color-tvs-crimson-500: #c41e3a;
-  --color-tvs-crimson-600: #a01830;
-  --color-tvs-crimson-700: #7d1224;
-  --color-tvs-crimson-800: #5a0d1a;
-  --color-tvs-crimson-900: #380810;
-  --color-tvs-crimson-950: #1a0308;
+  /* Bone - the cream of the ring and lettering. Warm highlights and
+     card surfaces that should not read as pure white. */
+  --color-hd-bone-50:  #fdfaf4;
+  --color-hd-bone-100: #f8f0c8;
+  --color-hd-bone-200: #f8e0b8;
+  --color-hd-bone-300: #eed3a2;
+  --color-hd-bone-400: #d9b985;
+  --color-hd-bone-500: #b89050;
+  --color-hd-bone-600: #96733f;
 
-  /* Steel Blues - secondary accent */
-  --color-tvs-steel-50:  #f0f4ff;
-  --color-tvs-steel-100: #dde5ff;
-  --color-tvs-steel-200: #b3c4ff;
-  --color-tvs-steel-300: #809fff;
-  --color-tvs-steel-400: #4d78ff;
-  --color-tvs-steel-500: #2563eb;
-  --color-tvs-steel-600: #1d4ed8;
-  --color-tvs-steel-700: #1e40af;
-  --color-tvs-steel-800: #1e3a8a;
-  --color-tvs-steel-900: #1e3270;
+  /* Clay - deep warm accent, for premium/marquee treatments. */
+  --color-hd-clay-500: #a8500e;
+  --color-hd-clay-600: #8c410c;
+  --color-hd-clay-700: #70330a;
+  --color-hd-clay-800: #542607;
+  --color-hd-clay-900: #381905;
+  --color-hd-clay-950: #1c0c02;
 
-  /* Charcoal Blacks - dark base */
-  --color-tvs-charcoal-50:  #f8f8f8;
-  --color-tvs-charcoal-100: #efefef;
-  --color-tvs-charcoal-200: #d4d4d4;
-  --color-tvs-charcoal-300: #a3a3a3;
-  --color-tvs-charcoal-400: #6b6b6b;
-  --color-tvs-charcoal-500: #4a4a4a;
-  --color-tvs-charcoal-600: #333333;
-  --color-tvs-charcoal-700: #242424;
-  --color-tvs-charcoal-800: #1a1a1a;
-  --color-tvs-charcoal-900: #111111;
-  --color-tvs-charcoal-950: #080808;
+  /* Slate - secondary accent. The teal-slate of the mountains in the
+     illustrated badge, not a generic blue. */
+  --color-hd-slate-50:  #f0f5f6;
+  --color-hd-slate-100: #dbe6e8;
+  --color-hd-slate-200: #b6ccd0;
+  --color-hd-slate-300: #86a9b0;
+  --color-hd-slate-400: #5b8792;
+  --color-hd-slate-500: #3e6b78;
+  --color-hd-slate-600: #325662;
+  --color-hd-slate-700: #2b464f;
+  --color-hd-slate-800: #263a41;
+  --color-hd-slate-900: #223237;
+
+  /* Ink - neutral base, warm-tinted. 950 is the badge field. */
+  --color-hd-ink-50:  #faf8f5;
+  --color-hd-ink-100: #f0ece5;
+  --color-hd-ink-200: #d8d2c8;
+  --color-hd-ink-300: #a8a196;
+  --color-hd-ink-400: #6e6862;
+  --color-hd-ink-500: #4c4741;
+  --color-hd-ink-600: #35312d;
+  --color-hd-ink-700: #262320;
+  --color-hd-ink-800: #1a1815;
+  --color-hd-ink-900: #110f0d;
+  --color-hd-ink-950: #0a0908;
 
   /* ── Semantic Color Aliases ── */
 
@@ -95,8 +112,8 @@
   --radius-3xl: 1.5rem;
 
   /* ── Shadows ── */
-  --shadow-glow-red:    0 0 24px -4px rgb(220 38 38 / 0.4);
-  --shadow-glow-blue:   0 0 24px -4px rgb(37 99 235 / 0.4);
+  --shadow-glow-ember:  0 0 24px -4px rgb(240 144 32 / 0.4);
+  --shadow-glow-slate:  0 0 24px -4px rgb(62 107 120 / 0.4);
   --shadow-glow-violet: 0 0 24px -4px rgb(124 58 237 / 0.4);
   --shadow-cinematic:   0 25px 60px -12px rgb(0 0 0 / 0.7);
   --shadow-card:        0 4px 24px -4px rgb(0 0 0 / 0.3);
@@ -110,17 +127,17 @@
    --------------------------------------------------------------------------- */
 
 html.light .dark-surface {
-  --color-tvs-charcoal-950: #080808;
-  --color-tvs-charcoal-900: #111111;
-  --color-tvs-charcoal-800: #1a1a1a;
-  --color-tvs-charcoal-700: #242424;
-  --color-tvs-charcoal-600: #333333;
-  --color-tvs-charcoal-500: #4a4a4a;
-  --color-tvs-charcoal-400: #6b6b6b;
-  --color-tvs-charcoal-300: #a3a3a3;
-  --color-tvs-charcoal-200: #d4d4d4;
-  --color-tvs-charcoal-100: #efefef;
-  --color-tvs-charcoal-50:  #f8f8f8;
+  --color-hd-ink-950: #080808;
+  --color-hd-ink-900: #111111;
+  --color-hd-ink-800: #1a1a1a;
+  --color-hd-ink-700: #242424;
+  --color-hd-ink-600: #333333;
+  --color-hd-ink-500: #4a4a4a;
+  --color-hd-ink-400: #6b6b6b;
+  --color-hd-ink-300: #a3a3a3;
+  --color-hd-ink-200: #d4d4d4;
+  --color-hd-ink-100: #efefef;
+  --color-hd-ink-50:  #f8f8f8;
 
   /* Restore full-depth shadows inside dark surfaces */
   --shadow-cinematic: 0 25px 60px -12px rgb(0 0 0 / 0.7);
@@ -159,8 +176,8 @@ html {
 }
 
 body {
-  background-color: var(--color-tvs-charcoal-950);
-  color: var(--color-tvs-charcoal-100);
+  background-color: var(--color-hd-ink-950);
+  color: var(--color-hd-ink-100);
   min-height: 100dvh;
   overflow-x: hidden;
   /* Safe-area bottom padding for iOS PWA home-indicator overlap */
@@ -171,31 +188,31 @@ body {
 /* ---------------------------------------------------------------------------
    Light Mode - override charcoal scale and semantic adjustments
    Activated by adding class="light" to <html>
-   The utility classes (bg-tvs-charcoal-*) all use CSS vars at runtime,
+   The utility classes (bg-hd-ink-*) all use CSS vars at runtime,
    so flipping the vars here propagates to every component automatically.
    --------------------------------------------------------------------------- */
 
 html.light {
   /* Flip the charcoal scale: 950=white, 50=near-black */
-  --color-tvs-charcoal-950: #ffffff;
-  --color-tvs-charcoal-900: #f8f9fb;
-  --color-tvs-charcoal-800: #f1f3f6;
-  --color-tvs-charcoal-700: #e2e6ea;
-  --color-tvs-charcoal-600: #c8cdd6;
-  --color-tvs-charcoal-500: #9aa3af;
-  --color-tvs-charcoal-400: #6c7480;
-  --color-tvs-charcoal-300: #4a5260;
-  --color-tvs-charcoal-200: #2d3340;
-  --color-tvs-charcoal-100: #1a1f2e;
-  --color-tvs-charcoal-50:  #0d1117;
+  --color-hd-ink-950: #ffffff;
+  --color-hd-ink-900: #f8f9fb;
+  --color-hd-ink-800: #f1f3f6;
+  --color-hd-ink-700: #e2e6ea;
+  --color-hd-ink-600: #c8cdd6;
+  --color-hd-ink-500: #9aa3af;
+  --color-hd-ink-400: #6c7480;
+  --color-hd-ink-300: #4a5260;
+  --color-hd-ink-200: #2d3340;
+  --color-hd-ink-100: #1a1f2e;
+  --color-hd-ink-50:  #0d1117;
 
   /* Softer shadows in light mode */
   --shadow-cinematic:   0 25px 60px -12px rgb(0 0 0 / 0.12);
   --shadow-card:        0 4px 24px -4px  rgb(0 0 0 / 0.08);
 
   /* Slightly more visible glow tints */
-  --shadow-glow-red:    0 0 24px -4px rgb(220 38 38 / 0.25);
-  --shadow-glow-blue:   0 0 24px -4px rgb(37 99 235 / 0.25);
+  --shadow-glow-ember:    0 0 24px -4px rgb(220 38 38 / 0.25);
+  --shadow-glow-slate:   0 0 24px -4px rgb(37 99 235 / 0.25);
   --shadow-glow-violet: 0 0 24px -4px rgb(124 58 237 / 0.25);
 }
 
@@ -209,24 +226,24 @@ html.light {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-tvs-charcoal-900);
+  background: var(--color-hd-ink-900);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-tvs-charcoal-600);
+  background: var(--color-hd-ink-600);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-tvs-charcoal-400);
+  background: var(--color-hd-ink-400);
 }
 
 html.light ::-webkit-scrollbar-track {
-  background: var(--color-tvs-charcoal-800);
+  background: var(--color-hd-ink-800);
 }
 
 html.light ::-webkit-scrollbar-thumb {
-  background: var(--color-tvs-charcoal-500);
+  background: var(--color-hd-ink-500);
 }
 
 /* ---------------------------------------------------------------------------
@@ -234,7 +251,7 @@ html.light ::-webkit-scrollbar-thumb {
    --------------------------------------------------------------------------- */
 
 :focus-visible {
-  outline: 2px solid var(--color-tvs-red-500);
+  outline: 2px solid var(--color-hd-ember-500);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -249,15 +266,15 @@ html.light ::-webkit-scrollbar-thumb {
     transparent 0%,
     rgb(8 8 8 / 0.3) 50%,
     rgb(8 8 8 / 0.9) 85%,
-    var(--color-tvs-charcoal-950) 100%
+    var(--color-hd-ink-950) 100%
   );
 }
 
 .gradient-card {
   background: linear-gradient(
     135deg,
-    var(--color-tvs-charcoal-800) 0%,
-    var(--color-tvs-charcoal-900) 100%
+    var(--color-hd-ink-800) 0%,
+    var(--color-hd-ink-900) 100%
   );
 }
 
@@ -274,14 +291,14 @@ html.light .gradient-card {
    premium, high-contrast cinematic feel. */
 
 /* Fallback banner fill for rides with no photo and no route map.
-   Palette is finalised with the brand pass. */
+   Burnt orange → warm near-black, echoing the badge field. */
 .gradient-brand {
-  background: linear-gradient(135deg, #6b1111 0%, #2a0505 55%, #0e0202 100%);
+  background: linear-gradient(135deg, #c06008 0%, #4a2408 55%, #0f0b07 100%);
 }
 
 /* Flagship rides get a richer treatment than the standard brand fill. */
 .gradient-marquee {
-  background: linear-gradient(135deg, #4c1d95 0%, #6b1111 50%, #0a0308 100%);
+  background: linear-gradient(135deg, #f09020 0%, #8c410c 45%, #120c06 100%);
 }
 
 /* ---------------------------------------------------------------------------
@@ -317,14 +334,14 @@ html.light .glass-dark {
    --------------------------------------------------------------------------- */
 
 .text-gradient-red {
-  background: linear-gradient(135deg, #f87171, #dc2626, #991b1b);
+  background: linear-gradient(135deg, #f8b665, #f09020, #c06008);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .text-gradient-steel {
-  background: linear-gradient(135deg, #93c5fd, #2563eb, #1e3a8a);
+  background: linear-gradient(135deg, #b6ccd0, #3e6b78, #263a41);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -369,9 +386,9 @@ html.light .glass-dark {
 .skeleton {
   background: linear-gradient(
     90deg,
-    var(--color-tvs-charcoal-800) 25%,
-    var(--color-tvs-charcoal-700) 50%,
-    var(--color-tvs-charcoal-800) 75%
+    var(--color-hd-ink-800) 25%,
+    var(--color-hd-ink-700) 50%,
+    var(--color-hd-ink-800) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;

@@ -69,20 +69,20 @@ export function RideCountdown({ nextRide }: RideCountdownProps) {
   return (
     <Link
       href={ROUTES.ride(nextRide.slug)}
-      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-tvs-charcoal-800/70 border border-tvs-charcoal-700/50 hover:border-tvs-red-700/50 hover:bg-tvs-charcoal-700/70 transition-all duration-200 group w-fit"
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-hd-ink-800/70 border border-hd-ink-700/50 hover:border-hd-ember-700/50 hover:bg-hd-ink-700/70 transition-all duration-200 group w-fit"
     >
-      <Flag className="size-3 text-tvs-red-500 shrink-0" />
-      <span className="text-xs text-tvs-charcoal-500 group-hover:text-tvs-charcoal-300 transition-colors whitespace-nowrap">
+      <Flag className="size-3 text-hd-ember-500 shrink-0" />
+      <span className="text-xs text-hd-ink-500 group-hover:text-hd-ink-300 transition-colors whitespace-nowrap">
         Next ride
       </span>
       <span className={
         isUrgent
-          ? "text-xs font-bold text-tvs-red-400 whitespace-nowrap"
-          : "text-xs font-bold text-tvs-charcoal-200 whitespace-nowrap"
+          ? "text-xs font-bold text-hd-ember-400 whitespace-nowrap"
+          : "text-xs font-bold text-hd-ink-200 whitespace-nowrap"
       }>
         {urgencyLabel}
       </span>
-      <span className="text-xs text-tvs-charcoal-500 truncate max-w-[160px] group-hover:text-tvs-charcoal-300 transition-colors">
+      <span className="text-xs text-hd-ink-500 truncate max-w-[160px] group-hover:text-hd-ink-300 transition-colors">
         · {nextRide.title}
       </span>
     </Link>

@@ -44,7 +44,7 @@ export default async function AdminLayout({
   const adminEmail = user.email ?? null;
 
   return (
-    <div className="min-h-dvh bg-tvs-charcoal-950">
+    <div className="min-h-dvh bg-hd-ink-950">
       <Navbar transparent={false} />
       <AdminSidebar logoUrl={logoUrl} adminEmail={adminEmail} adminName={adminName} />
       <main className="pt-16 lg:pl-60 min-h-dvh">

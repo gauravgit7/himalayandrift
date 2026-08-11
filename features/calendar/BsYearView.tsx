@@ -20,7 +20,7 @@ import type { Ride } from "@/types";
 
 const PRIORITY_DOT: Record<string, string> = {
   marquee:   "ring-1 ring-yellow-400/60",
-  signature: "ring-1 ring-tvs-red-400/40",
+  signature: "ring-1 ring-hd-ember-400/40",
   standard:  "",
 };
 
@@ -81,8 +81,8 @@ function BsMiniMonth({
       <button
         onClick={() => onMonthClick(bsMonth)}
         className={cn(
-          "text-left text-sm font-bold pb-1 hover:text-tvs-red-400 transition-colors duration-150",
-          isCurrentBsMonth ? "text-tvs-red-400" : "text-tvs-charcoal-200"
+          "text-left text-sm font-bold pb-1 hover:text-hd-ember-400 transition-colors duration-150",
+          isCurrentBsMonth ? "text-hd-ember-400" : "text-hd-ink-200"
         )}
       >
         {BS_MONTHS[bsMonth]}
@@ -91,7 +91,7 @@ function BsMiniMonth({
       {/* Day-of-week headers */}
       <div className="grid grid-cols-7 gap-px">
         {["S","M","T","W","T","F","S"].map((d, i) => (
-          <div key={`${d}-${i}`} className="text-center text-[9px] font-bold text-tvs-charcoal-600 pb-0.5">
+          <div key={`${d}-${i}`} className="text-center text-[9px] font-bold text-hd-ink-600 pb-0.5">
             {d}
           </div>
         ))}
@@ -115,10 +115,10 @@ function BsMiniMonth({
                 "relative flex flex-col items-center gap-[2px] py-0.5 rounded transition-all duration-100",
                 cell.isCurrentMonth
                   ? hasRides
-                    ? "hover:bg-tvs-charcoal-800 cursor-pointer"
+                    ? "hover:bg-hd-ink-800 cursor-pointer"
                     : "cursor-default"
                   : "opacity-30 cursor-default",
-                isToday && "ring-1 ring-tvs-red-600/60 bg-tvs-red-950/30"
+                isToday && "ring-1 ring-hd-ember-600/60 bg-hd-ember-950/30"
               )}
               title={hasRides ? `${ridesOnDay.length} ride${ridesOnDay.length > 1 ? "s" : ""}` : undefined}
             >
@@ -126,10 +126,10 @@ function BsMiniMonth({
               <span className={cn(
                 "text-[11px] leading-none font-medium",
                 isToday
-                  ? "text-tvs-red-400 font-bold"
+                  ? "text-hd-ember-400 font-bold"
                   : cell.isCurrentMonth
-                  ? hasRides ? "text-tvs-charcoal-50" : "text-tvs-charcoal-400"
-                  : "text-tvs-charcoal-700"
+                  ? hasRides ? "text-hd-ink-50" : "text-hd-ink-400"
+                  : "text-hd-ink-700"
               )}>
                 {cell.bsDay}
               </span>
@@ -151,7 +151,7 @@ function BsMiniMonth({
                     );
                   })}
                   {extra > 0 && (
-                    <span className="text-[8px] text-tvs-charcoal-500 leading-none">+{extra}</span>
+                    <span className="text-[8px] text-hd-ink-500 leading-none">+{extra}</span>
                   )}
                 </div>
               )}
@@ -198,19 +198,19 @@ export function BsYearView({ rides, bsYear, onMonthClick }: BsYearViewProps) {
             )}
             title={`${BS_MONTHS[m]}: ${count} rides`}
           >
-            <span className="text-[9px] text-tvs-charcoal-600 group-hover:text-tvs-charcoal-400 transition-colors">
+            <span className="text-[9px] text-hd-ink-600 group-hover:text-hd-ink-400 transition-colors">
               {count > 0 ? count : ""}
             </span>
             <div
               className={cn(
                 "w-full rounded-sm transition-all duration-200",
                 count > 0
-                  ? "bg-tvs-red-600/60 group-hover:bg-tvs-red-500"
-                  : "bg-tvs-charcoal-800/40"
+                  ? "bg-hd-ember-600/60 group-hover:bg-hd-ember-500"
+                  : "bg-hd-ink-800/40"
               )}
               style={{ height: count > 0 ? `${Math.max(4, Math.min(32, count * 6))}px` : "4px" }}
             />
-            <span className="text-[9px] text-tvs-charcoal-600 truncate w-full text-center leading-none">
+            <span className="text-[9px] text-hd-ink-600 truncate w-full text-center leading-none">
               {SHORT_BS_MONTHS[m]}
             </span>
           </button>
@@ -232,15 +232,15 @@ export function BsYearView({ rides, bsYear, onMonthClick }: BsYearViewProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-tvs-charcoal-800/50 text-xs text-tvs-charcoal-500">
-        <span className="font-medium text-tvs-charcoal-400">Legend:</span>
+      <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-hd-ink-800/50 text-xs text-hd-ink-500">
+        <span className="font-medium text-hd-ink-400">Legend:</span>
         {Object.values(RIDE_TYPE_STYLES).map((style) => (
           <span key={style.label} className="flex items-center gap-1.5">
             <span className={cn("size-2 rounded-full", style.dot)} />
             {style.label}
           </span>
         ))}
-        <span className="ml-auto text-tvs-charcoal-700">
+        <span className="ml-auto text-hd-ink-700">
           Numbers show Bikram Sambat dates
         </span>
       </div>

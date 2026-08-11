@@ -28,7 +28,7 @@ function StatusChip({ status }: { status: MemberCard["status"] }) {
       "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider",
       status === "pending"  && "bg-amber-900/30 text-amber-400 border-amber-800/30",
       status === "approved" && "bg-emerald-900/30 text-emerald-400 border-emerald-800/30",
-      status === "rejected" && "bg-tvs-red-950/40 text-tvs-red-400 border-tvs-red-900/30",
+      status === "rejected" && "bg-hd-ember-950/40 text-hd-ember-400 border-hd-ember-900/30",
     )}>
       {status === "pending"  && <Clock       className="size-2.5" />}
       {status === "approved" && <CheckCircle2 className="size-2.5" />}
@@ -66,7 +66,7 @@ function CardPreview({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 text-xs font-semibold text-tvs-charcoal-400 hover:text-tvs-charcoal-100 transition-colors"
+        className="flex items-center gap-2 text-xs font-semibold text-hd-ink-400 hover:text-hd-ink-100 transition-colors"
       >
         {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
         {open ? "Hide" : "Show"} Card Preview
@@ -154,13 +154,13 @@ function ApplicationModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-tvs-charcoal-900 border border-tvs-charcoal-700 rounded-2xl shadow-cinematic">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-hd-ink-900 border border-hd-ink-700 rounded-2xl shadow-cinematic">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-tvs-charcoal-800">
+        <div className="flex items-center justify-between p-5 border-b border-hd-ink-800">
           <div>
-            <h2 className="text-base font-bold text-tvs-charcoal-50">Application Review</h2>
-            <p className="text-xs text-tvs-charcoal-500 mt-0.5">
+            <h2 className="text-base font-bold text-hd-ink-50">Application Review</h2>
+            <p className="text-xs text-hd-ink-500 mt-0.5">
               Submitted {fmtDate(card.createdAt)}
               {card.resubmissionCount > 0 && (
                 <span className="ml-2 text-amber-500">
@@ -169,7 +169,7 @@ function ApplicationModal({
               )}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-tvs-charcoal-400 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-800 transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-hd-ink-400 hover:text-hd-ink-100 hover:bg-hd-ink-800 transition-colors">
             <X className="size-4" />
           </button>
         </div>
@@ -182,11 +182,11 @@ function ApplicationModal({
             <img
               src={card.photoUrl}
               alt={card.fullName}
-              className="size-20 rounded-xl object-cover object-top border border-tvs-charcoal-700 shrink-0"
+              className="size-20 rounded-xl object-cover object-top border border-hd-ink-700 shrink-0"
             />
             <div>
-              <h3 className="text-lg font-black text-tvs-charcoal-50">{card.fullName}</h3>
-              <p className="text-sm text-tvs-charcoal-400">{card.cardNumber ?? "No card number yet"}</p>
+              <h3 className="text-lg font-black text-hd-ink-50">{card.fullName}</h3>
+              <p className="text-sm text-hd-ink-400">{card.cardNumber ?? "No card number yet"}</p>
               <StatusChip status={card.status} />
             </div>
           </div>
@@ -199,9 +199,9 @@ function ApplicationModal({
               { label: "Emergency Phone",  value: card.emergencyPhone },
               { label: "License Number",   value: card.licenseNumber },
             ].map(({ label, value }) => (
-              <div key={label} className="p-3 rounded-lg bg-tvs-charcoal-800/60 border border-tvs-charcoal-700/40">
-                <p className="text-[9px] uppercase tracking-wider text-tvs-charcoal-500 mb-0.5">{label}</p>
-                <p className="text-sm font-semibold text-tvs-charcoal-100">{value}</p>
+              <div key={label} className="p-3 rounded-lg bg-hd-ink-800/60 border border-hd-ink-700/40">
+                <p className="text-[9px] uppercase tracking-wider text-hd-ink-500 mb-0.5">{label}</p>
+                <p className="text-sm font-semibold text-hd-ink-100">{value}</p>
               </div>
             ))}
           </div>
@@ -211,9 +211,9 @@ function ApplicationModal({
 
           {/* Rejection reason (existing) */}
           {card.status === "rejected" && card.rejectionReason && (
-            <div className="p-3 rounded-lg bg-tvs-red-950/40 border border-tvs-red-900/30">
-              <p className="text-[9px] uppercase tracking-wider text-tvs-red-600 mb-1">Previous Rejection Reason</p>
-              <p className="text-xs text-tvs-red-300">{card.rejectionReason}</p>
+            <div className="p-3 rounded-lg bg-hd-ember-950/40 border border-hd-ember-900/30">
+              <p className="text-[9px] uppercase tracking-wider text-hd-ember-600 mb-1">Previous Rejection Reason</p>
+              <p className="text-xs text-hd-ember-300">{card.rejectionReason}</p>
             </div>
           )}
 
@@ -227,7 +227,7 @@ function ApplicationModal({
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-tvs-red-950/50 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/50 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
               <AlertCircle className="size-4 shrink-0 mt-0.5" />{error}
             </div>
           )}
@@ -235,15 +235,15 @@ function ApplicationModal({
           {/* Reject form */}
           {showReject && (
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-tvs-charcoal-400 uppercase tracking-wide">
-                Rejection Reason <span className="text-tvs-red-500">*</span>
+              <label className="block text-xs font-semibold text-hd-ink-400 uppercase tracking-wide">
+                Rejection Reason <span className="text-hd-ember-500">*</span>
               </label>
               <textarea
                 value={rejReason}
                 onChange={(e) => setRejReason(e.target.value)}
                 rows={3}
                 placeholder="e.g. Photo is unclear, please resubmit with a clearer face photo."
-                className="w-full px-3 py-2 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600 focus:outline-none focus:border-tvs-red-600 resize-none"
+                className="w-full px-3 py-2 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm text-hd-ink-100 placeholder:text-hd-ink-600 focus:outline-none focus:border-hd-ember-600 resize-none"
               />
             </div>
           )}
@@ -251,13 +251,13 @@ function ApplicationModal({
 
         {/* Actions */}
         {card.status === "pending" && (
-          <div className="flex items-center gap-2 p-5 border-t border-tvs-charcoal-800">
+          <div className="flex items-center gap-2 p-5 border-t border-hd-ink-800">
             {!showReject ? (
               <>
                 <button
                   onClick={() => setShowReject(true)}
                   disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-tvs-red-800/60 text-tvs-red-400 hover:bg-tvs-red-950/40 text-sm font-semibold transition-all"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-hd-ember-800/60 text-hd-ember-400 hover:bg-hd-ember-950/40 text-sm font-semibold transition-all"
                 >
                   <XCircle className="size-4" /> Reject
                 </button>
@@ -266,7 +266,7 @@ function ApplicationModal({
                   disabled={saving}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-all",
-                    saving ? "bg-tvs-charcoal-700 cursor-not-allowed" : "bg-emerald-700 hover:bg-emerald-600",
+                    saving ? "bg-hd-ink-700 cursor-not-allowed" : "bg-emerald-700 hover:bg-emerald-600",
                   )}
                 >
                   {saving
@@ -280,7 +280,7 @@ function ApplicationModal({
                 <button
                   onClick={() => setShowReject(false)}
                   disabled={saving}
-                  className="px-4 py-2.5 rounded-xl border border-tvs-charcoal-700 text-tvs-charcoal-300 hover:text-tvs-charcoal-100 text-sm font-medium transition-colors"
+                  className="px-4 py-2.5 rounded-xl border border-hd-ink-700 text-hd-ink-300 hover:text-hd-ink-100 text-sm font-medium transition-colors"
                 >
                   Cancel
                 </button>
@@ -289,7 +289,7 @@ function ApplicationModal({
                   disabled={saving}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-all",
-                    saving ? "bg-tvs-charcoal-700 cursor-not-allowed" : "bg-tvs-red-600 hover:bg-tvs-red-500",
+                    saving ? "bg-hd-ink-700 cursor-not-allowed" : "bg-hd-ember-600 hover:bg-hd-ember-500",
                   )}
                 >
                   {saving
@@ -351,20 +351,20 @@ export function MembersAdmin({
             className={cn(
               "p-4 rounded-xl border text-left transition-all",
               filter === f
-                ? "border-tvs-red-700/60 bg-tvs-red-950/20"
-                : "gradient-card border-tvs-charcoal-700/60 hover:border-tvs-charcoal-500",
+                ? "border-hd-ember-700/60 bg-hd-ember-950/20"
+                : "gradient-card border-hd-ink-700/60 hover:border-hd-ink-500",
             )}
           >
             <p className={cn(
               "text-2xl font-black",
               f === "pending"  && "text-amber-400",
               f === "approved" && "text-emerald-400",
-              f === "rejected" && "text-tvs-red-400",
-              f === "all"      && "text-tvs-charcoal-50",
+              f === "rejected" && "text-hd-ember-400",
+              f === "all"      && "text-hd-ink-50",
             )}>
               {counts[f]}
             </p>
-            <p className="text-xs text-tvs-charcoal-500 capitalize mt-0.5">{f}</p>
+            <p className="text-xs text-hd-ink-500 capitalize mt-0.5">{f}</p>
           </button>
         ))}
       </div>
@@ -372,28 +372,28 @@ export function MembersAdmin({
       {/* Table */}
       {displayed.length === 0 ? (
         <div className="py-20 text-center">
-          <Users className="size-12 mx-auto mb-4 text-tvs-charcoal-700" />
-          <p className="text-sm text-tvs-charcoal-500">No {filter !== "all" ? filter : ""} applications.</p>
+          <Users className="size-12 mx-auto mb-4 text-hd-ink-700" />
+          <p className="text-sm text-hd-ink-500">No {filter !== "all" ? filter : ""} applications.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {displayed.map((card) => (
             <div
               key={card.id}
-              className="flex items-center gap-4 p-4 rounded-xl gradient-card border border-tvs-charcoal-700/60 hover:border-tvs-charcoal-500 transition-all"
+              className="flex items-center gap-4 p-4 rounded-xl gradient-card border border-hd-ink-700/60 hover:border-hd-ink-500 transition-all"
             >
               {/* Photo */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={card.photoUrl}
                 alt={card.fullName}
-                className="size-11 rounded-lg object-cover object-top border border-tvs-charcoal-700 shrink-0"
+                className="size-11 rounded-lg object-cover object-top border border-hd-ink-700 shrink-0"
               />
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-tvs-charcoal-50 text-sm truncate">{card.fullName}</p>
-                <p className="text-xs text-tvs-charcoal-500">
+                <p className="font-bold text-hd-ink-50 text-sm truncate">{card.fullName}</p>
+                <p className="text-xs text-hd-ink-500">
                   {fmtDate(card.createdAt)}
                 </p>
               </div>
@@ -404,7 +404,7 @@ export function MembersAdmin({
                 <button
                   type="button"
                   onClick={() => setViewing(card)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 hover:border-tvs-charcoal-500 text-tvs-charcoal-300 hover:text-tvs-charcoal-100 text-xs font-medium transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hd-ink-800 border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-300 hover:text-hd-ink-100 text-xs font-medium transition-colors"
                 >
                   <Eye className="size-3.5" />
                   Review

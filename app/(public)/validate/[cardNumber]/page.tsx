@@ -17,7 +17,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { cardNumber } = await params;
-  return { title: `Validate ${decodeURIComponent(cardNumber)} | TVS Nepal` };
+  return { title: `Validate ${decodeURIComponent(cardNumber)} | Himalayan Drift` };
 }
 
 export default async function ValidatePage({ params }: PageProps) {
@@ -51,29 +51,29 @@ export default async function ValidatePage({ params }: PageProps) {
           "size-20 rounded-full flex items-center justify-center mx-auto border-2",
           effectivelyValid
             ? "bg-emerald-900/30 border-emerald-700/50"
-            : "bg-tvs-red-950/40 border-tvs-red-800/40",
+            : "bg-hd-ember-950/40 border-hd-ember-800/40",
         )}>
           {effectivelyValid
             ? <CheckCircle2 className="size-10 text-emerald-400" />
-            : <XCircle      className="size-10 text-tvs-red-400" />}
+            : <XCircle      className="size-10 text-hd-ember-400" />}
         </div>
 
         {/* Status text */}
         <div>
           <h1 className={cn(
             "text-2xl font-black",
-            effectivelyValid ? "text-emerald-300" : "text-tvs-red-300",
+            effectivelyValid ? "text-emerald-300" : "text-hd-ember-300",
           )}>
             {effectivelyValid ? "Valid Member" : isExpired ? "Membership Expired" : "Invalid Card"}
           </h1>
-          <p className="text-sm text-tvs-charcoal-400 mt-1">{APP_META.name}</p>
+          <p className="text-sm text-hd-ink-400 mt-1">{APP_META.name}</p>
         </div>
 
         {/* Member details card */}
-        <div className="rounded-2xl gradient-card border border-tvs-charcoal-700/60 overflow-hidden text-left">
+        <div className="rounded-2xl gradient-card border border-hd-ink-700/60 overflow-hidden text-left">
 
           {/* Photo + name */}
-          <div className="flex items-center gap-4 p-5 border-b border-tvs-charcoal-800/60">
+          <div className="flex items-center gap-4 p-5 border-b border-hd-ink-800/60">
             <div
               className="size-16 rounded-full overflow-hidden shrink-0 border-2"
               style={{ borderColor: effectivelyValid ? "#059669" : "#991b1b" }}
@@ -86,8 +86,8 @@ export default async function ValidatePage({ params }: PageProps) {
               />
             </div>
             <div>
-              <p className="font-black text-tvs-charcoal-50 text-lg leading-tight">{card.fullName}</p>
-              <p className="text-xs text-tvs-charcoal-500 mt-0.5">{card.cardNumber}</p>
+              <p className="font-black text-hd-ink-50 text-lg leading-tight">{card.fullName}</p>
+              <p className="text-xs text-hd-ink-500 mt-0.5">{card.cardNumber}</p>
             </div>
           </div>
 
@@ -109,8 +109,8 @@ export default async function ValidatePage({ params }: PageProps) {
 
         {/* Shield note */}
         <div className="flex items-start gap-2 text-left">
-          <ShieldCheck className="size-4 text-tvs-charcoal-600 shrink-0 mt-0.5" />
-          <p className="text-[10px] text-tvs-charcoal-600 leading-relaxed">
+          <ShieldCheck className="size-4 text-hd-ink-600 shrink-0 mt-0.5" />
+          <p className="text-[10px] text-hd-ink-600 leading-relaxed">
             This page confirms the authenticity of a {APP_META.name} membership card.
             Verified by the {APP_META.name} operations platform.
           </p>
@@ -118,9 +118,9 @@ export default async function ValidatePage({ params }: PageProps) {
 
         <Link
           href="/"
-          className="text-xs text-tvs-charcoal-500 hover:text-tvs-charcoal-300 transition-colors"
+          className="text-xs text-hd-ink-500 hover:text-hd-ink-300 transition-colors"
         >
-          ← TVS Nepal Home
+          ← Himalayan Drift Home
         </Link>
       </div>
     </main>
@@ -136,13 +136,13 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-tvs-charcoal-500 text-xs">{label}</span>
+      <span className="text-hd-ink-500 text-xs">{label}</span>
       <span className={cn(
         "font-semibold text-right",
         mono && "font-mono text-xs tracking-wider",
-        highlight === "expired" && "text-tvs-red-400",
+        highlight === "expired" && "text-hd-ember-400",
         highlight === "ok"      && "text-emerald-400",
-        !highlight              && "text-tvs-charcoal-100",
+        !highlight              && "text-hd-ink-100",
       )}>
         {value}
       </span>

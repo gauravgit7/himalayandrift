@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback } from "react";
 
 export type DateMode = "ad" | "bs";
 
-const STORAGE_KEY = "tvs-date-mode";
+const STORAGE_KEY = "hd-date-mode";
 
 export function useDateMode(): {
   mode:   DateMode;

@@ -207,10 +207,10 @@ export function CalendarShell({ allRides, initialYear }: CalendarShellProps) {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col min-h-dvh pt-16 bg-tvs-charcoal-950">
+    <div className="flex flex-col min-h-dvh pt-16 bg-hd-ink-950">
 
       {/* ── Sticky toolbar ── */}
-      <div className="sticky top-16 z-40 bg-tvs-charcoal-950/95 backdrop-blur-md border-b border-tvs-charcoal-800/60">
+      <div className="sticky top-16 z-40 bg-hd-ink-950/95 backdrop-blur-md border-b border-hd-ink-800/60">
         <CalendarToolbar
           view={view}
           year={navProps.year}
@@ -239,8 +239,8 @@ export function CalendarShell({ allRides, initialYear }: CalendarShellProps) {
       {/* ── Calendar views ── */}
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 py-6">
         {isLoadingYear ? (
-          <div className="flex flex-col items-center justify-center py-32 gap-4 text-tvs-charcoal-500">
-            <div className="size-10 border-2 border-tvs-red-600/40 border-t-tvs-red-500 rounded-full animate-spin" />
+          <div className="flex flex-col items-center justify-center py-32 gap-4 text-hd-ink-500">
+            <div className="size-10 border-2 border-hd-ember-600/40 border-t-hd-ember-500 rounded-full animate-spin" />
             <p className="text-sm">
               Loading {dateMode === "bs" ? `${bsYear} BS` : adYear} rides…
             </p>

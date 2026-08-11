@@ -44,30 +44,30 @@ export function SignUpForm() {
   };
 
   const inputClass = cn(
-    "w-full h-10 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm transition-colors",
-    "text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-    "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40",
+    "w-full h-10 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm transition-colors",
+    "text-hd-ink-100 placeholder:text-hd-ink-600",
+    "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40",
     "disabled:opacity-50 disabled:cursor-not-allowed",
   );
   const selectClass = cn(inputClass, "cursor-pointer");
-  const labelClass  = "text-xs font-medium text-tvs-charcoal-400 uppercase tracking-wide";
+  const labelClass  = "text-xs font-medium text-hd-ink-400 uppercase tracking-wide";
 
   if (needsConfirmation) {
     return (
       <div className="w-full max-w-sm text-center space-y-4">
         <CheckCircle2 className="size-14 text-emerald-400 mx-auto" />
         <h2 className="text-xl font-black text-white">Check your email</h2>
-        <p className="text-sm text-tvs-charcoal-400 leading-relaxed">
+        <p className="text-sm text-hd-ink-400 leading-relaxed">
           We sent a confirmation link to{" "}
-          <strong className="text-tvs-charcoal-200">{email}</strong>.
+          <strong className="text-hd-ink-200">{email}</strong>.
           Click it to activate your account, then sign in.
         </p>
-        <p className="text-xs text-tvs-charcoal-500">
+        <p className="text-xs text-hd-ink-500">
           After sign-in, upload your photo on the profile page to help us verify your account faster.
         </p>
         <Link
           href={ROUTES.signin}
-          className="inline-block mt-2 px-5 py-2.5 rounded-xl bg-tvs-red-600 hover:bg-tvs-red-500 text-white text-sm font-semibold transition-colors"
+          className="inline-block mt-2 px-5 py-2.5 rounded-xl bg-hd-ember-600 hover:bg-hd-ember-500 text-white text-sm font-semibold transition-colors"
         >
           Go to Sign In
         </Link>
@@ -79,21 +79,21 @@ export function SignUpForm() {
     <div className="w-full max-w-lg space-y-6">
       <div className="text-center">
         <h1 className="text-2xl font-black text-white">Join {APP_META.name}</h1>
-        <p className="text-sm text-tvs-charcoal-400 mt-1">Create your community account</p>
+        <p className="text-sm text-hd-ink-400 mt-1">Create your community account</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="gradient-card rounded-2xl border border-tvs-charcoal-700 p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-4">
         {error && (
-          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-tvs-red-950/60 border border-tvs-red-800/40">
-            <AlertCircle className="size-4 text-tvs-red-400 shrink-0 mt-px" />
-            <p className="text-sm text-tvs-red-300">{error}</p>
+          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40">
+            <AlertCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
+            <p className="text-sm text-hd-ember-300">{error}</p>
           </div>
         )}
 
         {/* Full name */}
         <div className="space-y-1">
           <label htmlFor="fullName" className={labelClass}>
-            Full Name <span className="text-tvs-red-500">*</span>
+            Full Name <span className="text-hd-ember-500">*</span>
           </label>
           <input id="fullName" type="text" value={fullName} required
             onChange={(e) => setFullName(e.target.value)}
@@ -103,7 +103,7 @@ export function SignUpForm() {
         {/* Email */}
         <div className="space-y-1">
           <label htmlFor="email" className={labelClass}>
-            Email <span className="text-tvs-red-500">*</span>
+            Email <span className="text-hd-ember-500">*</span>
           </label>
           <input id="email" type="email" value={email} required autoComplete="email"
             onChange={(e) => setEmail(e.target.value)}
@@ -114,7 +114,7 @@ export function SignUpForm() {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label htmlFor="password" className={labelClass}>
-              Password <span className="text-tvs-red-500">*</span>
+              Password <span className="text-hd-ember-500">*</span>
             </label>
             <input id="password" type="password" value={password} required minLength={8}
               onChange={(e) => setPassword(e.target.value)}
@@ -122,7 +122,7 @@ export function SignUpForm() {
           </div>
           <div className="space-y-1">
             <label htmlFor="confirm" className={labelClass}>
-              Confirm <span className="text-tvs-red-500">*</span>
+              Confirm <span className="text-hd-ember-500">*</span>
             </label>
             <input id="confirm" type="password" value={confirm} required
               onChange={(e) => setConfirm(e.target.value)}
@@ -130,14 +130,14 @@ export function SignUpForm() {
           </div>
         </div>
 
-        <div className="border-t border-tvs-charcoal-800 pt-3">
-          <p className="text-[11px] uppercase tracking-widest text-tvs-charcoal-500 mb-3">Rider Details</p>
+        <div className="border-t border-hd-ink-800 pt-3">
+          <p className="text-[11px] uppercase tracking-widest text-hd-ink-500 mb-3">Rider Details</p>
 
           {/* DOB + License */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label htmlFor="dob" className={labelClass}>
-                Date of Birth <span className="text-tvs-red-500">*</span>
+                Date of Birth <span className="text-hd-ember-500">*</span>
               </label>
               <input id="dob" type="date" value={dateOfBirth} required
                 onChange={(e) => setDateOfBirth(e.target.value)}
@@ -147,7 +147,7 @@ export function SignUpForm() {
             </div>
             <div className="space-y-1">
               <label htmlFor="license" className={labelClass}>
-                License No. <span className="text-tvs-red-500">*</span>
+                License No. <span className="text-hd-ember-500">*</span>
               </label>
               <input id="license" type="text" value={licenseNumber} required
                 onChange={(e) => setLicenseNumber(e.target.value)}
@@ -157,7 +157,7 @@ export function SignUpForm() {
 
           {/* Bike model */}
           <div className="space-y-1 mt-3">
-            <label htmlFor="bikeModel" className={labelClass}>TVS Model</label>
+            <label htmlFor="bikeModel" className={labelClass}>Bike Model</label>
             <input id="bikeModel" type="text" value={bikeModel}
               onChange={(e) => setBikeModel(e.target.value)}
               placeholder="e.g. Apache RTR 200 4V, Ronin 225…"
@@ -173,8 +173,8 @@ export function SignUpForm() {
           </div>
         </div>
 
-        <div className="border-t border-tvs-charcoal-800 pt-3">
-          <p className="text-[11px] uppercase tracking-widest text-tvs-charcoal-500 mb-3">Contact</p>
+        <div className="border-t border-hd-ink-800 pt-3">
+          <p className="text-[11px] uppercase tracking-widest text-hd-ink-500 mb-3">Contact</p>
 
           {/* Phone */}
           <div className="space-y-1">
@@ -185,7 +185,7 @@ export function SignUpForm() {
           </div>
         </div>
 
-        <p className="text-[11px] text-tvs-charcoal-500 leading-relaxed">
+        <p className="text-[11px] text-hd-ink-500 leading-relaxed">
           Your account will be reviewed by admin before activation. After sign-in, upload a photo on your profile page to help speed up verification.
         </p>
 
@@ -193,8 +193,8 @@ export function SignUpForm() {
           type="submit" disabled={loading}
           className={cn(
             "w-full h-10 rounded-lg text-white font-semibold text-sm transition-all",
-            loading ? "bg-tvs-charcoal-700 cursor-not-allowed opacity-70"
-                    : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red active:scale-[0.98]"
+            loading ? "bg-hd-ink-700 cursor-not-allowed opacity-70"
+                    : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember active:scale-[0.98]"
           )}
         >
           {loading
@@ -206,9 +206,9 @@ export function SignUpForm() {
         </button>
       </form>
 
-      <p className="text-center text-sm text-tvs-charcoal-500">
+      <p className="text-center text-sm text-hd-ink-500">
         Already a member?{" "}
-        <Link href={ROUTES.signin} className="text-tvs-red-400 hover:text-tvs-red-300 font-semibold transition-colors">
+        <Link href={ROUTES.signin} className="text-hd-ember-400 hover:text-hd-ember-300 font-semibold transition-colors">
           Sign in
         </Link>
       </p>

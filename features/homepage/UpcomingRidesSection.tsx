@@ -36,15 +36,15 @@ export function UpcomingRidesSection({ rides, brandLogos }: UpcomingRidesSection
       <AnimateIn className="flex items-end justify-between mb-8 gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="block w-4 h-px bg-tvs-red-600 rounded-full" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-tvs-red-400">
+            <span className="block w-4 h-px bg-hd-ember-600 rounded-full" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-hd-ember-400">
               What&apos;s Coming
             </span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-tvs-charcoal-50">
+          <h2 className="text-3xl sm:text-4xl font-black text-hd-ink-50">
             Upcoming Rides
           </h2>
-          <p className="mt-1.5 text-sm text-tvs-charcoal-400">
+          <p className="mt-1.5 text-sm text-hd-ink-400">
             What&apos;s next on the Himalayan Drift calendar.
           </p>
         </div>
@@ -52,7 +52,7 @@ export function UpcomingRidesSection({ rides, brandLogos }: UpcomingRidesSection
           <DateModeToggle mode={dateMode} toggle={toggle} size="sm" />
           <Link
             href={ROUTES.calendar}
-            className="group inline-flex items-center gap-1.5 text-sm font-semibold text-tvs-charcoal-400 hover:text-tvs-red-400 transition-colors duration-200"
+            className="group inline-flex items-center gap-1.5 text-sm font-semibold text-hd-ink-400 hover:text-hd-ember-400 transition-colors duration-200"
           >
             Full calendar
             <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-transform duration-200" />
@@ -74,7 +74,7 @@ export function UpcomingRidesSection({ rides, brandLogos }: UpcomingRidesSection
       <AnimateIn className="mt-8 text-center" delay={0.1}>
         <Link
           href={ROUTES.calendar}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-tvs-charcoal-700 hover:border-tvs-charcoal-500 text-tvs-charcoal-200 hover:text-tvs-charcoal-50 font-semibold text-sm transition-all duration-200"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-200 hover:text-hd-ink-50 font-semibold text-sm transition-all duration-200"
         >
           See all {DEFAULT_CALENDAR_YEAR} rides
           <ArrowRight className="size-4" />

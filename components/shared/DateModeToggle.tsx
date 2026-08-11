@@ -33,7 +33,7 @@ export function DateModeToggle({
       title={mode === "ad" ? "Switch to Nepali (BS) dates" : "Switch to English (AD) dates"}
       className={cn(
         "flex items-center rounded-lg border transition-colors duration-200 cursor-pointer",
-        "bg-tvs-charcoal-900 border-tvs-charcoal-700/60 hover:border-tvs-charcoal-600",
+        "bg-hd-ink-900 border-hd-ink-700/60 hover:border-hd-ink-600",
         isXs ? "text-[10px] p-0.5 gap-0.5" : "text-xs p-1 gap-1",
         className
       )}
@@ -43,8 +43,8 @@ export function DateModeToggle({
         "px-2 py-0.5 rounded-md font-bold transition-all duration-200",
         isXs ? "px-1.5 py-0.5" : "px-2 py-0.5",
         mode === "ad"
-          ? "bg-tvs-red-600 text-white shadow-sm"
-          : "text-tvs-charcoal-500 hover:text-tvs-charcoal-400"
+          ? "bg-hd-ember-600 text-white shadow-sm"
+          : "text-hd-ink-500 hover:text-hd-ink-400"
       )}>
         AD
       </span>
@@ -52,8 +52,8 @@ export function DateModeToggle({
         "px-2 py-0.5 rounded-md font-bold transition-all duration-200",
         isXs ? "px-1.5 py-0.5" : "px-2 py-0.5",
         mode === "bs"
-          ? "bg-tvs-red-600 text-white shadow-sm"
-          : "text-tvs-charcoal-500 hover:text-tvs-charcoal-400"
+          ? "bg-hd-ember-600 text-white shadow-sm"
+          : "text-hd-ink-500 hover:text-hd-ink-400"
       )}>
         BS
       </span>

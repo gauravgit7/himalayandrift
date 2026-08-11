@@ -54,12 +54,12 @@ export function StatusChecker({ settings, brandLogos }: StatusCheckerProps) {
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => e.key === "Enter" && handleCheck()}
-          placeholder="TVS-XXXXXX"
+          placeholder="HD-XXXXXX"
           maxLength={10}
           className={cn(
-            "flex-1 h-10 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700",
-            "text-sm text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600 font-mono tracking-widest",
-            "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors uppercase",
+            "flex-1 h-10 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700",
+            "text-sm text-hd-ink-100 placeholder:text-hd-ink-600 font-mono tracking-widest",
+            "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors uppercase",
           )}
         />
         <button
@@ -69,8 +69,8 @@ export function StatusChecker({ settings, brandLogos }: StatusCheckerProps) {
           className={cn(
             "flex items-center gap-1.5 px-4 rounded-lg text-sm font-semibold transition-all",
             loading || !code.trim()
-              ? "bg-tvs-charcoal-700 text-tvs-charcoal-500 cursor-not-allowed"
-              : "bg-tvs-red-600 hover:bg-tvs-red-500 text-white hover:shadow-glow-red",
+              ? "bg-hd-ink-700 text-hd-ink-500 cursor-not-allowed"
+              : "bg-hd-ember-600 hover:bg-hd-ember-500 text-white hover:shadow-glow-ember",
           )}
         >
           {loading
@@ -82,7 +82,7 @@ export function StatusChecker({ settings, brandLogos }: StatusCheckerProps) {
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-tvs-red-950/50 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/50 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
           <XCircle className="size-4 shrink-0 mt-0.5" />{error}
         </div>
       )}
@@ -98,7 +98,7 @@ export function StatusChecker({ settings, brandLogos }: StatusCheckerProps) {
               <div>
                 <p className="text-sm font-bold text-amber-300">Under Review</p>
                 <p className="text-xs text-amber-600 mt-0.5 leading-relaxed">
-                  Your application is being reviewed by the TVS Nepal team.
+                  Your application is being reviewed by the Himalayan Drift team.
                   Check back in a few days.
                 </p>
               </div>
@@ -106,21 +106,21 @@ export function StatusChecker({ settings, brandLogos }: StatusCheckerProps) {
           )}
 
           {card.status === "rejected" && (
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-tvs-red-950/40 border border-tvs-red-800/40">
-              <XCircle className="size-5 text-tvs-red-400 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-hd-ember-950/40 border border-hd-ember-800/40">
+              <XCircle className="size-5 text-hd-ember-400 shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-bold text-tvs-red-300">Application Rejected</p>
+                <p className="text-sm font-bold text-hd-ember-300">Application Rejected</p>
                 {card.rejectionReason && (
-                  <p className="text-xs text-tvs-red-400 mt-1 leading-relaxed">
+                  <p className="text-xs text-hd-ember-400 mt-1 leading-relaxed">
                     Reason: {card.rejectionReason}
                   </p>
                 )}
-                <p className="text-xs text-tvs-charcoal-500 mt-2">
+                <p className="text-xs text-hd-ink-500 mt-2">
                   Please correct the issue and resubmit using the button below.
                 </p>
                 <Link
                   href={`/membership?code=${encodeURIComponent(code.trim())}&resubmit=1`}
-                  className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-tvs-red-600 hover:bg-tvs-red-500 text-white text-xs font-semibold transition-colors"
+                  className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 text-white text-xs font-semibold transition-colors"
                 >
                   Edit &amp; Resubmit →
                 </Link>
@@ -149,7 +149,7 @@ export function StatusChecker({ settings, brandLogos }: StatusCheckerProps) {
               <Link
                 href={ROUTES.memberCard(card.accessCode)}
                 target="_blank"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-tvs-charcoal-700 hover:border-tvs-charcoal-500 text-tvs-charcoal-200 hover:text-white text-sm font-semibold transition-all"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-200 hover:text-white text-sm font-semibold transition-all"
               >
                 <Printer className="size-4" />
                 Open Print / Download View

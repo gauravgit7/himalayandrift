@@ -29,12 +29,12 @@ function StatusBadge({ status, adminNotes }: { status: MemberRegistrationStatus;
   }
   if (status === "rejected") {
     return (
-      <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-tvs-red-950/40 border border-tvs-red-800/40">
-        <XCircle className="size-4 text-tvs-red-400 shrink-0 mt-px" />
+      <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-hd-ember-950/40 border border-hd-ember-800/40">
+        <XCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
         <div>
-          <p className="text-sm font-semibold text-tvs-red-300">Account Not Approved</p>
-          {adminNotes && <p className="text-xs text-tvs-red-400 mt-0.5">{adminNotes}</p>}
-          <p className="text-xs text-tvs-red-600 mt-1">Contact admin to resolve this or update your details below.</p>
+          <p className="text-sm font-semibold text-hd-ember-300">Account Not Approved</p>
+          {adminNotes && <p className="text-xs text-hd-ember-400 mt-0.5">{adminNotes}</p>}
+          <p className="text-xs text-hd-ember-600 mt-1">Contact admin to resolve this or update your details below.</p>
         </div>
       </div>
     );
@@ -89,20 +89,20 @@ export function ProfileClient({ profile }: Props) {
   }, [fullName, phone, avatarUrl, address, bikeModel, dateOfBirth, licenseNumber]);
 
   const inputClass = cn(
-    "w-full h-10 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm transition-colors",
-    "text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-    "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40",
+    "w-full h-10 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm transition-colors",
+    "text-hd-ink-100 placeholder:text-hd-ink-600",
+    "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40",
     "disabled:opacity-50",
   );
-  const labelClass = "text-xs font-medium text-tvs-charcoal-400 uppercase tracking-wide flex items-center gap-1.5";
+  const labelClass = "text-xs font-medium text-hd-ink-400 uppercase tracking-wide flex items-center gap-1.5";
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-tvs-charcoal-50">My Profile</h1>
-        <p className="text-sm text-tvs-charcoal-500 mt-0.5">
+        <h1 className="text-2xl font-black text-hd-ink-50">My Profile</h1>
+        <p className="text-sm text-hd-ink-500 mt-0.5">
           Member since {fmtDate(profile.createdAt)}
         </p>
       </div>
@@ -111,7 +111,7 @@ export function ProfileClient({ profile }: Props) {
       <StatusBadge status={profile.memberStatus} adminNotes={profile.adminNotes} />
 
       {/* Avatar + account info */}
-      <div className="gradient-card rounded-2xl border border-tvs-charcoal-700 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+      <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6">
         {/* Avatar */}
         <div className="flex flex-col items-center gap-3 shrink-0">
           {avatarUrl ? (
@@ -119,10 +119,10 @@ export function ProfileClient({ profile }: Props) {
             <img
               src={avatarUrl}
               alt={fullName}
-              className="size-24 rounded-full object-cover border-2 border-tvs-charcoal-700"
+              className="size-24 rounded-full object-cover border-2 border-hd-ink-700"
             />
           ) : (
-            <div className="size-24 rounded-full bg-tvs-red-600 flex items-center justify-center border-2 border-tvs-charcoal-700">
+            <div className="size-24 rounded-full bg-hd-ember-600 flex items-center justify-center border-2 border-hd-ink-700">
               <span className="text-2xl font-black text-white">{initials}</span>
             </div>
           )}
@@ -143,12 +143,12 @@ export function ProfileClient({ profile }: Props) {
         {/* Account info (read-only) */}
         <div className="flex-1 space-y-3 w-full">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-tvs-charcoal-500 mb-0.5">Email</p>
-            <p className="text-sm font-medium text-tvs-charcoal-200">{profile.email}</p>
+            <p className="text-[10px] uppercase tracking-widest text-hd-ink-500 mb-0.5">Email</p>
+            <p className="text-sm font-medium text-hd-ink-200">{profile.email}</p>
           </div>
           {profile.approvedAt && (
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-tvs-charcoal-500 mb-0.5">Approved</p>
+              <p className="text-[10px] uppercase tracking-widest text-hd-ink-500 mb-0.5">Approved</p>
               <p className="text-sm text-emerald-400">{fmtDate(profile.approvedAt)}</p>
             </div>
           )}
@@ -156,15 +156,15 @@ export function ProfileClient({ profile }: Props) {
       </div>
 
       {/* Editable fields */}
-      <div className="gradient-card rounded-2xl border border-tvs-charcoal-700 p-6 space-y-5">
-        <h2 className="text-sm font-bold text-tvs-charcoal-300 uppercase tracking-widest">
+      <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-5">
+        <h2 className="text-sm font-bold text-hd-ink-300 uppercase tracking-widest">
           Profile Details
         </h2>
 
         {error && (
-          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-tvs-red-950/60 border border-tvs-red-800/40">
-            <AlertCircle className="size-4 text-tvs-red-400 shrink-0 mt-px" />
-            <p className="text-sm text-tvs-red-300">{error}</p>
+          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40">
+            <AlertCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
+            <p className="text-sm text-hd-ember-300">{error}</p>
           </div>
         )}
         {saved && (
@@ -207,7 +207,7 @@ export function ProfileClient({ profile }: Props) {
 
         {/* Bike model */}
         <div className="space-y-1.5">
-          <label className={labelClass}><Bike className="size-3" /> TVS Model</label>
+          <label className={labelClass}><Bike className="size-3" /> Bike Model</label>
           <input
             type="text" value={bikeModel}
             onChange={(e) => setBikeModel(e.target.value)}
@@ -243,8 +243,8 @@ export function ProfileClient({ profile }: Props) {
           className={cn(
             "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all",
             saving || !fullName.trim()
-              ? "bg-tvs-charcoal-700 cursor-not-allowed opacity-60"
-              : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red active:scale-[0.98]"
+              ? "bg-hd-ink-700 cursor-not-allowed opacity-60"
+              : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember active:scale-[0.98]"
           )}
         >
           {saving

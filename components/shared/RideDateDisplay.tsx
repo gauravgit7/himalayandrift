@@ -33,9 +33,9 @@ export function RideDateDisplay({
 
   return (
     <span className={cn("flex flex-col leading-tight", className)}>
-      <span className="text-tvs-charcoal-200">{primary}</span>
+      <span className="text-hd-ink-200">{primary}</span>
       {showReference && (
-        <span className="text-[10px] text-tvs-charcoal-500 mt-0.5">{reference}</span>
+        <span className="text-[10px] text-hd-ink-500 mt-0.5">{reference}</span>
       )}
     </span>
   );

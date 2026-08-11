@@ -13,14 +13,14 @@ import { saveCardSettings }         from "@/lib/supabase/actions";
 import type { CardSettings }        from "@/types";
 
 const inputCls = cn(
-  "w-full h-9 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm",
-  "text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-  "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors",
+  "w-full h-9 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm",
+  "text-hd-ink-100 placeholder:text-hd-ink-600",
+  "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors",
 );
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-xs font-semibold text-tvs-charcoal-400 uppercase tracking-wide mb-1.5">
+    <label className="block text-xs font-semibold text-hd-ink-400 uppercase tracking-wide mb-1.5">
       {children}
     </label>
   );
@@ -34,7 +34,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
         onClick={() => onChange(!checked)}
         className={cn(
           "relative w-9 h-5 rounded-full transition-colors shrink-0",
-          checked ? "bg-tvs-red-600" : "bg-tvs-charcoal-700",
+          checked ? "bg-hd-ember-600" : "bg-hd-ink-700",
         )}
       >
         <span className={cn(
@@ -42,7 +42,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
           checked ? "translate-x-4" : "translate-x-0.5",
         )} />
       </button>
-      <span className="text-sm text-tvs-charcoal-200">{label}</span>
+      <span className="text-sm text-hd-ink-200">{label}</span>
     </label>
   );
 }
@@ -90,7 +90,7 @@ export function CardSettingsAdmin({ initial }: { initial: CardSettings }) {
           placeholder="NEPAL RIDES TOGETHER"
           className={inputCls}
         />
-        <p className="text-[10px] text-tvs-charcoal-600 mt-1">
+        <p className="text-[10px] text-hd-ink-600 mt-1">
           Shown at the bottom of the card front.
         </p>
       </div>
@@ -105,7 +105,7 @@ export function CardSettingsAdmin({ initial }: { initial: CardSettings }) {
           className={cn(inputCls, "h-auto resize-none py-2")}
           placeholder="If found, please return to the original owner..."
         />
-        <p className="text-[10px] text-tvs-charcoal-600 mt-1">
+        <p className="text-[10px] text-hd-ink-600 mt-1">
           Shown on the back of the card.
         </p>
       </div>
@@ -121,7 +121,7 @@ export function CardSettingsAdmin({ initial }: { initial: CardSettings }) {
           onChange={(e) => set("validityYears", Math.max(1, parseInt(e.target.value) || 2))}
           className={cn(inputCls, "w-32")}
         />
-        <p className="text-[10px] text-tvs-charcoal-600 mt-1">
+        <p className="text-[10px] text-hd-ink-600 mt-1">
           Applied from the approval date.
         </p>
       </div>
@@ -129,7 +129,7 @@ export function CardSettingsAdmin({ initial }: { initial: CardSettings }) {
       {/* Field visibility */}
       <div>
         <FieldLabel>Fields Shown on Card</FieldLabel>
-        <div className="space-y-3 p-4 rounded-xl bg-tvs-charcoal-800/40 border border-tvs-charcoal-700/40">
+        <div className="space-y-3 p-4 rounded-xl bg-hd-ink-800/40 border border-hd-ink-700/40">
           <Toggle checked={form.showBloodGroup}     onChange={(v) => set("showBloodGroup", v)}     label="Blood Group (back)" />
           <Toggle checked={form.showDob}            onChange={(v) => set("showDob", v)}            label="Date of Birth (back)" />
           <Toggle checked={form.showEmergencyPhone} onChange={(v) => set("showEmergencyPhone", v)} label="Emergency Phone (back)" />
@@ -139,19 +139,19 @@ export function CardSettingsAdmin({ initial }: { initial: CardSettings }) {
       {/* Benefits */}
       <div>
         <FieldLabel>Member Benefits</FieldLabel>
-        <p className="text-[10px] text-tvs-charcoal-600 mb-2">
+        <p className="text-[10px] text-hd-ink-600 mb-2">
           Shown on the public /membership landing page.
         </p>
         <div className="space-y-2 mb-3">
           {form.benefits.map((b, i) => (
             <div key={i} className="flex items-center gap-2">
-              <span className="flex-1 text-sm text-tvs-charcoal-200 px-3 py-2 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700/60">
+              <span className="flex-1 text-sm text-hd-ink-200 px-3 py-2 rounded-lg bg-hd-ink-800 border border-hd-ink-700/60">
                 {b}
               </span>
               <button
                 type="button"
                 onClick={() => removeBenefit(i)}
-                className="shrink-0 p-2 rounded-lg text-tvs-charcoal-500 hover:text-tvs-red-400 hover:bg-tvs-charcoal-800 transition-colors"
+                className="shrink-0 p-2 rounded-lg text-hd-ink-500 hover:text-hd-ember-400 hover:bg-hd-ink-800 transition-colors"
               >
                 <Trash2 className="size-3.5" />
               </button>
@@ -171,7 +171,7 @@ export function CardSettingsAdmin({ initial }: { initial: CardSettings }) {
             type="button"
             onClick={addBenefit}
             disabled={!newBenefit.trim()}
-            className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-tvs-charcoal-700 hover:bg-tvs-charcoal-600 text-tvs-charcoal-200 text-sm font-medium transition-colors disabled:opacity-40"
+            className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-hd-ink-700 hover:bg-hd-ink-600 text-hd-ink-200 text-sm font-medium transition-colors disabled:opacity-40"
           >
             <Plus className="size-3.5" />
             Add
@@ -181,7 +181,7 @@ export function CardSettingsAdmin({ initial }: { initial: CardSettings }) {
 
       {/* Error / success */}
       {error && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-tvs-red-950/50 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/50 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
           <AlertCircle className="size-4 shrink-0 mt-0.5" />{error}
         </div>
       )}
@@ -198,7 +198,7 @@ export function CardSettingsAdmin({ initial }: { initial: CardSettings }) {
         disabled={saving}
         className={cn(
           "flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all",
-          saving ? "bg-tvs-charcoal-700 cursor-not-allowed" : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red",
+          saving ? "bg-hd-ink-700 cursor-not-allowed" : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember",
         )}
       >
         {saving

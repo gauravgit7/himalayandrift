@@ -32,7 +32,7 @@ function pinIcon(color: string) {
 
 const START_ICON = pinIcon("#10B981");
 const STOP_ICON  = pinIcon("#F59E0B");
-const END_ICON   = pinIcon("#DC2626");
+const END_ICON   = pinIcon("#F09020");
 
 // ---------------------------------------------------------------------------
 // Auto-fit map to waypoints
@@ -102,7 +102,7 @@ export default function RideMap({
         {routePositions.length >= 2 && (
           <Polyline
             positions={routePositions}
-            pathOptions={{ color: "#DC2626", weight: 3.5, opacity: 0.85 }}
+            pathOptions={{ color: "#F09020", weight: 3.5, opacity: 0.85 }}
           />
         )}
 
@@ -133,16 +133,16 @@ export default function RideMap({
 
       {/* Stats bar - shown only in interactive / full mode */}
       {interactive && (totalDistanceKm || estimatedDurationHours) && (
-        <div className="flex items-center gap-4 px-4 py-2 bg-tvs-charcoal-900 border-t border-tvs-charcoal-800 rounded-b-xl text-xs text-tvs-charcoal-400">
+        <div className="flex items-center gap-4 px-4 py-2 bg-hd-ink-900 border-t border-hd-ink-800 rounded-b-xl text-xs text-hd-ink-400">
           {totalDistanceKm && (
             <span>
-              <strong className="text-tvs-charcoal-100">{totalDistanceKm} km</strong>
+              <strong className="text-hd-ink-100">{totalDistanceKm} km</strong>
               {" "}total distance
             </span>
           )}
           {estimatedDurationHours && (
             <span>
-              <strong className="text-tvs-charcoal-100">
+              <strong className="text-hd-ink-100">
                 {estimatedDurationHours >= 1
                   ? `${Math.floor(estimatedDurationHours)}h ${Math.round((estimatedDurationHours % 1) * 60)}min`
                   : `${Math.round(estimatedDurationHours * 60)} min`}
@@ -150,7 +150,7 @@ export default function RideMap({
               {" "}riding time
             </span>
           )}
-          <span className="ml-auto text-tvs-charcoal-600">
+          <span className="ml-auto text-hd-ink-600">
             {waypoints.length} waypoints
           </span>
         </div>

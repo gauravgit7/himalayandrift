@@ -62,8 +62,8 @@ function LogoPlaceholder({
         "flex items-center justify-center rounded-lg border select-none font-bold tracking-wide",
         sizeClasses,
         isTitleSponsor
-          ? "bg-tvs-red-950/50 border-tvs-red-800/40 text-tvs-red-400"
-          : "bg-tvs-charcoal-800/60 border-tvs-charcoal-700/50 text-tvs-charcoal-400"
+          ? "bg-hd-ember-950/50 border-hd-ember-800/40 text-hd-ember-400"
+          : "bg-hd-ink-800/60 border-hd-ink-700/50 text-hd-ink-400"
       )}
     >
       {initials}
@@ -87,15 +87,15 @@ export function SponsorShowcase({ sponsors }: SponsorShowcaseProps) {
   const otherSponsors    = sorted.filter((s) => s.tier !== "title");
 
   return (
-    <section className="py-14 px-4 sm:px-6 lg:px-8 border-t border-tvs-charcoal-800/50">
+    <section className="py-14 px-4 sm:px-6 lg:px-8 border-t border-hd-ink-800/50">
       <div className="max-w-7xl mx-auto">
         {/* Section label */}
         <AnimateIn variant="fadeIn" className="flex items-center justify-center gap-3 mb-10">
-          <span className="block flex-1 max-w-[80px] h-px bg-tvs-charcoal-800" />
-          <span className="text-[10px] uppercase tracking-[0.2em] text-tvs-charcoal-500">
+          <span className="block flex-1 max-w-[80px] h-px bg-hd-ink-800" />
+          <span className="text-[10px] uppercase tracking-[0.2em] text-hd-ink-500">
             Powered by
           </span>
-          <span className="block flex-1 max-w-[80px] h-px bg-tvs-charcoal-800" />
+          <span className="block flex-1 max-w-[80px] h-px bg-hd-ink-800" />
         </AnimateIn>
 
         {/* Title sponsor - centred, prominent */}
@@ -113,8 +113,8 @@ export function SponsorShowcase({ sponsors }: SponsorShowcaseProps) {
                 <LogoPlaceholder name={sponsor.name} size="xl" tier={sponsor.tier} />
               )}
               <div className="text-center">
-                <p className="text-sm font-bold text-tvs-charcoal-100">{sponsor.name}</p>
-                <p className="text-xs text-tvs-charcoal-500">
+                <p className="text-sm font-bold text-hd-ink-100">{sponsor.name}</p>
+                <p className="text-xs text-hd-ink-500">
                   {TIER_CONFIG[sponsor.tier]?.label ?? sponsor.tier}
                 </p>
               </div>
@@ -150,10 +150,10 @@ export function SponsorShowcase({ sponsors }: SponsorShowcaseProps) {
                     </div>
                   )}
                   <div className="text-center">
-                    <p className="text-xs font-medium text-tvs-charcoal-400 group-hover:text-tvs-charcoal-200 transition-colors duration-200">
+                    <p className="text-xs font-medium text-hd-ink-400 group-hover:text-hd-ink-200 transition-colors duration-200">
                       {sponsor.name}
                     </p>
-                    <p className="text-[9px] text-tvs-charcoal-600">
+                    <p className="text-[9px] text-hd-ink-600">
                       {tierCfg?.label ?? sponsor.tier}
                     </p>
                   </div>

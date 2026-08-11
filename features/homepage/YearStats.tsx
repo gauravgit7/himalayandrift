@@ -78,11 +78,11 @@ function StatCell({
       className="flex flex-col items-center gap-2 py-6 px-4"
     >
       <span className={`text-2xl ${color}`}>{icon}</span>
-      <p className="text-3xl sm:text-4xl font-black text-tvs-charcoal-50 tabular-nums">
+      <p className="text-3xl sm:text-4xl font-black text-hd-ink-50 tabular-nums">
         {count.toLocaleString()}
         {suffix}
       </p>
-      <p className="text-xs text-tvs-charcoal-400 text-center leading-snug">{label}</p>
+      <p className="text-xs text-hd-ink-400 text-center leading-snug">{label}</p>
     </motion.div>
   );
 }
@@ -105,7 +105,7 @@ export function YearStats({
       icon:   <Flag className="size-6" />,
       value:  totalRides,
       label:  "Total Rides in 2026",
-      color:  "text-tvs-red-500",
+      color:  "text-hd-ember-500",
     },
     {
       icon:   <CheckCircle className="size-6" />,
@@ -117,7 +117,7 @@ export function YearStats({
       icon:   <Clock className="size-6" />,
       value:  upcomingRides,
       label:  "Rides Upcoming",
-      color:  "text-tvs-steel-400",
+      color:  "text-hd-slate-400",
     },
     {
       icon:   <Star className="size-6" />,
@@ -130,14 +130,14 @@ export function YearStats({
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden border-y border-tvs-charcoal-800/60"
+      className="relative overflow-hidden border-y border-hd-ink-800/60"
     >
       {/* Subtle background */}
       <div className="absolute inset-0 gradient-card opacity-50" />
-      <div className="absolute inset-0 bg-gradient-to-r from-tvs-red-950/20 via-transparent to-tvs-steel-900/10 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-hd-ember-950/20 via-transparent to-hd-slate-900/10 pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-tvs-charcoal-800/60">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-hd-ink-800/60">
           {stats.map((s, i) => (
             <StatCell
               key={s.label}

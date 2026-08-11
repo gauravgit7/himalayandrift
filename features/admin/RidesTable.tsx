@@ -105,10 +105,10 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
 
   // ── Sorting icon ───────────────────────────────────────────────────────
   const SortIcon = ({ k }: { k: SortKey }) => {
-    if (sortKey !== k) return <ArrowUpDown className="size-3 text-tvs-charcoal-600" />;
+    if (sortKey !== k) return <ArrowUpDown className="size-3 text-hd-ink-600" />;
     return sortOrder === "asc"
-      ? <ChevronUp   className="size-3 text-tvs-red-400" />
-      : <ChevronDown className="size-3 text-tvs-red-400" />;
+      ? <ChevronUp   className="size-3 text-hd-ember-400" />
+      : <ChevronDown className="size-3 text-hd-ember-400" />;
   };
 
   return (
@@ -117,13 +117,13 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
       <div className="flex flex-wrap gap-3 items-center">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-tvs-charcoal-500 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-hd-ink-500 pointer-events-none" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search rides…"
-            className="w-full h-9 pl-9 pr-3 rounded-lg bg-tvs-charcoal-900 border border-tvs-charcoal-800 text-sm text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600 focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors"
+            className="w-full h-9 pl-9 pr-3 rounded-lg bg-hd-ink-900 border border-hd-ink-800 text-sm text-hd-ink-100 placeholder:text-hd-ink-600 focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors"
           />
         </div>
 
@@ -131,10 +131,10 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
         <select
           value={rideType}
           onChange={(e) => setRideType(e.target.value as RideType | "all")}
-          className="h-9 px-3 rounded-lg bg-tvs-charcoal-900 border border-tvs-charcoal-800 text-sm text-tvs-charcoal-300 focus:outline-none focus:border-tvs-red-600 transition-colors appearance-none"
+          className="h-9 px-3 rounded-lg bg-hd-ink-900 border border-hd-ink-800 text-sm text-hd-ink-300 focus:outline-none focus:border-hd-ember-600 transition-colors appearance-none"
         >
           {TYPE_FILTER_OPTS.map((o) => (
-            <option key={o.value} value={o.value} className="bg-tvs-charcoal-900">
+            <option key={o.value} value={o.value} className="bg-hd-ink-900">
               {o.label}
             </option>
           ))}
@@ -144,23 +144,23 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as RideStatus | "all")}
-          className="h-9 px-3 rounded-lg bg-tvs-charcoal-900 border border-tvs-charcoal-800 text-sm text-tvs-charcoal-300 focus:outline-none focus:border-tvs-red-600 transition-colors appearance-none"
+          className="h-9 px-3 rounded-lg bg-hd-ink-900 border border-hd-ink-800 text-sm text-hd-ink-300 focus:outline-none focus:border-hd-ember-600 transition-colors appearance-none"
         >
           {STATUS_FILTER_OPTS.map((o) => (
-            <option key={o.value} value={o.value} className="bg-tvs-charcoal-900">
+            <option key={o.value} value={o.value} className="bg-hd-ink-900">
               {o.label}
             </option>
           ))}
         </select>
 
-        <span className="text-xs text-tvs-charcoal-500 ml-1 whitespace-nowrap">
+        <span className="text-xs text-hd-ink-500 ml-1 whitespace-nowrap">
           {filtered.length} / {rides.length}
         </span>
 
         {/* Add button */}
         <Link
           href={`${ROUTES.adminRides}/new`}
-          className="ml-auto flex items-center gap-2 h-9 px-4 rounded-lg bg-tvs-red-600 hover:bg-tvs-red-500 text-white font-semibold text-sm transition-colors whitespace-nowrap"
+          className="ml-auto flex items-center gap-2 h-9 px-4 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 text-white font-semibold text-sm transition-colors whitespace-nowrap"
         >
           <Plus className="size-4" />
           Add Ride
@@ -168,9 +168,9 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
       </div>
 
       {/* ── Table ── */}
-      <div className="rounded-xl border border-tvs-charcoal-800/60 overflow-hidden">
+      <div className="rounded-xl border border-hd-ink-800/60 overflow-hidden">
         {/* Head */}
-        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-0 border-b border-tvs-charcoal-800/60 bg-tvs-charcoal-900/60">
+        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-0 border-b border-hd-ink-800/60 bg-hd-ink-900/60">
           {(
             [
               { key: "title",     label: "Ride" },
@@ -183,20 +183,20 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
             <button
               key={col.key}
               onClick={() => toggleSort(col.key)}
-              className="flex items-center gap-1 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-tvs-charcoal-500 hover:text-tvs-charcoal-200 transition-colors text-left"
+              className="flex items-center gap-1 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-hd-ink-500 hover:text-hd-ink-200 transition-colors text-left"
             >
               {col.label}
               <SortIcon k={col.key} />
             </button>
           ))}
-          <div className="px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-tvs-charcoal-500">
+          <div className="px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-hd-ink-500">
             Actions
           </div>
         </div>
 
         {/* Body */}
         {filtered.length === 0 ? (
-          <div className="py-12 text-center text-tvs-charcoal-500 text-sm">
+          <div className="py-12 text-center text-hd-ink-500 text-sm">
             No rides match your filters.
           </div>
         ) : (
@@ -204,8 +204,8 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
             <div
               key={ride.id}
               className={cn(
-                "grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center border-b border-tvs-charcoal-800/30 hover:bg-tvs-charcoal-800/20 transition-colors group",
-                i % 2 === 0 ? "bg-transparent" : "bg-tvs-charcoal-900/20"
+                "grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-0 items-center border-b border-hd-ink-800/30 hover:bg-hd-ink-800/20 transition-colors group",
+                i % 2 === 0 ? "bg-transparent" : "bg-hd-ink-900/20"
               )}
             >
               {/* Title */}
@@ -217,7 +217,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
                   )}
                 />
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-tvs-charcoal-100 truncate">
+                  <p className="text-sm font-medium text-hd-ink-100 truncate">
                     {ride.title}
                   </p>
                   {ride.rideType === "marquee" && (
@@ -227,14 +227,14 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
               </div>
               {/* Ride type */}
               <div className="px-3 py-3">
-                <span className="text-xs text-tvs-charcoal-300">
+                <span className="text-xs text-hd-ink-300">
                   {(RIDE_TYPE_STYLES[ride.rideType] ?? RIDE_TYPE_STYLE_FALLBACK).label}
                 </span>
               </div>
               {/* Location */}
-              <div className="px-3 py-3 text-xs text-tvs-charcoal-300">{ride.location}</div>
+              <div className="px-3 py-3 text-xs text-hd-ink-300">{ride.location}</div>
               {/* Date */}
-              <div className="px-3 py-3 text-xs text-tvs-charcoal-400">
+              <div className="px-3 py-3 text-xs text-hd-ink-400">
                 {formatRideDateRange(ride.startDate, ride.endDate)}
               </div>
               {/* Status */}
@@ -247,14 +247,14 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
                   href={ROUTES.ride(ride.slug)}
                   target="_blank"
                   title="View public page"
-                  className="p-1.5 rounded-lg text-tvs-charcoal-500 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-800 transition-colors"
+                  className="p-1.5 rounded-lg text-hd-ink-500 hover:text-hd-ink-100 hover:bg-hd-ink-800 transition-colors"
                 >
                   <Eye className="size-3.5" />
                 </Link>
                 <Link
                   href={`${ROUTES.adminRides}/${ride.id}`}
                   title="Edit ride"
-                  className="p-1.5 rounded-lg text-tvs-charcoal-500 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-800 transition-colors"
+                  className="p-1.5 rounded-lg text-hd-ink-500 hover:text-hd-ink-100 hover:bg-hd-ink-800 transition-colors"
                 >
                   <Edit2 className="size-3.5" />
                 </Link>
@@ -262,13 +262,13 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
                   <div className="flex items-center gap-1 ml-1">
                     <button
                       onClick={() => confirmDelete(ride.id)}
-                      className="text-[10px] font-bold px-2 py-1 rounded bg-tvs-red-600 hover:bg-tvs-red-500 text-white transition-colors"
+                      className="text-[10px] font-bold px-2 py-1 rounded bg-hd-ember-600 hover:bg-hd-ember-500 text-white transition-colors"
                     >
                       Confirm
                     </button>
                     <button
                       onClick={() => setDeleteId(null)}
-                      className="text-[10px] font-medium px-2 py-1 rounded bg-tvs-charcoal-700 hover:bg-tvs-charcoal-600 text-tvs-charcoal-200 transition-colors"
+                      className="text-[10px] font-medium px-2 py-1 rounded bg-hd-ink-700 hover:bg-hd-ink-600 text-hd-ink-200 transition-colors"
                     >
                       Cancel
                     </button>
@@ -277,7 +277,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
                   <button
                     onClick={() => setDeleteId(ride.id)}
                     title="Delete ride"
-                    className="p-1.5 rounded-lg text-tvs-charcoal-500 hover:text-tvs-red-400 hover:bg-tvs-red-950/40 transition-colors"
+                    className="p-1.5 rounded-lg text-hd-ink-500 hover:text-hd-ember-400 hover:bg-hd-ember-950/40 transition-colors"
                   >
                     <Trash2 className="size-3.5" />
                   </button>
@@ -289,7 +289,7 @@ export function RidesTable({ initialRides, brandLogos }: RidesTableProps) {
       </div>
 
       {/* Phase note */}
-      <p className="text-[10px] text-tvs-charcoal-700 text-center">
+      <p className="text-[10px] text-hd-ink-700 text-center">
         Delete actions are local-only · Phase 6 wires persistence to Supabase
       </p>
     </div>

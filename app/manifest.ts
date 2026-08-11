@@ -7,8 +7,8 @@ export const revalidate = 3600;
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   // Fetch PWA identity from Supabase (falls back to defaults if not set)
-  let appName   = "TVS Nepal Ride Operations";
-  let shortName = "TVS Nepal";
+  let appName   = APP_META.name;
+  let shortName = APP_META.shortName;
   let iconUrl: string | null = null;
 
   try {

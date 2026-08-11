@@ -1,5 +1,5 @@
 // =============================================================================
-// TVS Nepal Ride Operations Platform - Central Type Definitions
+// Himalayan Drift - Central Type Definitions
 // =============================================================================
 
 // ---------------------------------------------------------------------------
@@ -81,7 +81,7 @@ export interface Marshal {
   bio: string | null;
   totalRidesLed: number;
   isActive: boolean;
-  /** Instagram handle without @, e.g. "tvs_rider_ram". Null if not provided. */
+  /** Instagram handle without @, e.g. "himalayan_rider". Null if not provided. */
   instagramHandle: string | null;
 }
 

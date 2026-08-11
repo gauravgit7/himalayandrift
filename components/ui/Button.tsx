@@ -1,7 +1,7 @@
 "use client";
 
 // =============================================================================
-// Button - reusable base button with TVS brand variants
+// Button - reusable base button with brand variants
 // =============================================================================
 
 import { forwardRef } from "react";
@@ -21,20 +21,20 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANT_STYLES: Record<Variant, string> = {
   primary:
-    "bg-tvs-red-600 text-white hover:bg-tvs-red-500 active:bg-tvs-red-700 " +
-    "shadow-sm hover:shadow-glow-red focus-visible:ring-tvs-red-500",
+    "bg-hd-ember-600 text-white hover:bg-hd-ember-500 active:bg-hd-ember-700 " +
+    "shadow-sm hover:shadow-glow-ember focus-visible:ring-hd-ember-500",
   secondary:
-    "bg-tvs-charcoal-800 text-tvs-charcoal-100 border border-tvs-charcoal-600 " +
-    "hover:bg-tvs-charcoal-700 hover:border-tvs-charcoal-500 active:bg-tvs-charcoal-900",
+    "bg-hd-ink-800 text-hd-ink-100 border border-hd-ink-600 " +
+    "hover:bg-hd-ink-700 hover:border-hd-ink-500 active:bg-hd-ink-900",
   ghost:
-    "bg-transparent text-tvs-charcoal-200 hover:bg-tvs-charcoal-800 hover:text-tvs-charcoal-50 " +
-    "active:bg-tvs-charcoal-900",
+    "bg-transparent text-hd-ink-200 hover:bg-hd-ink-800 hover:text-hd-ink-50 " +
+    "active:bg-hd-ink-900",
   danger:
     "bg-red-700 text-white hover:bg-red-600 active:bg-red-800 " +
     "shadow-sm focus-visible:ring-red-500",
   outline:
-    "bg-transparent text-tvs-red-400 border border-tvs-red-600 " +
-    "hover:bg-tvs-red-600/10 hover:text-tvs-red-300 active:bg-tvs-red-600/20",
+    "bg-transparent text-hd-ember-400 border border-hd-ember-600 " +
+    "hover:bg-hd-ember-600/10 hover:text-hd-ember-300 active:bg-hd-ember-600/20",
 };
 
 const SIZE_STYLES: Record<Size, string> = {
@@ -70,7 +70,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "inline-flex items-center justify-center font-medium rounded-lg",
           "transition-all duration-200 ease-out",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-          "focus-visible:ring-offset-tvs-charcoal-950",
+          "focus-visible:ring-offset-hd-ink-950",
           "select-none cursor-pointer",
           // Disabled state
           "disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none",

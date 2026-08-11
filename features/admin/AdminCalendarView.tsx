@@ -100,10 +100,10 @@ function DroppableCell({
     <div
       ref={setNodeRef}
       className={cn(
-        "relative min-h-[80px] p-1 border-b border-r border-tvs-charcoal-800/50 transition-colors duration-100",
-        isCurrentMonth ? "bg-transparent" : "bg-tvs-charcoal-900/30",
-        isOver && "bg-tvs-red-950/30 border-tvs-red-800/40",
-        isOver && "ring-1 ring-inset ring-tvs-red-700/40"
+        "relative min-h-[80px] p-1 border-b border-r border-hd-ink-800/50 transition-colors duration-100",
+        isCurrentMonth ? "bg-transparent" : "bg-hd-ink-900/30",
+        isOver && "bg-hd-ember-950/30 border-hd-ember-800/40",
+        isOver && "ring-1 ring-inset ring-hd-ember-700/40"
       )}
     >
       {/* Day number */}
@@ -111,10 +111,10 @@ function DroppableCell({
         className={cn(
           "inline-flex items-center justify-center text-xs font-semibold mb-1 w-6 h-6 rounded-full",
           isToday
-            ? "bg-tvs-red-600 text-white font-bold"
+            ? "bg-hd-ember-600 text-white font-bold"
             : isCurrentMonth
-            ? "text-tvs-charcoal-300"
-            : "text-tvs-charcoal-700"
+            ? "text-hd-ink-300"
+            : "text-hd-ink-700"
         )}
       >
         {dayNum}
@@ -123,7 +123,7 @@ function DroppableCell({
       {/* Drop hint */}
       {isOver && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[9px] font-bold text-tvs-red-400 uppercase tracking-wider">
+          <span className="text-[9px] font-bold text-hd-ember-400 uppercase tracking-wider">
             Drop here
           </span>
         </div>
@@ -140,7 +140,7 @@ function DroppableCell({
             />
           ))}
           {rides.length > 3 && (
-            <span className="text-[10px] text-tvs-charcoal-500 pl-1">
+            <span className="text-[10px] text-hd-ink-500 pl-1">
               +{rides.length - 3} more
             </span>
           )}
@@ -274,14 +274,14 @@ export function AdminCalendarView({ initialRides }: AdminCalendarViewProps) {
       {/* ── Header ── */}
       <div className="flex items-center gap-3 flex-wrap">
         {/* Month nav */}
-        <div className="flex items-center gap-1 bg-tvs-charcoal-900 border border-tvs-charcoal-800 rounded-lg overflow-hidden">
-          <button onClick={prevMonth} className="p-2 hover:bg-tvs-charcoal-800 text-tvs-charcoal-400 hover:text-tvs-charcoal-50 transition-colors">
+        <div className="flex items-center gap-1 bg-hd-ink-900 border border-hd-ink-800 rounded-lg overflow-hidden">
+          <button onClick={prevMonth} className="p-2 hover:bg-hd-ink-800 text-hd-ink-400 hover:text-hd-ink-50 transition-colors">
             <ChevronLeft className="size-4" />
           </button>
-          <span className="px-3 py-1.5 text-sm font-bold text-tvs-charcoal-50 min-w-[130px] text-center">
+          <span className="px-3 py-1.5 text-sm font-bold text-hd-ink-50 min-w-[130px] text-center">
             {MONTHS[month]} {year}
           </span>
-          <button onClick={nextMonth} className="p-2 hover:bg-tvs-charcoal-800 text-tvs-charcoal-400 hover:text-tvs-charcoal-50 transition-colors">
+          <button onClick={nextMonth} className="p-2 hover:bg-hd-ink-800 text-hd-ink-400 hover:text-hd-ink-50 transition-colors">
             <ChevronRight className="size-4" />
           </button>
         </div>
@@ -299,7 +299,7 @@ export function AdminCalendarView({ initialRides }: AdminCalendarViewProps) {
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={resetChanges}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-tvs-charcoal-700 text-tvs-charcoal-400 hover:text-tvs-charcoal-50 text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-hd-ink-700 text-hd-ink-400 hover:text-hd-ink-50 text-xs font-medium transition-colors"
             >
               <RotateCcw className="size-3.5" />
               Undo All
@@ -307,7 +307,7 @@ export function AdminCalendarView({ initialRides }: AdminCalendarViewProps) {
             <button
               onClick={saveChanges}
               disabled={saveFeedback}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-tvs-red-600 hover:bg-tvs-red-500 text-white text-xs font-semibold transition-colors disabled:opacity-60"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 text-white text-xs font-semibold transition-colors disabled:opacity-60"
             >
               <Save className="size-3.5" />
               {saveFeedback ? "Saving…" : "Save Changes"}
@@ -316,7 +316,7 @@ export function AdminCalendarView({ initialRides }: AdminCalendarViewProps) {
         )}
 
         {/* Rides in month */}
-        <span className={cn("text-xs text-tvs-charcoal-500", pendingCount === 0 && "ml-auto")}>
+        <span className={cn("text-xs text-hd-ink-500", pendingCount === 0 && "ml-auto")}>
           {rides.filter((r) =>
             r.startDate.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`)
           ).length}{" "}
@@ -325,8 +325,8 @@ export function AdminCalendarView({ initialRides }: AdminCalendarViewProps) {
       </div>
 
       {/* ── Phase note ── */}
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-tvs-charcoal-900/60 border border-tvs-charcoal-800/40 text-xs text-tvs-charcoal-500">
-        <Info className="size-3.5 text-tvs-charcoal-600 shrink-0" />
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-hd-ink-900/60 border border-hd-ink-800/40 text-xs text-hd-ink-500">
+        <Info className="size-3.5 text-hd-ink-600 shrink-0" />
         Drag ride chips to reschedule - duration is preserved. Changes shown locally until saved (Phase 6 persists to Supabase).
       </div>
 
@@ -337,11 +337,11 @@ export function AdminCalendarView({ initialRides }: AdminCalendarViewProps) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="rounded-xl border border-tvs-charcoal-800/50 overflow-hidden">
+        <div className="rounded-xl border border-hd-ink-800/50 overflow-hidden">
           {/* Day headers */}
-          <div className="grid grid-cols-7 border-b border-tvs-charcoal-800/50">
+          <div className="grid grid-cols-7 border-b border-hd-ink-800/50">
             {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
-              <div key={d} className="py-2 text-center text-[11px] font-bold text-tvs-charcoal-500 uppercase tracking-wide bg-tvs-charcoal-900/50">
+              <div key={d} className="py-2 text-center text-[11px] font-bold text-hd-ink-500 uppercase tracking-wide bg-hd-ink-900/50">
                 {d}
               </div>
             ))}
@@ -377,17 +377,17 @@ export function AdminCalendarView({ initialRides }: AdminCalendarViewProps) {
       {/* ── Change log ── */}
       {pendingCount > 0 && (
         <div className="space-y-1">
-          <p className="text-xs font-bold text-tvs-charcoal-500 uppercase tracking-wider">
+          <p className="text-xs font-bold text-hd-ink-500 uppercase tracking-wider">
             Pending Changes
           </p>
           {Object.entries(changes).map(([id, { from, to }]) => {
             const ride = rides.find((r) => r.id === id);
             return (
-              <div key={id} className="flex items-center gap-2 text-xs text-tvs-charcoal-400 bg-tvs-charcoal-900/60 border border-tvs-charcoal-800/40 rounded-lg px-3 py-2">
-                <span className="font-medium text-tvs-charcoal-200 truncate">{ride?.title ?? id}</span>
-                <span className="text-tvs-charcoal-600">·</span>
-                <span className="text-tvs-red-400 line-through">{from}</span>
-                <span className="text-tvs-charcoal-600">→</span>
+              <div key={id} className="flex items-center gap-2 text-xs text-hd-ink-400 bg-hd-ink-900/60 border border-hd-ink-800/40 rounded-lg px-3 py-2">
+                <span className="font-medium text-hd-ink-200 truncate">{ride?.title ?? id}</span>
+                <span className="text-hd-ink-600">·</span>
+                <span className="text-hd-ember-400 line-through">{from}</span>
+                <span className="text-hd-ink-600">→</span>
                 <span className="text-emerald-400">{to}</span>
                 <button
                   onClick={() => {
@@ -397,7 +397,7 @@ export function AdminCalendarView({ initialRides }: AdminCalendarViewProps) {
                       setChanges((prev) => { const e = { ...prev }; delete e[id]; return e; });
                     }
                   }}
-                  className="ml-auto text-tvs-charcoal-600 hover:text-tvs-red-400 transition-colors"
+                  className="ml-auto text-hd-ink-600 hover:text-hd-ember-400 transition-colors"
                   title="Undo this change"
                 >
                   ✕

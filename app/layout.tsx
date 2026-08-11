@@ -1,5 +1,5 @@
 // =============================================================================
-// Root Layout - TVS Nepal Ride Operations Platform
+// Root Layout - Himalayan Drift
 // =============================================================================
 
 import type { Metadata, Viewport } from "next";
@@ -87,7 +87,7 @@ export default function RootLayout({
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('tvs-theme');if(t==='light'){document.documentElement.classList.add('light');}}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('hd-theme');if(t==='light'){document.documentElement.classList.add('light');}}catch(e){}})();`,
           }}
         />
       </head>

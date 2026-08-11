@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Ride not found" }, { status: 404 });
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tvs-nepal.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://himalayandrift.com";
   const pageUrl = `${siteUrl}/rides/${ride.slug}`;
 
   // Build description
@@ -77,13 +77,13 @@ export async function GET(request: NextRequest) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//TVS Nepal//Ride Calendar//EN",
+    "PRODID:-//Himalayan Drift//Ride Calendar//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:TVS Nepal Rides",
+    "X-WR-CALNAME:Himalayan Drift",
     "X-WR-TIMEZONE:Asia/Kathmandu",
     "BEGIN:VEVENT",
-    fold(`UID:ride-${ride.id}@tvs-nepal.com`),
+    fold(`UID:ride-${ride.id}@himalayandrift.com`),
     `DTSTAMP:${now}`,
     `DTSTART;VALUE=DATE:${toIcalDate(ride.startDate)}`,
     `DTEND;VALUE=DATE:${exclusiveEnd(ride.endDate)}`,

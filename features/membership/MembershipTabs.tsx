@@ -21,9 +21,9 @@ export function MembershipTabs({ settings, brandLogos }: MembershipTabsProps) {
   const [tab, setTab] = useState<"apply" | "status">("apply");
 
   return (
-    <div className="rounded-2xl gradient-card border border-tvs-charcoal-700/60 overflow-hidden">
+    <div className="rounded-2xl gradient-card border border-hd-ink-700/60 overflow-hidden">
       {/* Tab bar */}
-      <div className="flex border-b border-tvs-charcoal-800/60">
+      <div className="flex border-b border-hd-ink-800/60">
         {(["apply", "status"] as const).map((t) => (
           <button
             key={t}
@@ -32,8 +32,8 @@ export function MembershipTabs({ settings, brandLogos }: MembershipTabsProps) {
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-all",
               tab === t
-                ? "text-tvs-charcoal-50 border-b-2 border-tvs-red-600 bg-tvs-red-950/20"
-                : "text-tvs-charcoal-500 hover:text-tvs-charcoal-200 hover:bg-tvs-charcoal-800/40",
+                ? "text-hd-ink-50 border-b-2 border-hd-ember-600 bg-hd-ember-950/20"
+                : "text-hd-ink-500 hover:text-hd-ink-200 hover:bg-hd-ink-800/40",
             )}
           >
             {t === "apply"
@@ -49,7 +49,7 @@ export function MembershipTabs({ settings, brandLogos }: MembershipTabsProps) {
           <ApplicationForm />
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-tvs-charcoal-400">
+            <p className="text-sm text-hd-ink-400">
               Enter the reference code you received after submitting your application.
             </p>
             <StatusChecker settings={settings} brandLogos={brandLogos} />

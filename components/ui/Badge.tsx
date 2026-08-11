@@ -18,12 +18,12 @@ interface BadgeProps {
 }
 
 const VARIANT_STYLES: Record<BadgeVariant, string> = {
-  default: "bg-tvs-charcoal-700  text-tvs-charcoal-200 border border-tvs-charcoal-600",
+  default: "bg-hd-ink-700  text-hd-ink-200 border border-hd-ink-600",
   success: "bg-emerald-950       text-emerald-400       border border-emerald-800",
   warning: "bg-amber-950         text-amber-400         border border-amber-800",
   danger:  "bg-red-950           text-red-400           border border-red-800",
   info:    "bg-blue-950          text-blue-400          border border-blue-800",
-  ghost:   "bg-white/5           text-tvs-charcoal-300  border border-white/10",
+  ghost:   "bg-white/5           text-hd-ink-300  border border-white/10",
 };
 
 const SIZE_STYLES: Record<BadgeSize, string> = {

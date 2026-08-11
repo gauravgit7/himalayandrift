@@ -17,7 +17,7 @@ import type { RouteData, RouteWaypoint } from "@/types";
 const RideRouteMap = dynamic(() => import("@/components/maps/RideRouteMap"), {
   ssr:     false,
   loading: () => (
-    <div className="h-64 w-full rounded-xl bg-tvs-charcoal-800 border border-tvs-charcoal-700 flex items-center justify-center text-tvs-charcoal-500 text-sm">
+    <div className="h-64 w-full rounded-xl bg-hd-ink-800 border border-hd-ink-700 flex items-center justify-center text-hd-ink-500 text-sm">
       Loading map…
     </div>
   ),
@@ -130,22 +130,22 @@ interface WaypointRowProps {
 }
 
 const inputCls = cn(
-  "w-full h-9 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm",
-  "text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-  "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors"
+  "w-full h-9 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm",
+  "text-hd-ink-100 placeholder:text-hd-ink-600",
+  "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors"
 );
 
 function WaypointRow({ wp, index, total, onChange, onRemove, onSelect }: WaypointRowProps) {
   const isFirst = index === 0;
   const isLast  = index === total - 1;
-  const dotColor = isFirst ? "bg-emerald-500" : isLast ? "bg-tvs-red-500" : "bg-amber-500";
+  const dotColor = isFirst ? "bg-emerald-500" : isLast ? "bg-hd-ember-500" : "bg-amber-500";
   const label    = isFirst ? "Start" : isLast ? "End" : `Stop ${index}`;
 
   return (
     <div className="flex items-start gap-2">
       {/* Drag handle + dot */}
       <div className="flex flex-col items-center gap-1 pt-2 shrink-0">
-        <GripVertical className="size-4 text-tvs-charcoal-600 cursor-grab" />
+        <GripVertical className="size-4 text-hd-ink-600 cursor-grab" />
         <span className={cn("size-2.5 rounded-full shrink-0", dotColor)} />
       </div>
 
@@ -153,7 +153,7 @@ function WaypointRow({ wp, index, total, onChange, onRemove, onSelect }: Waypoin
       <div className="flex-1 relative">
         <div className="relative">
           {wp.searching && (
-            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-tvs-charcoal-500 animate-spin" />
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-hd-ink-500 animate-spin" />
           )}
           {wp.lat !== null && !wp.searching && (
             <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 size-3.5 text-emerald-500" />
@@ -170,16 +170,16 @@ function WaypointRow({ wp, index, total, onChange, onRemove, onSelect }: Waypoin
 
         {/* Suggestions dropdown */}
         {wp.showSuggestions && wp.suggestions.length > 0 && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-tvs-charcoal-900 border border-tvs-charcoal-700 rounded-lg shadow-cinematic overflow-hidden">
+          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-hd-ink-900 border border-hd-ink-700 rounded-lg shadow-cinematic overflow-hidden">
             {wp.suggestions.map((s) => (
               <button
                 key={s.place_id}
                 type="button"
                 onClick={() => onSelect(wp.id, s)}
-                className="flex items-start gap-2 w-full px-3 py-2 text-left hover:bg-tvs-charcoal-800 transition-colors"
+                className="flex items-start gap-2 w-full px-3 py-2 text-left hover:bg-hd-ink-800 transition-colors"
               >
-                <MapPin className="size-3.5 text-tvs-charcoal-500 mt-0.5 shrink-0" />
-                <span className="text-xs text-tvs-charcoal-300 leading-snug line-clamp-2">
+                <MapPin className="size-3.5 text-hd-ink-500 mt-0.5 shrink-0" />
+                <span className="text-xs text-hd-ink-300 leading-snug line-clamp-2">
                   {s.display_name}
                 </span>
               </button>
@@ -201,7 +201,7 @@ function WaypointRow({ wp, index, total, onChange, onRemove, onSelect }: Waypoin
             "text-[10px] font-semibold px-1.5 py-0.5 rounded border transition-colors",
             wp.isStop
               ? "bg-amber-900/50 text-amber-400 border-amber-800/40"
-              : "bg-tvs-charcoal-800 text-tvs-charcoal-600 border-tvs-charcoal-700"
+              : "bg-hd-ink-800 text-hd-ink-600 border-hd-ink-700"
           )}>
             {wp.isStop ? "Stop" : "Via"}
           </span>
@@ -213,7 +213,7 @@ function WaypointRow({ wp, index, total, onChange, onRemove, onSelect }: Waypoin
         <button
           type="button"
           onClick={() => onRemove(wp.id)}
-          className="mt-2 p-1 rounded text-tvs-charcoal-600 hover:text-tvs-red-400 hover:bg-tvs-red-950/30 transition-colors shrink-0"
+          className="mt-2 p-1 rounded text-hd-ink-600 hover:text-hd-ember-400 hover:bg-hd-ember-950/30 transition-colors shrink-0"
           title="Remove waypoint"
         >
           <X className="size-3.5" />
@@ -358,7 +358,7 @@ export function RouteBuilder({ initialRouteData, onChange }: RouteBuilderProps) 
         <button
           type="button"
           onClick={addWaypoint}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-tvs-charcoal-700 text-xs font-semibold text-tvs-charcoal-500 hover:border-tvs-charcoal-500 hover:text-tvs-charcoal-300 transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-hd-ink-700 text-xs font-semibold text-hd-ink-500 hover:border-hd-ink-500 hover:text-hd-ink-300 transition-all"
         >
           <Plus className="size-3.5" />
           Add Stop
@@ -371,8 +371,8 @@ export function RouteBuilder({ initialRouteData, onChange }: RouteBuilderProps) 
           className={cn(
             "flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all",
             canFetch && !fetching
-              ? "bg-tvs-red-600 text-white hover:bg-tvs-red-500 hover:shadow-glow-red"
-              : "bg-tvs-charcoal-800 text-tvs-charcoal-600 border border-tvs-charcoal-700 cursor-not-allowed"
+              ? "bg-hd-ember-600 text-white hover:bg-hd-ember-500 hover:shadow-glow-ember"
+              : "bg-hd-ink-800 text-hd-ink-600 border border-hd-ink-700 cursor-not-allowed"
           )}
         >
           {fetching ? (
@@ -386,7 +386,7 @@ export function RouteBuilder({ initialRouteData, onChange }: RouteBuilderProps) 
           <button
             type="button"
             onClick={clearRoute}
-            className="text-xs text-tvs-charcoal-600 hover:text-tvs-red-400 transition-colors"
+            className="text-xs text-hd-ink-600 hover:text-hd-ember-400 transition-colors"
           >
             Clear route
           </button>
@@ -395,7 +395,7 @@ export function RouteBuilder({ initialRouteData, onChange }: RouteBuilderProps) 
 
       {/* ── Error ── */}
       {fetchError && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-tvs-red-950/60 border border-tvs-red-800/40 text-tvs-red-300 text-xs">
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40 text-hd-ember-300 text-xs">
           <AlertCircle className="size-3.5 shrink-0 mt-px" />
           {fetchError}
         </div>
@@ -426,13 +426,13 @@ export function RouteBuilder({ initialRouteData, onChange }: RouteBuilderProps) 
         <RideRouteMap
           waypoints={fetchedRoute.waypoints}
           totalDistanceKm={fetchedRoute.totalDistanceKm}
-          className="h-64 rounded-xl overflow-hidden border border-tvs-charcoal-700"
+          className="h-64 rounded-xl overflow-hidden border border-hd-ink-700"
         />
       )}
 
       {/* Helper text */}
       {!fetchedRoute && (
-        <p className="text-[10px] text-tvs-charcoal-600">
+        <p className="text-[10px] text-hd-ink-600">
           Search locations using OpenStreetMap · Route calculated via OSRM (free, no API key) ·
           Route is saved with the ride automatically
         </p>

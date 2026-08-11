@@ -1,4 +1,4 @@
-// GET /api/members/status?code=TVS-XXXXXX
+// GET /api/members/status?code=HD-XXXXXX
 // Returns the member card for a given access code.
 // Uses the service-role (admin) client so RLS policy gaps never block a
 // legitimate lookup — the access code itself is the security gate.

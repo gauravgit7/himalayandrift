@@ -7,7 +7,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
       <div className="text-center">
-        <span className="size-8 rounded-full border-2 border-tvs-charcoal-700 border-t-tvs-red-600 animate-spin inline-block" />
+        <span className="size-8 rounded-full border-2 border-hd-ink-700 border-t-hd-ember-600 animate-spin inline-block" />
       </div>
     }>
       <ResetPasswordForm />

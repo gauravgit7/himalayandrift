@@ -17,24 +17,24 @@ import { BLOOD_GROUPS, ROUTES } from "@/lib/constants";
 // ---------------------------------------------------------------------------
 
 const inputCls = cn(
-  "w-full h-10 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700",
-  "text-sm text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-  "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors",
+  "w-full h-10 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700",
+  "text-sm text-hd-ink-100 placeholder:text-hd-ink-600",
+  "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors",
 );
 
 const selectCls = cn(inputCls, "cursor-pointer appearance-none");
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="block text-xs font-semibold text-tvs-charcoal-400 uppercase tracking-wide mb-1.5">
-      {children}{required && <span className="text-tvs-red-500 ml-0.5">*</span>}
+    <label className="block text-xs font-semibold text-hd-ink-400 uppercase tracking-wide mb-1.5">
+      {children}{required && <span className="text-hd-ember-500 ml-0.5">*</span>}
     </label>
   );
 }
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
-  return <p className="text-xs text-tvs-red-400 mt-1">{msg}</p>;
+  return <p className="text-xs text-hd-ember-400 mt-1">{msg}</p>;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,7 +111,7 @@ export function ApplicationForm() {
       {/* Photo */}
       <div>
         <FieldLabel required>Profile Photo</FieldLabel>
-        <p className="text-xs text-tvs-charcoal-500 mb-2">
+        <p className="text-xs text-hd-ink-500 mb-2">
           Clear face photo — this appears on your ID card. Square crop will be applied.
         </p>
         <ImageUpload
@@ -190,7 +190,7 @@ export function ApplicationForm() {
           placeholder="e.g. 01-23-456789"
           className={inputCls}
         />
-        <p className="text-[10px] text-tvs-charcoal-600 mt-1">
+        <p className="text-[10px] text-hd-ink-600 mt-1">
           Stored securely for verification — not shown on your card.
         </p>
         <FieldError msg={errors.licenseNumber} />
@@ -202,18 +202,18 @@ export function ApplicationForm() {
           "flex items-start gap-3 cursor-pointer group",
           "p-4 rounded-xl border transition-colors",
           form.consentAccepted
-            ? "border-tvs-red-800/40 bg-tvs-red-950/20"
-            : "border-tvs-charcoal-700 hover:border-tvs-charcoal-600",
+            ? "border-hd-ember-800/40 bg-hd-ember-950/20"
+            : "border-hd-ink-700 hover:border-hd-ink-600",
         )}>
           <input
             type="checkbox"
             checked={form.consentAccepted}
             onChange={(e) => set("consentAccepted", e.target.checked)}
-            className="mt-0.5 accent-tvs-red-600 shrink-0"
+            className="mt-0.5 accent-hd-ember-600 shrink-0"
           />
-          <span className="text-xs text-tvs-charcoal-300 leading-relaxed">
+          <span className="text-xs text-hd-ink-300 leading-relaxed">
             I confirm that all information provided is accurate and belongs to me.
-            I consent to TVS Nepal storing this data for membership verification purposes.
+            I consent to Himalayan Drift storing this data for membership verification purposes.
             I understand this is a digital membership card and does not constitute vehicle ownership transfer.
           </span>
         </label>
@@ -222,7 +222,7 @@ export function ApplicationForm() {
 
       {/* API error */}
       {apiError && (
-        <div className="p-3 rounded-lg bg-tvs-red-950/60 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+        <div className="p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
           {apiError}
         </div>
       )}
@@ -235,8 +235,8 @@ export function ApplicationForm() {
         className={cn(
           "w-full py-3 rounded-xl font-bold text-sm transition-all",
           saving
-            ? "bg-tvs-charcoal-700 text-tvs-charcoal-400 cursor-not-allowed"
-            : "bg-tvs-red-600 hover:bg-tvs-red-500 text-white hover:shadow-glow-red active:scale-[0.98]",
+            ? "bg-hd-ink-700 text-hd-ink-400 cursor-not-allowed"
+            : "bg-hd-ember-600 hover:bg-hd-ember-500 text-white hover:shadow-glow-ember active:scale-[0.98]",
         )}
       >
         {saving ? (

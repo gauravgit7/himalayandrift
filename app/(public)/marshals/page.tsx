@@ -34,19 +34,19 @@ export default async function MarshalsPage() {
       {/* ── Header ── */}
       <AnimateIn className="mb-12 text-center">
         <div className="flex items-center justify-center gap-2 mb-3">
-          <span className="block w-8 h-px bg-tvs-red-600 rounded-full" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-tvs-red-400">
+          <span className="block w-8 h-px bg-hd-ember-600 rounded-full" />
+          <span className="text-xs font-semibold uppercase tracking-widest text-hd-ember-400">
             The Team
           </span>
-          <span className="block w-8 h-px bg-tvs-red-600 rounded-full" />
+          <span className="block w-8 h-px bg-hd-ember-600 rounded-full" />
         </div>
-        <h1 className="text-4xl sm:text-5xl font-black text-tvs-charcoal-50 mb-3">
+        <h1 className="text-4xl sm:text-5xl font-black text-hd-ink-50 mb-3">
           Meet Our Marshals
         </h1>
-        <p className="text-sm sm:text-base text-tvs-charcoal-400 max-w-lg mx-auto leading-relaxed">
+        <p className="text-sm sm:text-base text-hd-ink-400 max-w-lg mx-auto leading-relaxed">
           Experienced riders leading Himalayan Drift on the road.
           {marshals.length > 0 && (
-            <span className="block mt-1 text-tvs-charcoal-500">
+            <span className="block mt-1 text-hd-ink-500">
               {marshals.length} active marshal{marshals.length !== 1 ? "s" : ""}.
             </span>
           )}
@@ -57,20 +57,20 @@ export default async function MarshalsPage() {
           <div className="flex items-center justify-center gap-6 mt-5">
             {headCount > 0 && (
               <div className="text-center">
-                <p className="text-lg font-black text-tvs-red-400">{headCount}</p>
-                <p className="text-[10px] text-tvs-charcoal-600 uppercase tracking-wider">Head</p>
+                <p className="text-lg font-black text-hd-ember-400">{headCount}</p>
+                <p className="text-[10px] text-hd-ink-600 uppercase tracking-wider">Head</p>
               </div>
             )}
             {seniorCount > 0 && (
               <div className="text-center">
                 <p className="text-lg font-black text-amber-400">{seniorCount}</p>
-                <p className="text-[10px] text-tvs-charcoal-600 uppercase tracking-wider">Senior</p>
+                <p className="text-[10px] text-hd-ink-600 uppercase tracking-wider">Senior</p>
               </div>
             )}
             {regionalCount > 0 && (
               <div className="text-center">
                 <p className="text-lg font-black text-blue-400">{regionalCount}</p>
-                <p className="text-[10px] text-tvs-charcoal-600 uppercase tracking-wider">Regional</p>
+                <p className="text-[10px] text-hd-ink-600 uppercase tracking-wider">Regional</p>
               </div>
             )}
           </div>

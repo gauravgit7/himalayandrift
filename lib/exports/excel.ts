@@ -21,7 +21,7 @@ const C = {
   charcoal:   (): ArgbColor => ({ argb: "FF1C1917" }),
   charcoal2:  (): ArgbColor => ({ argb: "FF292524" }),
   white:      (): ArgbColor => ({ argb: "FFFFFFFF" }),
-  red:        (): ArgbColor => ({ argb: "FFDC2626" }),
+  ember:      (): ArgbColor => ({ argb: "FFF09020" }),
   lightGray:  (): ArgbColor => ({ argb: "FFF5F5F4" }),
   lighterGray:(): ArgbColor => ({ argb: "FFFAFAF9" }),
 } as const;
@@ -52,7 +52,7 @@ function styleHeaderRow(row: ExcelJS.Row) {
     cell.fill   = { type: "pattern", pattern: "solid", fgColor: C.charcoal() };
     cell.font   = { bold: true, color: C.white(), size: 10, name: "Calibri" };
     cell.alignment = { vertical: "middle", horizontal: "center", wrapText: false };
-    cell.border = { bottom: { style: "thin", color: C.red() } };
+    cell.border = { bottom: { style: "thin", color: C.ember() } };
   });
 }
 
@@ -62,7 +62,7 @@ function styleTotalsRow(row: ExcelJS.Row) {
     cell.fill   = { type: "pattern", pattern: "solid", fgColor: C.charcoal() };
     cell.font   = { bold: true, color: C.white(), size: 10, name: "Calibri" };
     cell.alignment = { vertical: "middle", horizontal: "center" };
-    cell.border = { top: { style: "thin", color: C.red() } };
+    cell.border = { top: { style: "thin", color: C.ember() } };
   });
 }
 
@@ -211,7 +211,7 @@ export async function buildRidesExcel(rides: Ride[], year: number): Promise<Buff
     // Highlight marquee months in red
     const mqCell = row.getCell("marquee");
     if (mr.some((r) => r.rideType === "marquee")) {
-      mqCell.font = { bold: true, color: C.red(), size: 9.5, name: "Calibri" };
+      mqCell.font = { bold: true, color: C.ember(), size: 9.5, name: "Calibri" };
     }
   });
 

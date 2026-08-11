@@ -66,9 +66,9 @@ export default function RideRouteMap({
   if (!hasRoute) {
     return (
       <div
-        className={`${className} flex items-center justify-center rounded-xl bg-tvs-charcoal-900/60 border border-tvs-charcoal-700/60`}
+        className={`${className} flex items-center justify-center rounded-xl bg-hd-ink-900/60 border border-hd-ink-700/60`}
       >
-        <p className="text-sm text-tvs-charcoal-500">Route map not available</p>
+        <p className="text-sm text-hd-ink-500">Route map not available</p>
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function RideRouteMap({
         <Polyline
           positions={positions}
           pathOptions={{
-            color:      "#DC2626",
+            color:      "#F09020",
             weight:     3,
             opacity:    0.85,
             dashArray:  "8 4",
@@ -105,7 +105,7 @@ export default function RideRouteMap({
         <Polyline
           positions={positions}
           pathOptions={{
-            color:      "#DC2626",
+            color:      "#F09020",
             weight:     12,
             opacity:    0.12,
           }}
@@ -120,7 +120,7 @@ export default function RideRouteMap({
               center={[wp.coordinates[1], wp.coordinates[0]]}
               radius={isEndpoint ? 10 : 6}
               pathOptions={{
-                fillColor:   isEndpoint ? "#DC2626" : "#374151",
+                fillColor:   isEndpoint ? "#F09020" : "#374151",
                 color:       "#ffffff",
                 weight:      2,
                 opacity:     1,
@@ -140,7 +140,7 @@ export default function RideRouteMap({
 
       {/* Distance badge (above map controls) */}
       {totalDistanceKm && (
-        <div className="absolute bottom-3 right-10 z-[1000] px-2.5 py-1 rounded-lg bg-tvs-charcoal-900/90 border border-tvs-charcoal-700/60 text-xs text-tvs-charcoal-300 font-medium backdrop-blur-sm pointer-events-none">
+        <div className="absolute bottom-3 right-10 z-[1000] px-2.5 py-1 rounded-lg bg-hd-ink-900/90 border border-hd-ink-700/60 text-xs text-hd-ink-300 font-medium backdrop-blur-sm pointer-events-none">
           {totalDistanceKm} km total
         </div>
       )}
@@ -150,12 +150,12 @@ export default function RideRouteMap({
         {[waypoints[0], waypoints[waypoints.length - 1]].map((wp, i) => (
           <div
             key={i}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-tvs-charcoal-900/80 border border-tvs-charcoal-700/40 backdrop-blur-sm"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-hd-ink-900/80 border border-hd-ink-700/40 backdrop-blur-sm"
           >
-            <span className="text-[9px] font-bold text-tvs-red-400">
+            <span className="text-[9px] font-bold text-hd-ember-400">
               {i === 0 ? "START" : "END"}
             </span>
-            <span className="text-[10px] text-tvs-charcoal-300 truncate">{wp.name}</span>
+            <span className="text-[10px] text-hd-ink-300 truncate">{wp.name}</span>
           </div>
         ))}
       </div>

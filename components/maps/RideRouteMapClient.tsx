@@ -12,8 +12,8 @@ import type { ComponentProps } from "react";
 const RideRouteMap = dynamic(() => import("./RideRouteMap"), {
   ssr:     false,
   loading: () => (
-    <div className="h-72 rounded-xl bg-tvs-charcoal-900/60 border border-tvs-charcoal-700/40 flex items-center justify-center">
-      <p className="text-xs text-tvs-charcoal-600 animate-pulse">Loading map…</p>
+    <div className="h-72 rounded-xl bg-hd-ink-900/60 border border-hd-ink-700/40 flex items-center justify-center">
+      <p className="text-xs text-hd-ink-600 animate-pulse">Loading map…</p>
     </div>
   ),
 });

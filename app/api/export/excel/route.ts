@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type":        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="tvs-nepal-rides-${year}.xlsx"`,
+        "Content-Disposition": `attachment; filename="HimalayanDrift-rides-${year}.xlsx"`,
         "Cache-Control":       "no-store",
       },
     });

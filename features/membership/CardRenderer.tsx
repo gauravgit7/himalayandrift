@@ -1,6 +1,6 @@
 // =============================================================================
 // CardRenderer — Digital membership ID card
-// Renders front + back in the TVS Nepal dark design language.
+// Renders front + back in the Himalayan Drift dark design language.
 // Single brand palette across front and back
 // mode "screen" = side-by-side preview
 // mode "print"  = full-screen dark A4 layout for window.print()
@@ -37,11 +37,11 @@ function fmtMonth(iso: string) {
 // ---------------------------------------------------------------------------
 
 const t = {
-  accent:     "#dc2626",
-  accentDark: "#7f1d1d",
-  accentMid:  "#991b1b",
-  accentFade: "rgba(220,38,38,0.15)",
-  stripe:     "#1e3a8a",
+  accent:     "#f09020",   // ember 500 - the logo orange
+  accentDark: "#7a3f0f",   // ember 900
+  accentMid:  "#c06008",   // ember 700 - burnt orange
+  accentFade: "rgba(240,144,32,0.15)",
+  stripe:     "#263a41",   // slate 800
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -282,7 +282,7 @@ function CardBack({
             <p className="text-[7px] uppercase tracking-[0.2em]" style={{ color: "rgba(255,255,255,0.35)" }}>
               PROUD MEMBER OF
             </p>
-            <p className="text-xs font-black text-white leading-tight">TVS NEPAL COMMUNITY</p>
+            <p className="text-xs font-black text-white leading-tight">HIMALAYAN DRIFT</p>
           </div>
         </div>
 
@@ -384,7 +384,7 @@ export function CardRenderer({ card, settings, brandLogos, mode = "screen" }: Ca
         <div className="text-center mb-2">
           <p className="text-[9px] tracking-[0.3em] uppercase font-semibold"
             style={{ color: "rgba(255,255,255,0.25)" }}>
-            TVS Nepal · Membership Card
+            Himalayan Drift · Membership Card
           </p>
         </div>
         {front}
@@ -405,13 +405,13 @@ export function CardRenderer({ card, settings, brandLogos, mode = "screen" }: Ca
   return (
     <div className={rowClass}>
       <div className="flex flex-col items-center gap-2">
-        <span className="text-[9px] tracking-widest uppercase font-semibold text-tvs-charcoal-500">
+        <span className="text-[9px] tracking-widest uppercase font-semibold text-hd-ink-500">
           Front
         </span>
         {front}
       </div>
       <div className="flex flex-col items-center gap-2">
-        <span className="text-[9px] tracking-widest uppercase font-semibold text-tvs-charcoal-500">
+        <span className="text-[9px] tracking-widest uppercase font-semibold text-hd-ink-500">
           Back
         </span>
         {back}

@@ -78,7 +78,7 @@ export function Modal({
       {/* Panel */}
       <div
         className={cn(
-          "relative w-full bg-tvs-charcoal-900 border border-tvs-charcoal-700",
+          "relative w-full bg-hd-ink-900 border border-hd-ink-700",
           "rounded-2xl shadow-cinematic overflow-hidden",
           "animate-fade-in max-h-[90dvh] flex flex-col",
           SIZE_STYLES[size],
@@ -87,9 +87,9 @@ export function Modal({
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-tvs-charcoal-800 shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-hd-ink-800 shrink-0">
             {title && (
-              <h2 className="text-base font-semibold text-tvs-charcoal-100">
+              <h2 className="text-base font-semibold text-hd-ink-100">
                 {title}
               </h2>
             )}

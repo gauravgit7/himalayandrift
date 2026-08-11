@@ -8,7 +8,7 @@ import { getRides, getHomepageContent } from "@/lib/supabase/queries";
 import { RidesFilterList } from "@/features/rides/RidesFilterList";
 
 export const metadata: Metadata = {
-  title: "All Rides | TVS Nepal",
+  title: "All Rides | Himalayan Drift",
   description: "Browse every Himalayan Drift ride - filter by type and status.",
 };
 

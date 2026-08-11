@@ -1,5 +1,5 @@
 // =============================================================================
-// TVS Nepal Ride Operations Platform - Application Constants
+// Himalayan Drift - Application Constants
 // =============================================================================
 
 import type {
@@ -87,15 +87,15 @@ export const RIDE_TYPE_STYLES: Record<
   { chip: string; continuation: string; dot: string; label: string }
 > = {
   day: {
-    chip:         "bg-tvs-charcoal-800/70 border-l-tvs-charcoal-400 text-tvs-charcoal-100 hover:bg-tvs-charcoal-700/70",
-    continuation: "bg-tvs-charcoal-700/30 border-l-tvs-charcoal-600",
-    dot:          "bg-tvs-charcoal-300",
+    chip:         "bg-hd-ink-800/70 border-l-hd-ink-400 text-hd-ink-100 hover:bg-hd-ink-700/70",
+    continuation: "bg-hd-ink-700/30 border-l-hd-ink-600",
+    dot:          "bg-hd-ink-300",
     label:        "Day Ride",
   },
   overnight: {
-    chip:         "bg-tvs-steel-900/50 border-l-tvs-steel-400 text-tvs-steel-200 hover:bg-tvs-steel-800/60",
-    continuation: "bg-tvs-steel-800/30 border-l-tvs-steel-700",
-    dot:          "bg-tvs-steel-400",
+    chip:         "bg-hd-slate-900/50 border-l-hd-slate-400 text-hd-slate-200 hover:bg-hd-slate-800/60",
+    continuation: "bg-hd-slate-800/30 border-l-hd-slate-700",
+    dot:          "bg-hd-slate-400",
     label:        "Overnight",
   },
   multiday: {
@@ -114,9 +114,9 @@ export const RIDE_TYPE_STYLES: Record<
 
 /** Fallbacks for a ride whose type isn't recognised (e.g. legacy DB rows). */
 export const RIDE_TYPE_STYLE_FALLBACK = {
-  chip:         "bg-tvs-charcoal-800 border-l-tvs-charcoal-600 text-tvs-charcoal-200",
-  continuation: "bg-tvs-charcoal-800 border-l-tvs-charcoal-600",
-  dot:          "bg-tvs-charcoal-500",
+  chip:         "bg-hd-ink-800 border-l-hd-ink-600 text-hd-ink-200",
+  continuation: "bg-hd-ink-800 border-l-hd-ink-600",
+  dot:          "bg-hd-ink-500",
   label:        "Ride",
 } as const;
 
@@ -294,5 +294,5 @@ export const APP_META = {
   tagline:     "Riding the raw side of Nepal, together",
   description: "Riding the raw side of Nepal, together — ride planning and operations for the Himalayan Drift community.",
   url:         process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  primaryColor: "#DC2626",
+  primaryColor: "#F09020",
 } as const;

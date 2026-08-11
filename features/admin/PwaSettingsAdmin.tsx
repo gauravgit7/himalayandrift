@@ -26,18 +26,18 @@ export interface PwaSettings {
 // ---------------------------------------------------------------------------
 
 const inputCls = cn(
-  "w-full h-9 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm",
-  "text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-  "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors"
+  "w-full h-9 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm",
+  "text-hd-ink-100 placeholder:text-hd-ink-600",
+  "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors"
 );
 
 function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
     <div className="mb-1">
-      <label className="block text-xs font-semibold text-tvs-charcoal-400 uppercase tracking-wide">
+      <label className="block text-xs font-semibold text-hd-ink-400 uppercase tracking-wide">
         {children}
       </label>
-      {hint && <p className="text-[10px] text-tvs-charcoal-600 mt-0.5">{hint}</p>}
+      {hint && <p className="text-[10px] text-hd-ink-600 mt-0.5">{hint}</p>}
     </div>
   );
 }
@@ -72,23 +72,23 @@ export function PwaSettingsAdmin({ initial }: { initial: PwaSettings }) {
   };
 
   return (
-    <div className="space-y-4 p-5 rounded-xl gradient-card border border-tvs-charcoal-700/60 max-w-2xl">
+    <div className="space-y-4 p-5 rounded-xl gradient-card border border-hd-ink-700/60 max-w-2xl">
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="size-8 rounded-lg bg-tvs-red-900/40 border border-tvs-red-800/40 flex items-center justify-center shrink-0">
-          <Smartphone className="size-4 text-tvs-red-400" />
+        <div className="size-8 rounded-lg bg-hd-ember-900/40 border border-hd-ember-800/40 flex items-center justify-center shrink-0">
+          <Smartphone className="size-4 text-hd-ember-400" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-tvs-charcoal-50">PWA App Identity</h3>
-          <p className="text-[11px] text-tvs-charcoal-500 mt-0.5">
+          <h3 className="text-sm font-bold text-hd-ink-50">PWA App Identity</h3>
+          <p className="text-[11px] text-hd-ink-500 mt-0.5">
             Name and icon shown when the app is installed on a device
           </p>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-tvs-red-950/60 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
           <AlertCircle className="size-4 shrink-0 mt-px" />{error}
         </div>
       )}
@@ -108,7 +108,7 @@ export function PwaSettingsAdmin({ initial }: { initial: PwaSettings }) {
           value={form.appName}
           onChange={(e) => set("appName", e.target.value)}
           className={inputCls}
-          placeholder="TVS Nepal Ride Operations"
+          placeholder="Himalayan Drift"
           maxLength={60}
         />
       </div>
@@ -123,7 +123,7 @@ export function PwaSettingsAdmin({ initial }: { initial: PwaSettings }) {
           value={form.shortName}
           onChange={(e) => set("shortName", e.target.value)}
           className={inputCls}
-          placeholder="TVS Nepal"
+          placeholder="HD"
           maxLength={12}
         />
         {form.shortName.length > 12 && (
@@ -146,7 +146,7 @@ export function PwaSettingsAdmin({ initial }: { initial: PwaSettings }) {
           compressThresholdMb={0.1}
           cropAspect={1}
         />
-        <p className="text-[10px] text-tvs-charcoal-600 mt-1.5">
+        <p className="text-[10px] text-hd-ink-600 mt-1.5">
           Leave empty to use the default generated icon.
         </p>
       </div>
@@ -158,8 +158,8 @@ export function PwaSettingsAdmin({ initial }: { initial: PwaSettings }) {
         className={cn(
           "flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-semibold transition-all",
           saving || saved
-            ? "bg-tvs-charcoal-700 text-tvs-charcoal-400 cursor-not-allowed"
-            : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red"
+            ? "bg-hd-ink-700 text-hd-ink-400 cursor-not-allowed"
+            : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember"
         )}
       >
         {saving ? (

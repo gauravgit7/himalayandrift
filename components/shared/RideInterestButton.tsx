@@ -34,7 +34,7 @@ export function RideInterestButton({
   initialCount,
   className,
 }: RideInterestButtonProps) {
-  const storageKey = `tvs-interest-${rideId}`;
+  const storageKey = `hd-interest-${rideId}`;
 
   const [count,     setCount]     = useState(initialCount);
   const [hasJoined, setHasJoined] = useState(false);
@@ -92,7 +92,7 @@ export function RideInterestButton({
           // Joined: green by default, shifts to a muted red-tint on hover to
           // signal that clicking again will remove interest.
           ? "bg-emerald-950/50 border border-emerald-700/40 text-emerald-400 hover:bg-red-950/40 hover:border-red-800/40 hover:text-red-400 active:scale-[0.97]"
-          : "bg-tvs-charcoal-800/80 border border-tvs-charcoal-700 text-tvs-charcoal-200 hover:bg-tvs-charcoal-700 hover:text-white hover:border-tvs-charcoal-500 active:scale-[0.97]",
+          : "bg-hd-ink-800/80 border border-hd-ink-700 text-hd-ink-200 hover:bg-hd-ink-700 hover:text-white hover:border-hd-ink-500 active:scale-[0.97]",
         isLoading && "cursor-wait",
         className
       )}
@@ -128,7 +128,7 @@ export function RideInterestButton({
             "text-xs px-1.5 py-0.5 rounded-full tabular-nums transition-colors duration-200",
             hasJoined
               ? "bg-emerald-900/50 text-emerald-300 group-hover:bg-red-900/40 group-hover:text-red-300"
-              : "bg-tvs-charcoal-700 text-tvs-charcoal-400"
+              : "bg-hd-ink-700 text-hd-ink-400"
           )}
         >
           {count}

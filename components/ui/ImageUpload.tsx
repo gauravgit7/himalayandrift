@@ -113,19 +113,19 @@ function CropModal({ src, aspect, onCrop, onCancel }: CropModalProps) {
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onCancel} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-sm bg-tvs-charcoal-900 border border-tvs-charcoal-700 rounded-2xl shadow-cinematic overflow-hidden">
+      <div className="relative w-full max-w-sm bg-hd-ink-900 border border-hd-ink-700 rounded-2xl shadow-cinematic overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-tvs-charcoal-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-hd-ink-800">
           <div>
-            <h3 className="text-sm font-bold text-tvs-charcoal-50">Crop Photo</h3>
-            <p className="text-[11px] text-tvs-charcoal-500 mt-0.5">
+            <h3 className="text-sm font-bold text-hd-ink-50">Crop Photo</h3>
+            <p className="text-[11px] text-hd-ink-500 mt-0.5">
               Drag to reposition · Scroll or pinch to zoom
             </p>
           </div>
           <button
             type="button"
             onClick={onCancel}
-            className="p-1.5 rounded-lg text-tvs-charcoal-400 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-800 transition-colors"
+            className="p-1.5 rounded-lg text-hd-ink-400 hover:text-hd-ink-100 hover:bg-hd-ink-800 transition-colors"
           >
             <X className="size-4" />
           </button>
@@ -144,16 +144,16 @@ function CropModal({ src, aspect, onCrop, onCancel }: CropModalProps) {
             onZoomChange={setZoom}
             onCropComplete={onCropComplete}
             style={{
-              containerStyle: { background: "#0a0a0b" },
-              cropAreaStyle:  { border: "2px solid #dc2626", borderRadius: "8px" },
+              containerStyle: { background: "#0a0908" },
+              cropAreaStyle:  { border: "2px solid #f09020", borderRadius: "8px" },
             }}
           />
         </div>
 
         {/* Zoom slider + actions */}
-        <div className="px-5 py-4 border-t border-tvs-charcoal-800 space-y-4">
+        <div className="px-5 py-4 border-t border-hd-ink-800 space-y-4">
           <div className="flex items-center gap-3">
-            <ZoomOut className="size-3.5 shrink-0 text-tvs-charcoal-500" />
+            <ZoomOut className="size-3.5 shrink-0 text-hd-ink-500" />
             <input
               type="range"
               min={1}
@@ -161,16 +161,16 @@ function CropModal({ src, aspect, onCrop, onCancel }: CropModalProps) {
               step={0.02}
               value={zoom}
               onChange={(e) => setZoom(parseFloat(e.target.value))}
-              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-tvs-red-600"
+              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-hd-ember-600"
             />
-            <ZoomIn className="size-3.5 shrink-0 text-tvs-charcoal-500" />
+            <ZoomIn className="size-3.5 shrink-0 text-hd-ink-500" />
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 py-2 rounded-lg border border-tvs-charcoal-700 hover:border-tvs-charcoal-500 text-tvs-charcoal-300 hover:text-tvs-charcoal-100 text-sm font-medium transition-colors"
+              className="flex-1 py-2 rounded-lg border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-300 hover:text-hd-ink-100 text-sm font-medium transition-colors"
             >
               Cancel
             </button>
@@ -181,8 +181,8 @@ function CropModal({ src, aspect, onCrop, onCancel }: CropModalProps) {
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-white text-sm font-semibold transition-all",
                 applying
-                  ? "bg-tvs-charcoal-700 cursor-not-allowed"
-                  : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red"
+                  ? "bg-hd-ink-700 cursor-not-allowed"
+                  : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember"
               )}
             >
               {applying ? (
@@ -407,7 +407,7 @@ export function ImageUpload({
 
         {/* ── Preview ── */}
         {preview ? (
-          <div className="relative group rounded-xl overflow-hidden border border-tvs-charcoal-700/60 bg-tvs-charcoal-900/50">
+          <div className="relative group rounded-xl overflow-hidden border border-hd-ink-700/60 bg-hd-ink-900/50">
             <div className="relative w-full h-48">
               <Image
                 src={preview}
@@ -425,7 +425,7 @@ export function ImageUpload({
                 <button
                   type="button"
                   onClick={() => inputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-tvs-charcoal-800/90 hover:bg-tvs-charcoal-700 text-white text-xs font-medium transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hd-ink-800/90 hover:bg-hd-ink-700 text-white text-xs font-medium transition-colors"
                 >
                   <Upload className="size-3.5" />
                   Replace
@@ -443,9 +443,9 @@ export function ImageUpload({
 
             {/* Progress bar */}
             {busy && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-tvs-charcoal-800">
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-hd-ink-800">
                 <div
-                  className="h-full bg-tvs-red-600 transition-all duration-150"
+                  className="h-full bg-hd-ember-600 transition-all duration-150"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -474,32 +474,32 @@ export function ImageUpload({
               "flex flex-col items-center justify-center gap-3 p-8 rounded-xl",
               "border-2 border-dashed transition-colors",
               busy
-                ? "border-tvs-red-600/60 bg-tvs-red-950/20 cursor-not-allowed"
-                : "border-tvs-charcoal-700 hover:border-tvs-red-600/50 bg-tvs-charcoal-900/30 hover:bg-tvs-charcoal-800/20 cursor-pointer"
+                ? "border-hd-ember-600/60 bg-hd-ember-950/20 cursor-not-allowed"
+                : "border-hd-ink-700 hover:border-hd-ember-600/50 bg-hd-ink-900/30 hover:bg-hd-ink-800/20 cursor-pointer"
             )}
           >
             {busy ? (
               <>
-                <Loader2 className="size-8 text-tvs-red-500 animate-spin" />
-                <div className="w-36 h-1 rounded-full bg-tvs-charcoal-700 overflow-hidden">
+                <Loader2 className="size-8 text-hd-ember-500 animate-spin" />
+                <div className="w-36 h-1 rounded-full bg-hd-ink-700 overflow-hidden">
                   <div
-                    className="h-full bg-tvs-red-600 transition-all duration-150"
+                    className="h-full bg-hd-ember-600 transition-all duration-150"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <p className="text-sm text-tvs-charcoal-400">{stageLabel}</p>
+                <p className="text-sm text-hd-ink-400">{stageLabel}</p>
               </>
             ) : (
               <>
-                <div className="size-12 rounded-xl bg-tvs-charcoal-800 flex items-center justify-center">
-                  <ImageIcon className="size-6 text-tvs-charcoal-500" />
+                <div className="size-12 rounded-xl bg-hd-ink-800 flex items-center justify-center">
+                  <ImageIcon className="size-6 text-hd-ink-500" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium text-tvs-charcoal-300">
+                  <p className="text-sm font-medium text-hd-ink-300">
                     Click to upload{" "}
-                    <span className="text-tvs-charcoal-500">or drag & drop</span>
+                    <span className="text-hd-ink-500">or drag & drop</span>
                   </p>
-                  <p className="text-xs text-tvs-charcoal-600 mt-0.5">
+                  <p className="text-xs text-hd-ink-600 mt-0.5">
                     {cropAspect
                       ? "PNG, JPG, WebP · crop to square before upload"
                       : "PNG, JPG, WebP · auto-compressed on upload"}

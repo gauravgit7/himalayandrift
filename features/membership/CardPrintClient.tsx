@@ -44,7 +44,7 @@ export function CardPrintClient({ card, settings, brandLogos }: Props) {
 
         {/* Label */}
         <p className="hidden sm:block text-xs font-semibold tracking-widest uppercase text-gray-400">
-          TVS Nepal · Membership Card
+          Himalayan Drift · Membership Card
         </p>
 
         {/* Actions */}
@@ -60,7 +60,7 @@ export function CardPrintClient({ card, settings, brandLogos }: Props) {
           <button
             type="button"
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-tvs-red-600 hover:bg-tvs-red-500 text-white text-sm font-semibold transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 text-white text-sm font-semibold transition-colors"
           >
             <FileDown className="size-4" />
             Download PDF

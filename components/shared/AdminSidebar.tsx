@@ -68,18 +68,18 @@ function NavLink({
       className={cn(
         "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
         isActive
-          ? "bg-tvs-red-600/20 text-tvs-red-300 border border-tvs-red-800/40"
-          : "text-tvs-charcoal-400 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-800/60 border border-transparent"
+          ? "bg-hd-ember-600/20 text-hd-ember-300 border border-hd-ember-800/40"
+          : "text-hd-ink-400 hover:text-hd-ink-100 hover:bg-hd-ink-800/60 border border-transparent"
       )}
     >
       <Icon
         className={cn(
           "size-4 shrink-0 transition-colors",
-          isActive ? "text-tvs-red-400" : "text-tvs-charcoal-500 group-hover:text-tvs-charcoal-300"
+          isActive ? "text-hd-ember-400" : "text-hd-ink-500 group-hover:text-hd-ink-300"
         )}
       />
       <span className="flex-1">{item.label}</span>
-      {isActive && <ChevronRight className="size-3 text-tvs-red-500/60" />}
+      {isActive && <ChevronRight className="size-3 text-hd-ember-500/60" />}
     </Link>
   );
 }
@@ -97,7 +97,7 @@ function SidebarContent({ onLinkClick, logoUrl, adminEmail, adminName }: {
   return (
     <div className="flex flex-col h-full">
       {/* Brand */}
-      <div className="px-3 py-4 mb-2 border-b border-tvs-charcoal-800/60">
+      <div className="px-3 py-4 mb-2 border-b border-hd-ink-800/60">
         <div className="flex items-center gap-2.5">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -107,13 +107,13 @@ function SidebarContent({ onLinkClick, logoUrl, adminEmail, adminName }: {
               className="h-8 w-auto object-contain shrink-0"
             />
           ) : (
-            <div className="size-8 rounded-lg bg-tvs-red-600 flex items-center justify-center shadow-glow-red shrink-0">
+            <div className="size-8 rounded-lg bg-hd-ember-600 flex items-center justify-center shadow-glow-ember shrink-0">
               <span className="text-white font-black text-sm">{APP_META.shortName}</span>
             </div>
           )}
           <div>
-            <p className="text-sm font-bold text-tvs-charcoal-50 leading-tight">{APP_META.name}</p>
-            <p className="text-[10px] text-tvs-charcoal-500 leading-tight">Admin Panel</p>
+            <p className="text-sm font-bold text-hd-ink-50 leading-tight">{APP_META.name}</p>
+            <p className="text-[10px] text-hd-ink-500 leading-tight">Admin Panel</p>
           </div>
         </div>
       </div>
@@ -126,28 +126,28 @@ function SidebarContent({ onLinkClick, logoUrl, adminEmail, adminName }: {
       </nav>
 
       {/* Footer */}
-      <div className="px-2 py-3 border-t border-tvs-charcoal-800/60 space-y-0.5">
+      <div className="px-2 py-3 border-t border-hd-ink-800/60 space-y-0.5">
         {/* Admin identity */}
         {(adminName || adminEmail) && (
           <div className="px-3 py-2 mb-1">
             {adminName && (
-              <p className="text-xs font-semibold text-tvs-charcoal-300 truncate">{adminName}</p>
+              <p className="text-xs font-semibold text-hd-ink-300 truncate">{adminName}</p>
             )}
             {adminEmail && (
-              <p className="text-[10px] text-tvs-charcoal-600 truncate">{adminEmail}</p>
+              <p className="text-[10px] text-hd-ink-600 truncate">{adminEmail}</p>
             )}
           </div>
         )}
         <Link
           href={ROUTES.home}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-tvs-charcoal-500 hover:text-tvs-charcoal-200 hover:bg-tvs-charcoal-800/60 transition-all duration-150"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-hd-ink-500 hover:text-hd-ink-200 hover:bg-hd-ink-800/60 transition-all duration-150"
         >
           <Globe className="size-4 shrink-0" />
           View Public Site
         </Link>
         <button
           onClick={() => signOut()}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-tvs-charcoal-500 hover:text-tvs-red-400 hover:bg-tvs-charcoal-800/60 transition-all duration-150"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-hd-ink-500 hover:text-hd-ember-400 hover:bg-hd-ink-800/60 transition-all duration-150"
         >
           <LogOut className="size-4 shrink-0" />
           Sign Out
@@ -173,14 +173,14 @@ export function AdminSidebar({ logoUrl, adminEmail, adminName }: AdminSidebarPro
   return (
     <>
       {/* ── Desktop sidebar - fixed left ── */}
-      <aside className="hidden lg:flex flex-col fixed top-16 left-0 h-[calc(100dvh-4rem)] w-60 bg-tvs-charcoal-900 border-r border-tvs-charcoal-800/60 z-30">
+      <aside className="hidden lg:flex flex-col fixed top-16 left-0 h-[calc(100dvh-4rem)] w-60 bg-hd-ink-900 border-r border-hd-ink-800/60 z-30">
         <SidebarContent logoUrl={logoUrl} adminEmail={adminEmail} adminName={adminName} />
       </aside>
 
       {/* ── Mobile hamburger button ── */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-[4.5rem] left-3 z-40 flex items-center justify-center size-9 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-tvs-charcoal-300 hover:text-tvs-charcoal-50 shadow-md transition-colors"
+        className="lg:hidden fixed top-[4.5rem] left-3 z-40 flex items-center justify-center size-9 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-hd-ink-300 hover:text-hd-ink-50 shadow-md transition-colors"
         aria-label="Open admin menu"
       >
         <Menu className="size-4" />
@@ -193,10 +193,10 @@ export function AdminSidebar({ logoUrl, adminEmail, adminName }: AdminSidebarPro
             className="lg:hidden fixed inset-0 bg-black/60 z-40"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="lg:hidden fixed top-0 left-0 h-dvh w-72 bg-tvs-charcoal-900 border-r border-tvs-charcoal-800 z-50 shadow-2xl">
+          <aside className="lg:hidden fixed top-0 left-0 h-dvh w-72 bg-hd-ink-900 border-r border-hd-ink-800 z-50 shadow-2xl">
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 text-tvs-charcoal-400 hover:text-tvs-charcoal-50 transition-colors"
+              className="absolute top-4 right-4 text-hd-ink-400 hover:text-hd-ink-50 transition-colors"
               aria-label="Close menu"
             >
               <X className="size-5" />

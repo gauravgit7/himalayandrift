@@ -45,7 +45,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Sync state with the class that the inline script applied
   useEffect(() => {
-    const stored = localStorage.getItem("tvs-theme") as Theme | null;
+    const stored = localStorage.getItem("hd-theme") as Theme | null;
     const resolved: Theme = stored === "light" ? "light" : "dark";
     setTheme(resolved);
     applyClass(resolved);
@@ -54,7 +54,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggle = useCallback(() => {
     setTheme((prev) => {
       const next: Theme = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("tvs-theme", next);
+      localStorage.setItem("hd-theme", next);
       applyClass(next);
       return next;
     });

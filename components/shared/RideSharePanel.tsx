@@ -110,7 +110,7 @@ export function RideSharePanel(props: RideSharePanelProps) {
 
   return (
     <div className="print:hidden flex flex-wrap items-center gap-2 mt-5">
-      <span className="text-xs text-tvs-charcoal-600 font-medium uppercase tracking-wide mr-1">
+      <span className="text-xs text-hd-ink-600 font-medium uppercase tracking-wide mr-1">
         Share
       </span>
 
@@ -134,7 +134,7 @@ export function RideSharePanel(props: RideSharePanelProps) {
           btnBase,
           copied
             ? "bg-emerald-900/40 border border-emerald-700/40 text-emerald-400"
-            : "bg-tvs-charcoal-800/60 border border-tvs-charcoal-700/40 text-tvs-charcoal-300 hover:bg-tvs-charcoal-700/60 hover:text-tvs-charcoal-100"
+            : "bg-hd-ink-800/60 border border-hd-ink-700/40 text-hd-ink-300 hover:bg-hd-ink-700/60 hover:text-hd-ink-100"
         )}
         title="Copy link"
       >
@@ -147,7 +147,7 @@ export function RideSharePanel(props: RideSharePanelProps) {
         onClick={handleNativeShare}
         className={cn(
           btnBase,
-          "sm:hidden bg-tvs-charcoal-800/60 border border-tvs-charcoal-700/40 text-tvs-charcoal-300 hover:bg-tvs-charcoal-700/60"
+          "sm:hidden bg-hd-ink-800/60 border border-hd-ink-700/40 text-hd-ink-300 hover:bg-hd-ink-700/60"
         )}
         title="Share"
       >
@@ -160,7 +160,7 @@ export function RideSharePanel(props: RideSharePanelProps) {
         onClick={handlePrint}
         className={cn(
           btnBase,
-          "bg-tvs-charcoal-800/60 border border-tvs-charcoal-700/40 text-tvs-charcoal-300 hover:bg-tvs-charcoal-700/60 hover:text-tvs-charcoal-100"
+          "bg-hd-ink-800/60 border border-hd-ink-700/40 text-hd-ink-300 hover:bg-hd-ink-700/60 hover:text-hd-ink-100"
         )}
         title="Print ride details"
       >

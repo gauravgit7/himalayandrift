@@ -27,15 +27,12 @@ const P = {
   dark:    "#1C1917",   // charcoal 950
   dark2:   "#292524",   // charcoal 900
   dark3:   "#44403C",   // charcoal 700
-  red:     "#DC2626",
+  ember:   "#F09020",
   gray:    "#78716C",   // charcoal 500
   border:  "#E7E5E4",   // charcoal 200
   lgray:   "#F5F5F4",   // charcoal 100
   lgray2:  "#FAFAF9",   // charcoal 50
   white:   "#FFFFFF",
-  aog:     "#DC2626",
-  cult:    "#2563EB",
-  mixed:   "#7C3AED",
 } as const;
 
 const STATUS_COLORS: Record<string, string> = {
@@ -93,7 +90,7 @@ const S = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 4,
-    backgroundColor: P.red,
+    backgroundColor: P.ember,
     marginRight: 10,
   },
   coverBrand: {
@@ -105,7 +102,7 @@ const S = StyleSheet.create({
   coverYear: {
     fontSize: 100,
     fontFamily: "Helvetica-Bold",
-    color: P.red,
+    color: P.ember,
     lineHeight: 1,
   },
   coverTitle: {
@@ -123,7 +120,7 @@ const S = StyleSheet.create({
   coverRule: {
     height: 2,
     width: 56,
-    backgroundColor: P.red,
+    backgroundColor: P.ember,
     marginTop: 28,
     marginBottom: 28,
   },
@@ -180,7 +177,7 @@ const S = StyleSheet.create({
     alignItems: "center",
     paddingBottom: 6,
     borderBottomWidth: 0.75,
-    borderBottomColor: P.red,
+    borderBottomColor: P.ember,
   },
   pageHeaderLeft: {
     flexDirection: "row",
@@ -190,7 +187,7 @@ const S = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 2,
-    backgroundColor: P.red,
+    backgroundColor: P.ember,
     marginRight: 6,
   },
   pageHeaderText: {
@@ -375,7 +372,7 @@ function CoverPage({
 
         {/* Brand badge */}
         <View style={S.coverBadgesRow}>
-          <Text style={[S.coverBadge, { backgroundColor: P.aog, alignSelf: "center" }]}>
+          <Text style={[S.coverBadge, { backgroundColor: P.ember, alignSelf: "center" }]}>
             {APP_META.shortName}
           </Text>
         </View>

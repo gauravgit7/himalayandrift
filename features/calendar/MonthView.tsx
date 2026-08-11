@@ -32,12 +32,12 @@ const CHIP_BASE = "block w-full text-left px-1.5 py-0.5 rounded text-[11px] trun
 
 // Status dot
 const STATUS_DOT: Record<string, string> = {
-  planned:   "bg-tvs-charcoal-500",
+  planned:   "bg-hd-ink-500",
   tentative: "bg-amber-500",
   confirmed: "bg-emerald-500",
-  postponed: "bg-tvs-red-400",
-  cancelled: "bg-tvs-red-900",
-  completed: "bg-tvs-steel-600",
+  postponed: "bg-hd-ember-400",
+  cancelled: "bg-hd-ember-900",
+  completed: "bg-hd-slate-600",
 };
 
 // ---------------------------------------------------------------------------
@@ -101,7 +101,7 @@ function RideChip({ ride, dateStr }: { ride: Ride; dateStr: string }) {
         <span
           className={cn(
             "shrink-0 size-1.5 rounded-full",
-            STATUS_DOT[ride.status] ?? "bg-tvs-charcoal-500"
+            STATUS_DOT[ride.status] ?? "bg-hd-ink-500"
           )}
         />
         <span className="flex-1 truncate">{ride.title}</span>
@@ -151,8 +151,8 @@ function DayCell({
   return (
     <div
       className={cn(
-        "relative min-h-[80px] sm:min-h-[96px] p-1 sm:p-1.5 border-b border-r border-tvs-charcoal-800/50",
-        isCurrentMonth ? "bg-transparent" : "bg-tvs-charcoal-900/30",
+        "relative min-h-[80px] sm:min-h-[96px] p-1 sm:p-1.5 border-b border-r border-hd-ink-800/50",
+        isCurrentMonth ? "bg-transparent" : "bg-hd-ink-900/30",
       )}
     >
       {/* Day numbers: primary (large) + reference (tiny) */}
@@ -161,17 +161,17 @@ function DayCell({
           className={cn(
             "inline-flex items-center justify-center text-xs font-semibold w-6 h-6 rounded-full transition-colors",
             todayFlag
-              ? "bg-tvs-red-600 text-white font-bold"
+              ? "bg-hd-ember-600 text-white font-bold"
               : isCurrentMonth
-              ? "text-tvs-charcoal-200 hover:text-tvs-charcoal-50"
-              : "text-tvs-charcoal-700"
+              ? "text-hd-ink-200 hover:text-hd-ink-50"
+              : "text-hd-ink-700"
           )}
         >
           {primaryDay}
         </span>
         <span className={cn(
           "text-[9px] leading-none ml-0.5",
-          isCurrentMonth ? "text-tvs-charcoal-500" : "text-tvs-charcoal-800"
+          isCurrentMonth ? "text-hd-ink-500" : "text-hd-ink-800"
         )}>
           {referenceDay}
         </span>
@@ -183,7 +183,7 @@ function DayCell({
           <RideChip key={`${ride.id}-${dateStr}`} ride={ride} dateStr={dateStr} />
         ))}
         {overflow > 0 && (
-          <span className="text-[10px] text-tvs-charcoal-500 pl-1">
+          <span className="text-[10px] text-hd-ink-500 pl-1">
             +{overflow} more
           </span>
         )}
@@ -226,12 +226,12 @@ export function MonthView({ rides, year, month, dateMode = "ad" }: MonthViewProp
         return (
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-black text-tvs-charcoal-50">
+          <h2 className="text-xl font-black text-hd-ink-50">
             {primaryLabel}
           </h2>
-          <p className="text-xs text-tvs-charcoal-500 mt-0.5">{referenceLabel}</p>
+          <p className="text-xs text-hd-ink-500 mt-0.5">{referenceLabel}</p>
         </div>
-        <span className="text-sm text-tvs-charcoal-400">
+        <span className="text-sm text-hd-ink-400">
           {monthRideCount} {monthRideCount === 1 ? "ride" : "rides"} this month
         </span>
       </div>
@@ -239,13 +239,13 @@ export function MonthView({ rides, year, month, dateMode = "ad" }: MonthViewProp
       })()}
 
       {/* Calendar grid */}
-      <div className="rounded-xl overflow-hidden border border-tvs-charcoal-800/50">
+      <div className="rounded-xl overflow-hidden border border-hd-ink-800/50">
         {/* Day-of-week headers */}
-        <div className="grid grid-cols-7 border-b border-tvs-charcoal-800/50">
+        <div className="grid grid-cols-7 border-b border-hd-ink-800/50">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
             <div
               key={d}
-              className="py-2 text-center text-[11px] font-bold text-tvs-charcoal-500 uppercase tracking-wide bg-tvs-charcoal-900/50"
+              className="py-2 text-center text-[11px] font-bold text-hd-ink-500 uppercase tracking-wide bg-hd-ink-900/50"
             >
               {d}
             </div>
@@ -274,13 +274,13 @@ export function MonthView({ rides, year, month, dateMode = "ad" }: MonthViewProp
       </div>
 
       {/* Status legend */}
-      <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-tvs-charcoal-500">
+      <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-hd-ink-500">
         {[
-          { label: "Planned",   dot: "bg-tvs-charcoal-500" },
+          { label: "Planned",   dot: "bg-hd-ink-500" },
           { label: "Tentative", dot: "bg-amber-500" },
           { label: "Confirmed", dot: "bg-emerald-500" },
-          { label: "Postponed", dot: "bg-tvs-red-400" },
-          { label: "Completed", dot: "bg-tvs-steel-600" },
+          { label: "Postponed", dot: "bg-hd-ember-400" },
+          { label: "Completed", dot: "bg-hd-slate-600" },
         ].map((s) => (
           <span key={s.label} className="flex items-center gap-1.5">
             <span className={cn("size-1.5 rounded-full", s.dot)} />

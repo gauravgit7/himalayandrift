@@ -28,7 +28,7 @@ type Status =
   | "installing"  // user accepted — waiting for appinstalled event
   | "installed";  // appinstalled fired — show success then fade out
 
-const DISMISSED_KEY = "tvs-install-dismissed";
+const DISMISSED_KEY = "hd-install-dismissed";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -115,11 +115,11 @@ export function InstallPrompt() {
     <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-3 mb-0 z-10">
       <div className={cn(
         "flex items-center gap-3 px-4 py-3 rounded-xl",
-        "bg-tvs-charcoal-900/95 border backdrop-blur-sm shadow-lg",
+        "bg-hd-ink-900/95 border backdrop-blur-sm shadow-lg",
         "animate-in slide-in-from-top-2 duration-300",
         status === "installed"
           ? "border-emerald-800/60"
-          : "border-tvs-charcoal-700/80",
+          : "border-hd-ink-700/80",
       )}>
 
         {/* Icon */}
@@ -128,15 +128,15 @@ export function InstallPrompt() {
           status === "installed"
             ? "bg-emerald-900/40 border-emerald-800/40"
             : status === "installing"
-            ? "bg-tvs-charcoal-800 border-tvs-charcoal-700"
-            : "bg-tvs-red-900/40 border-tvs-red-800/40",
+            ? "bg-hd-ink-800 border-hd-ink-700"
+            : "bg-hd-ember-900/40 border-hd-ember-800/40",
         )}>
           {status === "installed" ? (
             <CheckCircle2 className="size-4 text-emerald-400" />
           ) : status === "installing" ? (
-            <Loader2 className="size-4 text-tvs-charcoal-400 animate-spin" />
+            <Loader2 className="size-4 text-hd-ink-400 animate-spin" />
           ) : (
-            <Smartphone className="size-4 text-tvs-red-400" />
+            <Smartphone className="size-4 text-hd-ember-400" />
           )}
         </div>
 
@@ -148,17 +148,17 @@ export function InstallPrompt() {
                 Installed successfully!
               </p>
               <p className="text-[10px] text-emerald-600 leading-tight mt-0.5">
-                TVS Nepal Rides is now on your home screen
+                Himalayan Drift is now on your home screen
               </p>
             </>
           )}
 
           {status === "installing" && (
             <>
-              <p className="text-xs font-semibold text-tvs-charcoal-200 leading-tight">
+              <p className="text-xs font-semibold text-hd-ink-200 leading-tight">
                 Installing…
               </p>
-              <p className="text-[10px] text-tvs-charcoal-500 leading-tight mt-0.5">
+              <p className="text-[10px] text-hd-ink-500 leading-tight mt-0.5">
                 Check your home screen in a moment
               </p>
             </>
@@ -166,10 +166,10 @@ export function InstallPrompt() {
 
           {status === "android" && (
             <>
-              <p className="text-xs font-semibold text-tvs-charcoal-100 leading-tight">
-                Install TVS Nepal Rides
+              <p className="text-xs font-semibold text-hd-ink-100 leading-tight">
+                Install Himalayan Drift
               </p>
-              <p className="text-[10px] text-tvs-charcoal-500 leading-tight mt-0.5 hidden sm:block">
+              <p className="text-[10px] text-hd-ink-500 leading-tight mt-0.5 hidden sm:block">
                 Add to your home screen — works offline too
               </p>
             </>
@@ -177,16 +177,16 @@ export function InstallPrompt() {
 
           {status === "ios" && (
             <>
-              <p className="text-xs font-semibold text-tvs-charcoal-100 leading-tight">
+              <p className="text-xs font-semibold text-hd-ink-100 leading-tight">
                 Add to Home Screen
               </p>
-              <p className="text-[10px] text-tvs-charcoal-400 leading-tight mt-0.5 flex items-center gap-1 flex-wrap">
+              <p className="text-[10px] text-hd-ink-400 leading-tight mt-0.5 flex items-center gap-1 flex-wrap">
                 Tap
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-[9px] font-medium text-tvs-charcoal-300">
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-hd-ink-800 border border-hd-ink-700 text-[9px] font-medium text-hd-ink-300">
                   <Share className="size-2.5" /> Share
                 </span>
                 then
-                <span className="text-tvs-charcoal-200 font-medium">&ldquo;Add to Home Screen&rdquo;</span>
+                <span className="text-hd-ink-200 font-medium">&ldquo;Add to Home Screen&rdquo;</span>
               </p>
             </>
           )}
@@ -196,7 +196,7 @@ export function InstallPrompt() {
         {status === "android" && (
           <button
             onClick={handleInstall}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red text-white text-xs font-semibold transition-all"
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember text-white text-xs font-semibold transition-all"
           >
             <Download className="size-3" />
             Install
@@ -207,7 +207,7 @@ export function InstallPrompt() {
         {status !== "installing" && (
           <button
             onClick={handleDismiss}
-            className="shrink-0 p-1.5 rounded-lg text-tvs-charcoal-500 hover:text-tvs-charcoal-200 hover:bg-tvs-charcoal-800 transition-colors"
+            className="shrink-0 p-1.5 rounded-lg text-hd-ink-500 hover:text-hd-ink-200 hover:bg-hd-ink-800 transition-colors"
             aria-label="Dismiss"
           >
             <X className="size-3.5" />

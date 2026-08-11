@@ -1,7 +1,7 @@
 // =============================================================================
 // PushOptIn — Web Push subscription prompt
 // Style (banner vs modal) and delay are driven by push_settings from Supabase.
-// localStorage key "tvs-push-dismissed" prevents reshowing after dismiss.
+// localStorage key "hd-push-dismissed" prevents reshowing after dismiss.
 // =============================================================================
 
 "use client";
@@ -72,8 +72,8 @@ export function PushOptIn({ settings, page = "home" }: PushOptInProps) {
     if (!shouldShowOnPage) return;
 
     // Don't show if already subscribed or dismissed
-    if (localStorage.getItem("tvs-push-subscribed") === "true") return;
-    if (localStorage.getItem("tvs-push-dismissed")  === "true") return;
+    if (localStorage.getItem("hd-push-subscribed") === "true") return;
+    if (localStorage.getItem("hd-push-dismissed")  === "true") return;
 
     // Don't show if push isn't supported
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
@@ -89,7 +89,7 @@ export function PushOptIn({ settings, page = "home" }: PushOptInProps) {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setVisible(false);
-        localStorage.setItem("tvs-push-dismissed", "true");
+        localStorage.setItem("hd-push-dismissed", "true");
         return;
       }
 
@@ -106,7 +106,7 @@ export function PushOptIn({ settings, page = "home" }: PushOptInProps) {
         }),
       });
 
-      localStorage.setItem("tvs-push-subscribed", "true");
+      localStorage.setItem("hd-push-subscribed", "true");
       setSubscribed(true);
       setTimeout(() => setVisible(false), 2500);
     } catch (err) {
@@ -119,7 +119,7 @@ export function PushOptIn({ settings, page = "home" }: PushOptInProps) {
 
   const handleDismiss = useCallback(() => {
     setVisible(false);
-    localStorage.setItem("tvs-push-dismissed", "true");
+    localStorage.setItem("hd-push-dismissed", "true");
   }, []);
 
   if (!visible) return null;
@@ -129,27 +129,27 @@ export function PushOptIn({ settings, page = "home" }: PushOptInProps) {
     return (
       <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleDismiss} />
-        <div className="relative w-full max-w-sm bg-tvs-charcoal-900 border border-tvs-charcoal-700 rounded-2xl shadow-cinematic p-6 space-y-5">
+        <div className="relative w-full max-w-sm bg-hd-ink-900 border border-hd-ink-700 rounded-2xl shadow-cinematic p-6 space-y-5">
           <button
             onClick={handleDismiss}
-            className="absolute top-4 right-4 p-1.5 rounded-lg text-tvs-charcoal-500 hover:text-tvs-charcoal-200 hover:bg-tvs-charcoal-800 transition-colors"
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-hd-ink-500 hover:text-hd-ink-200 hover:bg-hd-ink-800 transition-colors"
           >
             <X className="size-4" />
           </button>
 
           <div className="flex items-center gap-4">
-            <div className="size-12 rounded-xl bg-tvs-red-900/40 border border-tvs-red-800/40 flex items-center justify-center shrink-0">
-              <Bell className="size-6 text-tvs-red-400" />
+            <div className="size-12 rounded-xl bg-hd-ember-900/40 border border-hd-ember-800/40 flex items-center justify-center shrink-0">
+              <Bell className="size-6 text-hd-ember-400" />
             </div>
             <div>
-              <h3 className="font-bold text-tvs-charcoal-50">Stay in the loop</h3>
-              <p className="text-xs text-tvs-charcoal-400 mt-0.5">
+              <h3 className="font-bold text-hd-ink-50">Stay in the loop</h3>
+              <p className="text-xs text-hd-ink-400 mt-0.5">
                 Get notified when new rides drop
               </p>
             </div>
           </div>
 
-          <p className="text-sm text-tvs-charcoal-300 leading-relaxed">
+          <p className="text-sm text-hd-ink-300 leading-relaxed">
             Enable notifications for ride reminders, new ride announcements, and when registration opens.
           </p>
 
@@ -168,7 +168,7 @@ export function PushOptIn({ settings, page = "home" }: PushOptInProps) {
   return (
     <div className={cn(
       "fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:max-w-sm z-[500]",
-      "bg-tvs-charcoal-900 border border-tvs-charcoal-700 rounded-2xl shadow-cinematic",
+      "bg-hd-ink-900 border border-hd-ink-700 rounded-2xl shadow-cinematic",
       "flex items-center gap-3 p-4",
       "animate-in slide-in-from-bottom-4 duration-300",
     )}>
@@ -183,15 +183,15 @@ export function PushOptIn({ settings, page = "home" }: PushOptInProps) {
         </>
       ) : (
         <>
-          <div className="size-8 rounded-lg bg-tvs-red-900/40 border border-tvs-red-800/40 flex items-center justify-center shrink-0">
-            <Bell className="size-4 text-tvs-red-400" />
+          <div className="size-8 rounded-lg bg-hd-ember-900/40 border border-hd-ember-800/40 flex items-center justify-center shrink-0">
+            <Bell className="size-4 text-hd-ember-400" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-tvs-charcoal-100 truncate">
+            <p className="text-xs font-semibold text-hd-ink-100 truncate">
               Get ride notifications
             </p>
-            <p className="text-[10px] text-tvs-charcoal-500 truncate">
+            <p className="text-[10px] text-hd-ink-500 truncate">
               Reminders, new rides & registrations
             </p>
           </div>
@@ -203,8 +203,8 @@ export function PushOptIn({ settings, page = "home" }: PushOptInProps) {
               className={cn(
                 "px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-all",
                 loading
-                  ? "bg-tvs-charcoal-700 cursor-not-allowed"
-                  : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red"
+                  ? "bg-hd-ink-700 cursor-not-allowed"
+                  : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember"
               )}
             >
               {loading ? (
@@ -213,7 +213,7 @@ export function PushOptIn({ settings, page = "home" }: PushOptInProps) {
             </button>
             <button
               onClick={handleDismiss}
-              className="p-1.5 rounded-lg text-tvs-charcoal-500 hover:text-tvs-charcoal-200 hover:bg-tvs-charcoal-800 transition-colors"
+              className="p-1.5 rounded-lg text-hd-ink-500 hover:text-hd-ink-200 hover:bg-hd-ink-800 transition-colors"
               title="Dismiss"
             >
               <X className="size-3.5" />
@@ -249,7 +249,7 @@ function OptInActions({
     <div className="flex gap-2">
       <button
         onClick={onDismiss}
-        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-tvs-charcoal-700 hover:border-tvs-charcoal-500 text-tvs-charcoal-400 hover:text-tvs-charcoal-200 text-sm font-medium transition-colors"
+        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-400 hover:text-hd-ink-200 text-sm font-medium transition-colors"
       >
         <BellOff className="size-3.5" />
         Not now
@@ -260,8 +260,8 @@ function OptInActions({
         className={cn(
           "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-white text-sm font-semibold transition-all",
           loading
-            ? "bg-tvs-charcoal-700 cursor-not-allowed"
-            : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red"
+            ? "bg-hd-ink-700 cursor-not-allowed"
+            : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember"
         )}
       >
         {loading ? (

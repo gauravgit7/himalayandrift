@@ -58,16 +58,16 @@ function BsMonthSection({
   return (
     <div className="space-y-3">
       {/* Sticky month header */}
-      <div className="flex items-center gap-3 sticky top-[108px] z-30 bg-tvs-charcoal-950/95 backdrop-blur-sm py-2 -mx-3 sm:-mx-6 px-3 sm:px-6 border-b border-tvs-charcoal-800/40">
+      <div className="flex items-center gap-3 sticky top-[108px] z-30 bg-hd-ink-950/95 backdrop-blur-sm py-2 -mx-3 sm:-mx-6 px-3 sm:px-6 border-b border-hd-ink-800/40">
         <div className="flex flex-col">
-          <h2 className="text-base font-black text-tvs-charcoal-50 leading-tight">
+          <h2 className="text-base font-black text-hd-ink-50 leading-tight">
             {monthName}
           </h2>
-          <span className="text-[10px] text-tvs-charcoal-500 leading-tight">
+          <span className="text-[10px] text-hd-ink-500 leading-tight">
             {bsYear} BS
           </span>
         </div>
-        <span className="text-xs text-tvs-charcoal-500">
+        <span className="text-xs text-hd-ink-500">
           {rides.length} {rides.length === 1 ? "ride" : "rides"}
         </span>
         <div className="flex items-center gap-1.5 ml-auto">
@@ -87,7 +87,7 @@ function BsMonthSection({
 
       {/* Ride cards */}
       {rides.length === 0 ? (
-        <p className="text-xs text-tvs-charcoal-700 italic pl-1 pb-4">
+        <p className="text-xs text-hd-ink-700 italic pl-1 pb-4">
           No rides in {monthName} {bsYear}
         </p>
       ) : (
@@ -125,8 +125,8 @@ export function BsListView({ rides, bsYear, brandLogos }: BsListViewProps) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
         <span className="text-4xl">🏍️</span>
-        <h3 className="text-lg font-bold text-tvs-charcoal-200">No rides this BS year</h3>
-        <p className="text-sm text-tvs-charcoal-500 max-w-xs">
+        <h3 className="text-lg font-bold text-hd-ink-200">No rides this BS year</h3>
+        <p className="text-sm text-hd-ink-500 max-w-xs">
           No rides scheduled for {bsYear} BS. Try navigating to a different year.
         </p>
       </div>
@@ -137,12 +137,12 @@ export function BsListView({ rides, bsYear, brandLogos }: BsListViewProps) {
     <div className="space-y-2">
       {/* Summary */}
       <div className="flex items-center gap-3 mb-6">
-        <p className="text-sm text-tvs-charcoal-400">
-          <span className="text-tvs-charcoal-50 font-bold">{rides.length}</span>{" "}
+        <p className="text-sm text-hd-ink-400">
+          <span className="text-hd-ink-50 font-bold">{rides.length}</span>{" "}
           {rides.length === 1 ? "ride" : "rides"} across{" "}
-          <span className="text-tvs-charcoal-50 font-bold">{monthsWithRides}</span>{" "}
+          <span className="text-hd-ink-50 font-bold">{monthsWithRides}</span>{" "}
           {monthsWithRides === 1 ? "month" : "months"} in{" "}
-          <span className="text-tvs-charcoal-50 font-bold">{bsYear} BS</span>
+          <span className="text-hd-ink-50 font-bold">{bsYear} BS</span>
         </p>
       </div>
 

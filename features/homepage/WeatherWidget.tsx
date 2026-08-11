@@ -40,14 +40,14 @@ function WeatherCard({ ride, weather }: WeatherItem) {
     <div
       className={cn(
         "flex flex-col gap-3 p-4 rounded-xl border",
-        cond ? cond.bg : "bg-tvs-charcoal-800/40 border-tvs-charcoal-700/40"
+        cond ? cond.bg : "bg-hd-ink-800/40 border-hd-ink-700/40"
       )}
     >
       {/* Ride meta */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-tvs-charcoal-100 truncate">{ride.title}</p>
-          <p className="text-xs text-tvs-charcoal-500 mt-0.5">{formatRideDate(ride.startDate)}</p>
+          <p className="text-sm font-semibold text-hd-ink-100 truncate">{ride.title}</p>
+          <p className="text-xs text-hd-ink-500 mt-0.5">{formatRideDate(ride.startDate)}</p>
         </div>
         {/* OW weather icon */}
         {weather?.conditions[0]?.icon ? (
@@ -68,10 +68,10 @@ function WeatherCard({ ride, weather }: WeatherItem) {
       {weather ? (
         <>
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-black text-tvs-charcoal-50 leading-none">
+            <span className="text-2xl font-black text-hd-ink-50 leading-none">
               {weather.temperatureCelsius}°
             </span>
-            <div className="text-xs text-tvs-charcoal-400 space-y-0.5">
+            <div className="text-xs text-hd-ink-400 space-y-0.5">
               <p>Feels {weather.feelsLikeCelsius}°C</p>
               <p>💨 {weather.windSpeedKmh} km/h · 💧 {weather.humidity}%</p>
             </div>
@@ -80,7 +80,7 @@ function WeatherCard({ ride, weather }: WeatherItem) {
           {/* Condition badge */}
           <div className="flex items-center gap-2">
             <span className={cn("text-xs font-bold", cond?.color)}>{cond?.label}</span>
-            <span className="text-xs text-tvs-charcoal-500 capitalize">
+            <span className="text-xs text-hd-ink-500 capitalize">
               {weather.conditions[0]?.description}
             </span>
           </div>
@@ -95,7 +95,7 @@ function WeatherCard({ ride, weather }: WeatherItem) {
                     key={day.date}
                     className="flex-1 text-center"
                   >
-                    <p className="text-[10px] text-tvs-charcoal-500">
+                    <p className="text-[10px] text-hd-ink-500">
                       {new Date(day.date + "T12:00:00").toLocaleDateString("en", { weekday: "short" })}
                     </p>
                     <Image
@@ -106,9 +106,9 @@ function WeatherCard({ ride, weather }: WeatherItem) {
                       className="mx-auto"
                       unoptimized
                     />
-                    <p className="text-[10px] text-tvs-charcoal-50 font-medium">
+                    <p className="text-[10px] text-hd-ink-50 font-medium">
                       {day.maxTempCelsius}°
-                      <span className="text-tvs-charcoal-600">/{day.minTempCelsius}°</span>
+                      <span className="text-hd-ink-600">/{day.minTempCelsius}°</span>
                     </p>
                     <span className={cn("text-[9px] font-bold", dc.color)}>{dc.label}</span>
                   </div>
@@ -120,8 +120,8 @@ function WeatherCard({ ride, weather }: WeatherItem) {
       ) : (
         /* Fallback when API not configured */
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-tvs-charcoal-200">{ride.location}</p>
-          <p className="text-xs text-tvs-charcoal-600">
+          <p className="text-sm font-semibold text-hd-ink-200">{ride.location}</p>
+          <p className="text-xs text-hd-ink-600">
             Set OPENWEATHER_API_KEY for live conditions
           </p>
         </div>
@@ -141,9 +141,9 @@ export function WeatherWidget({ items }: WeatherWidgetProps) {
 
   return (
     <section className="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="relative overflow-hidden rounded-2xl border border-tvs-charcoal-700/50 gradient-card">
+      <div className="relative overflow-hidden rounded-2xl border border-hd-ink-700/50 gradient-card">
         {/* Background accent */}
-        <div className="absolute inset-0 bg-gradient-to-br from-tvs-steel-900/20 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-hd-slate-900/20 via-transparent to-transparent pointer-events-none" />
 
         <div className="relative p-6 sm:p-8">
           {/* Header */}
@@ -151,14 +151,14 @@ export function WeatherWidget({ items }: WeatherWidgetProps) {
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="text-lg">🌤️</span>
-                <span className="text-xs font-semibold uppercase tracking-widest text-tvs-steel-400">
+                <span className="text-xs font-semibold uppercase tracking-widest text-hd-slate-400">
                   Ride Weather
                 </span>
               </div>
-              <h3 className="text-xl font-black text-tvs-charcoal-50">
+              <h3 className="text-xl font-black text-hd-ink-50">
                 Conditions for Upcoming Destinations
               </h3>
-              <p className="text-sm text-tvs-charcoal-400 mt-1">
+              <p className="text-sm text-hd-ink-400 mt-1">
                 {hasRealData
                   ? "Live conditions via OpenWeather · Updated every 30 minutes"
                   : "Add OPENWEATHER_API_KEY to .env.local for live forecasts"}
@@ -181,7 +181,7 @@ export function WeatherWidget({ items }: WeatherWidgetProps) {
           </StaggerContainer>
 
           {hasRealData && (
-            <p className="mt-4 text-[10px] text-tvs-charcoal-600 text-center">
+            <p className="mt-4 text-[10px] text-hd-ink-600 text-center">
               Powered by OpenWeather · Coordinates from each ride&apos;s route start
             </p>
           )}

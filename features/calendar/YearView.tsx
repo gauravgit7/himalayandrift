@@ -30,7 +30,7 @@ interface YearViewProps {
 
 const PRIORITY_DOT: Record<string, string> = {
   marquee:   "ring-1 ring-yellow-400/60",
-  signature: "ring-1 ring-tvs-red-400/40",
+  signature: "ring-1 ring-hd-ember-400/40",
   standard:  "",
 };
 
@@ -86,8 +86,8 @@ function MiniMonth({
       <button
         onClick={() => onMonthClick(monthIndex)}
         className={cn(
-          "text-left text-sm font-bold pb-1 hover:text-tvs-red-400 transition-colors duration-150",
-          isCurrentMonth ? "text-tvs-red-400" : "text-tvs-charcoal-200"
+          "text-left text-sm font-bold pb-1 hover:text-hd-ember-400 transition-colors duration-150",
+          isCurrentMonth ? "text-hd-ember-400" : "text-hd-ink-200"
         )}
       >
         {MONTHS[monthIndex]}
@@ -98,7 +98,7 @@ function MiniMonth({
         {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
           <div
             key={`${d}-${i}`}
-            className="text-center text-[9px] font-bold text-tvs-charcoal-600 pb-0.5"
+            className="text-center text-[9px] font-bold text-hd-ink-600 pb-0.5"
           >
             {d}
           </div>
@@ -126,10 +126,10 @@ function MiniMonth({
                 "relative flex flex-col items-center gap-[2px] py-0.5 rounded transition-all duration-100",
                 isCurrentMonthDay
                   ? hasRides
-                    ? "hover:bg-tvs-charcoal-800 cursor-pointer"
+                    ? "hover:bg-hd-ink-800 cursor-pointer"
                     : "cursor-default"
                   : "opacity-30 cursor-default",
-                todayFlag && "ring-1 ring-tvs-red-600/60 bg-tvs-red-950/30"
+                todayFlag && "ring-1 ring-hd-ember-600/60 bg-hd-ember-950/30"
               )}
               disabled={!hasRides && !todayFlag}
               title={hasRides ? `${ridesOnDay.length} ride${ridesOnDay.length > 1 ? "s" : ""}` : undefined}
@@ -146,18 +146,18 @@ function MiniMonth({
                       className={cn(
                         "text-[11px] leading-none font-medium",
                         todayFlag
-                          ? "text-tvs-red-400 font-bold"
+                          ? "text-hd-ember-400 font-bold"
                           : isCurrentMonthDay
                           ? hasRides
-                            ? "text-tvs-charcoal-50"
-                            : "text-tvs-charcoal-400"
-                          : "text-tvs-charcoal-700"
+                            ? "text-hd-ink-50"
+                            : "text-hd-ink-400"
+                          : "text-hd-ink-700"
                       )}
                     >
                       {primary}
                     </span>
                     {isCurrentMonthDay && (
-                      <span className="text-[7px] text-tvs-charcoal-700 leading-none">
+                      <span className="text-[7px] text-hd-ink-700 leading-none">
                         {reference}
                       </span>
                     )}
@@ -182,7 +182,7 @@ function MiniMonth({
                     );
                   })}
                   {extraRides > 0 && (
-                    <span className="text-[8px] text-tvs-charcoal-500 leading-none">
+                    <span className="text-[8px] text-hd-ink-500 leading-none">
                       +{extraRides}
                     </span>
                   )}
@@ -225,19 +225,19 @@ export function YearView({ rides, year, dateMode = "ad", onDayClick, onMonthClic
             )}
             title={`${MONTHS[m]}: ${count} rides`}
           >
-            <span className="text-[9px] text-tvs-charcoal-600 group-hover:text-tvs-charcoal-400 transition-colors">
+            <span className="text-[9px] text-hd-ink-600 group-hover:text-hd-ink-400 transition-colors">
               {count > 0 ? count : ""}
             </span>
             <div
               className={cn(
                 "w-full rounded-t transition-all duration-200",
                 count === 0
-                  ? "h-1 bg-tvs-charcoal-800"
-                  : "bg-tvs-red-700/70 group-hover:bg-tvs-red-600"
+                  ? "h-1 bg-hd-ink-800"
+                  : "bg-hd-ember-700/70 group-hover:bg-hd-ember-600"
               )}
               style={{ height: count > 0 ? `${Math.max(4, (count / 7) * 32)}px` : "4px" }}
             />
-            <span className="text-[8px] text-tvs-charcoal-600">
+            <span className="text-[8px] text-hd-ink-600">
               {SHORT_MONTHS[m]}
             </span>
           </button>
@@ -260,8 +260,8 @@ export function YearView({ rides, year, dateMode = "ad", onDayClick, onMonthClic
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-tvs-charcoal-800/50 text-xs text-tvs-charcoal-500">
-        <span className="font-medium text-tvs-charcoal-400">Legend:</span>
+      <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-hd-ink-800/50 text-xs text-hd-ink-500">
+        <span className="font-medium text-hd-ink-400">Legend:</span>
         {Object.values(RIDE_TYPE_STYLES).map((style) => (
           <span key={style.label} className="flex items-center gap-1.5">
             <span className={cn("size-2 rounded-full", style.dot)} />
@@ -269,11 +269,11 @@ export function YearView({ rides, year, dateMode = "ad", onDayClick, onMonthClic
           </span>
         ))}
         <span className="flex items-center gap-1.5 ml-2">
-          <span className="size-2 rounded-full bg-tvs-red-500 ring-1 ring-yellow-400/60" />
+          <span className="size-2 rounded-full bg-hd-ember-500 ring-1 ring-yellow-400/60" />
           Marquee priority
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-4 rounded flex items-center justify-center ring-1 ring-tvs-red-600/60 bg-tvs-red-950/30 text-[8px] text-tvs-red-400">•</span>
+          <span className="size-4 rounded flex items-center justify-center ring-1 ring-hd-ember-600/60 bg-hd-ember-950/30 text-[8px] text-hd-ember-400">•</span>
           Today
         </span>
       </div>

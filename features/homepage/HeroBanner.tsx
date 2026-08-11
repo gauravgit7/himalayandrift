@@ -1,7 +1,7 @@
 // =============================================================================
 // HeroBanner - Phase 3 · Full-viewport cinematic hero
 // Phase 10 · Admin-configured background image + overlay opacity
-//            Dynamic brand logo support (TVS Nepal logo from Supabase Storage)
+//            Dynamic brand logo support (Himalayan Drift logo from Supabase Storage)
 // 'use client' - Framer Motion entrance animations
 // =============================================================================
 
@@ -59,7 +59,7 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
     <section className="dark-surface relative min-h-dvh flex flex-col justify-center overflow-hidden">
 
       {/* ── Background layer 1: base colour (always present) ──────────── */}
-      <div className="absolute inset-0 bg-tvs-charcoal-950" />
+      <div className="absolute inset-0 bg-hd-ink-950" />
 
       {hasPhoto ? (
         /* ── Photo mode: layered cinematic overlays ───────────────────── */
@@ -97,20 +97,20 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
           />
 
           {/* Layer 4d: brand red tint - bottom-right glow for identity */}
-          <div className="absolute -bottom-24 -right-24 w-[480px] h-[480px] rounded-full bg-tvs-red-900/20 blur-[100px] pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-[480px] h-[480px] rounded-full bg-hd-ember-900/20 blur-[100px] pointer-events-none" />
         </>
       ) : (
         /* ── Ambient mode: generative dark aesthetic (no photo) ───────── */
         <>
           {/* Ambient red glow - top-right */}
-          <div className="absolute -top-48 -right-48 w-[640px] h-[640px] rounded-full bg-tvs-red-900/25 blur-[128px] pointer-events-none" />
+          <div className="absolute -top-48 -right-48 w-[640px] h-[640px] rounded-full bg-hd-ember-900/25 blur-[128px] pointer-events-none" />
           {/* Crimson glow - bottom-left */}
-          <div className="absolute -bottom-48 -left-32 w-[520px] h-[520px] rounded-full bg-tvs-crimson-900/20 blur-[100px] pointer-events-none" />
+          <div className="absolute -bottom-48 -left-32 w-[520px] h-[520px] rounded-full bg-hd-clay-900/20 blur-[100px] pointer-events-none" />
           {/* Subtle dot-grid texture */}
           <div
             className="absolute inset-0 opacity-[0.025] pointer-events-none"
             style={{
-              backgroundImage: "radial-gradient(circle, #dc2626 1px, transparent 1px)",
+              backgroundImage: "radial-gradient(circle, #f09020 1px, transparent 1px)",
               backgroundSize: "48px 48px",
             }}
           />
@@ -118,7 +118,7 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
       )}
 
       {/* ── Layer 5 (always): bottom fade into the next section ──────── */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-tvs-charcoal-950 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-hd-ink-950 to-transparent pointer-events-none" />
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
       <div className="relative z-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full pt-24 pb-20">
@@ -140,7 +140,7 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
               {RIDE_TYPES.map((t) => (
                 <span
                   key={t.value}
-                  className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-tvs-charcoal-800/80 border border-tvs-charcoal-700 text-tvs-charcoal-400"
+                  className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-hd-ink-800/80 border border-hd-ink-700 text-hd-ink-400"
                 >
                   {t.icon} {t.label}
                 </span>
@@ -155,7 +155,7 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
               <h1 className="text-5xl sm:text-6xl lg:text-[4.25rem] font-black text-white leading-[1.03] tracking-tight">
                 {heroContent.title}
               </h1>
-              <p className="mt-4 text-base sm:text-lg text-tvs-charcoal-400 max-w-md leading-relaxed">
+              <p className="mt-4 text-base sm:text-lg text-hd-ink-400 max-w-md leading-relaxed">
                 {heroContent.subtitle}
               </p>
             </motion.div>
@@ -166,11 +166,11 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="flex items-center gap-2"
             >
-              <span className="block w-6 h-px bg-tvs-red-600 rounded-full" />
-              <span className="text-sm font-semibold text-tvs-red-400">
+              <span className="block w-6 h-px bg-hd-ember-600 rounded-full" />
+              <span className="text-sm font-semibold text-hd-ember-400">
                 {stats?.year} Annual Ride Season
               </span>
-              <span className="block w-6 h-px bg-tvs-red-600 rounded-full" />
+              <span className="block w-6 h-px bg-hd-ember-600 rounded-full" />
             </motion.div>
 
             {/* Countdown pill */}
@@ -191,7 +191,7 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
             >
               <Link
                 href={heroContent.primaryCTALink}
-                className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-tvs-red-600 hover:bg-tvs-red-500 text-white font-semibold text-sm transition-all duration-200 hover:shadow-glow-red"
+                className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-hd-ember-600 hover:bg-hd-ember-500 text-white font-semibold text-sm transition-all duration-200 hover:shadow-glow-ember"
               >
                 <Calendar className="size-4 shrink-0" />
                 {heroContent.primaryCTALabel}
@@ -200,7 +200,7 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
               {heroContent.secondaryCTALabel && (
                 <Link
                   href={heroContent.secondaryCTALink ?? ROUTES.calendar}
-                  className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-tvs-charcoal-700 hover:border-violet-700/70 hover:bg-violet-950/30 text-tvs-charcoal-200 hover:text-white font-semibold text-sm transition-all duration-200"
+                  className="group inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-hd-ink-700 hover:border-violet-700/70 hover:bg-violet-950/30 text-hd-ink-200 hover:text-white font-semibold text-sm transition-all duration-200"
                 >
                   <span className="text-yellow-400">★</span>
                   {heroContent.secondaryCTALabel}
@@ -213,7 +213,7 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
             <motion.div
               variants={fadeUp}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="flex flex-wrap gap-x-7 gap-y-3 pt-3 border-t border-tvs-charcoal-800/70"
+              className="flex flex-wrap gap-x-7 gap-y-3 pt-3 border-t border-hd-ink-800/70"
             >
               {[
                 {
@@ -231,7 +231,7 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
               ].map((s) => (
                 <div key={s.label}>
                   <p className="text-xl font-black text-white">{s.value}</p>
-                  <p className="text-xs text-tvs-charcoal-500 mt-0.5">{s.label}</p>
+                  <p className="text-xs text-hd-ink-500 mt-0.5">{s.label}</p>
                 </div>
               ))}
             </motion.div>
@@ -258,11 +258,11 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
         animate={{ opacity: 1 }}
         transition={{ delay: 1.4, duration: 0.6 }}
       >
-        <span className="text-[9px] uppercase tracking-[0.2em] text-tvs-charcoal-600">
+        <span className="text-[9px] uppercase tracking-[0.2em] text-hd-ink-600">
           Scroll
         </span>
         <motion.div
-          className="w-px h-6 bg-gradient-to-b from-tvs-charcoal-600 to-transparent"
+          className="w-px h-6 bg-gradient-to-b from-hd-ink-600 to-transparent"
           animate={{ scaleY: [1, 0.4, 1] }}
           transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
         />
@@ -288,7 +288,7 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
         "hover:-translate-y-1 hover:shadow-cinematic",
         isMarquee
           ? "border-violet-700/50 hover:border-violet-500/60"
-          : "border-tvs-charcoal-700 hover:border-tvs-red-700/50"
+          : "border-hd-ink-700 hover:border-hd-ember-700/50"
       )}
     >
       {/* Background gradient */}
@@ -305,7 +305,7 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
       <div
         className={cn(
           "relative h-0.5 w-full shrink-0",
-          isMarquee ? "bg-gradient-to-r from-violet-500 to-tvs-red-500" : "bg-tvs-red-600"
+          isMarquee ? "bg-gradient-to-r from-violet-500 to-hd-ember-500" : "bg-hd-ember-600"
         )}
       />
 
@@ -324,11 +324,11 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
 
         {/* Title */}
         <div>
-          <h3 className="text-lg font-black text-white leading-tight group-hover:text-tvs-red-100 transition-colors duration-200">
+          <h3 className="text-lg font-black text-white leading-tight group-hover:text-hd-ember-100 transition-colors duration-200">
             {ride.title}
           </h3>
           {ride.shortDescription && (
-            <p className="mt-1.5 text-sm text-tvs-charcoal-300/90 line-clamp-2 leading-snug">
+            <p className="mt-1.5 text-sm text-hd-ink-300/90 line-clamp-2 leading-snug">
               {ride.shortDescription}
             </p>
           )}
@@ -338,16 +338,16 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
         <div className="flex items-start gap-3">
           {/* Left: ride meta */}
           <div className="flex flex-col gap-1.5 flex-1">
-            <div className="flex items-center gap-2 text-xs text-tvs-charcoal-300">
-              <Calendar className="size-3.5 text-tvs-red-500 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-hd-ink-300">
+              <Calendar className="size-3.5 text-hd-ember-500 shrink-0" />
               <span>{dateLabel}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-tvs-charcoal-300">
-              <MapPin className="size-3.5 text-tvs-red-500 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-hd-ink-300">
+              <MapPin className="size-3.5 text-hd-ember-500 shrink-0" />
               <span>{ride.location}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-tvs-charcoal-300">
-              <Users className="size-3.5 text-tvs-red-500 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-hd-ink-300">
+              <Users className="size-3.5 text-hd-ember-500 shrink-0" />
               <span>{ride.expectedRiders} riders expected</span>
             </div>
           </div>
@@ -365,23 +365,23 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
         {/* Route waypoints (marquee only) */}
         {waypoints.length > 0 && (
           <div className="pt-3 border-t border-white/10">
-            <p className="text-[9px] uppercase tracking-widest text-tvs-charcoal-500 mb-2">
+            <p className="text-[9px] uppercase tracking-widest text-hd-ink-500 mb-2">
               Route
             </p>
             <div className="flex items-center gap-1 flex-wrap">
               {waypoints.map((wp, i) => (
                 <span key={wp.name} className="flex items-center gap-1">
-                  <span className="text-[11px] font-medium text-tvs-charcoal-200">
+                  <span className="text-[11px] font-medium text-hd-ink-200">
                     {wp.name}
                   </span>
                   {i < waypoints.length - 1 && (
-                    <span className="text-tvs-charcoal-600 text-xs">›</span>
+                    <span className="text-hd-ink-600 text-xs">›</span>
                   )}
                 </span>
               ))}
             </div>
             {ride.routeData?.totalDistanceKm && (
-              <p className="text-[10px] text-tvs-charcoal-500 mt-1">
+              <p className="text-[10px] text-hd-ink-500 mt-1">
                 {ride.routeData.totalDistanceKm} km total
               </p>
             )}
@@ -398,14 +398,14 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
                 e.stopPropagation();
                 window.open(ride.registrationLink!, "_blank", "noopener,noreferrer");
               }}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-tvs-red-600 hover:bg-tvs-red-500 text-white transition-colors duration-150"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 text-white transition-colors duration-150"
             >
               Register →
             </button>
           ) : (
             <span />
           )}
-          <span className="flex items-center gap-1 text-xs text-tvs-charcoal-400 group-hover:text-tvs-charcoal-200 transition-colors duration-200">
+          <span className="flex items-center gap-1 text-xs text-hd-ink-400 group-hover:text-hd-ink-200 transition-colors duration-200">
             View details
             <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform duration-200" />
           </span>

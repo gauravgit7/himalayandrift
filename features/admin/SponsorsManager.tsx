@@ -18,14 +18,14 @@ import type { SponsorPayload } from "@/lib/supabase/actions";
 // ---------------------------------------------------------------------------
 
 const inputCls = cn(
-  "w-full h-9 px-3 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 text-sm",
-  "text-tvs-charcoal-100 placeholder:text-tvs-charcoal-600",
-  "focus:outline-none focus:border-tvs-red-600 focus:ring-1 focus:ring-tvs-red-600/40 transition-colors"
+  "w-full h-9 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm",
+  "text-hd-ink-100 placeholder:text-hd-ink-600",
+  "focus:outline-none focus:border-hd-ember-600 focus:ring-1 focus:ring-hd-ember-600/40 transition-colors"
 );
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-xs font-semibold text-tvs-charcoal-400 uppercase tracking-wide mb-1">
+    <label className="block text-xs font-semibold text-hd-ink-400 uppercase tracking-wide mb-1">
       {children}
     </label>
   );
@@ -33,16 +33,16 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 const TIER_OPTIONS: { value: SponsorPayload["tier"]; label: string; color: string }[] = [
   { value: "title",     label: "Title Sponsor",     color: "text-yellow-400"       },
-  { value: "co",        label: "Co-Sponsor",         color: "text-tvs-charcoal-200" },
-  { value: "associate", label: "Associate Sponsor",  color: "text-tvs-charcoal-400" },
-  { value: "media",     label: "Media Partner",      color: "text-tvs-steel-400"    },
+  { value: "co",        label: "Co-Sponsor",         color: "text-hd-ink-200" },
+  { value: "associate", label: "Associate Sponsor",  color: "text-hd-ink-400" },
+  { value: "media",     label: "Media Partner",      color: "text-hd-slate-400"    },
 ];
 
 const TIER_BADGE: Record<string, string> = {
   title:     "bg-yellow-900/50 text-yellow-400 border-yellow-800/40",
-  co:        "bg-tvs-charcoal-700/60 text-tvs-charcoal-200 border-tvs-charcoal-600/40",
-  associate: "bg-tvs-charcoal-800/60 text-tvs-charcoal-400 border-tvs-charcoal-700/40",
-  media:     "bg-tvs-steel-900/50 text-tvs-steel-400 border-tvs-steel-800/40",
+  co:        "bg-hd-ink-700/60 text-hd-ink-200 border-hd-ink-600/40",
+  associate: "bg-hd-ink-800/60 text-hd-ink-400 border-hd-ink-700/40",
+  media:     "bg-hd-slate-900/50 text-hd-slate-400 border-hd-slate-800/40",
 };
 
 // ---------------------------------------------------------------------------
@@ -92,18 +92,18 @@ function SponsorModal({ initial, title, onClose, onSaved }: ModalProps) {
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-tvs-charcoal-900 border border-tvs-charcoal-700 rounded-2xl shadow-cinematic">
+      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-hd-ink-900 border border-hd-ink-700 rounded-2xl shadow-cinematic">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-tvs-charcoal-800">
-          <h2 className="text-base font-bold text-tvs-charcoal-50">{title}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-tvs-charcoal-400 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-800 transition-colors">
+        <div className="flex items-center justify-between p-5 border-b border-hd-ink-800">
+          <h2 className="text-base font-bold text-hd-ink-50">{title}</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-hd-ink-400 hover:text-hd-ink-100 hover:bg-hd-ink-800 transition-colors">
             <X className="size-4" />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
           {error && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-tvs-red-950/60 border border-tvs-red-800/40 text-tvs-red-300 text-sm">
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40 text-hd-ember-300 text-sm">
               <AlertCircle className="size-4 shrink-0 mt-px" />
               {error}
             </div>
@@ -118,7 +118,7 @@ function SponsorModal({ initial, title, onClose, onSaved }: ModalProps) {
             <FieldLabel>Tier</FieldLabel>
             <select value={form.tier} onChange={(e) => set("tier", e.target.value as SponsorPayload["tier"])} className={cn(inputCls, "appearance-none")}>
               {TIER_OPTIONS.map((t) => (
-                <option key={t.value} value={t.value} className="bg-tvs-charcoal-900">{t.label}</option>
+                <option key={t.value} value={t.value} className="bg-hd-ink-900">{t.label}</option>
               ))}
             </select>
           </div>
@@ -150,17 +150,17 @@ function SponsorModal({ initial, title, onClose, onSaved }: ModalProps) {
               onClick={() => set("isActive", !form.isActive)}
               className={cn(
                 "relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0",
-                form.isActive ? "bg-tvs-red-600" : "bg-tvs-charcoal-700"
+                form.isActive ? "bg-hd-ember-600" : "bg-hd-ink-700"
               )}
             >
               <span className={cn("absolute top-0.5 size-4 rounded-full bg-white shadow transition-transform duration-200", form.isActive ? "translate-x-4" : "translate-x-0.5")} />
             </button>
-            <span className="text-sm font-medium text-tvs-charcoal-200">Active (shown on homepage)</span>
+            <span className="text-sm font-medium text-hd-ink-200">Active (shown on homepage)</span>
           </label>
         </div>
 
-        <div className="flex items-center justify-end gap-2 p-5 border-t border-tvs-charcoal-800">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-tvs-charcoal-700 hover:border-tvs-charcoal-500 text-tvs-charcoal-300 hover:text-tvs-charcoal-100 text-sm font-medium transition-colors">
+        <div className="flex items-center justify-end gap-2 p-5 border-t border-hd-ink-800">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-300 hover:text-hd-ink-100 text-sm font-medium transition-colors">
             Cancel
           </button>
           <button
@@ -168,7 +168,7 @@ function SponsorModal({ initial, title, onClose, onSaved }: ModalProps) {
             disabled={saving}
             className={cn(
               "flex items-center gap-2 px-5 py-2 rounded-lg text-white text-sm font-semibold transition-all",
-              saving ? "bg-tvs-charcoal-700 cursor-not-allowed" : "bg-tvs-red-600 hover:bg-tvs-red-500 hover:shadow-glow-red"
+              saving ? "bg-hd-ink-700 cursor-not-allowed" : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember"
             )}
           >
             {saving ? (
@@ -203,20 +203,20 @@ function DeleteModal({ sponsor, onClose, onDeleted }: { sponsor: Sponsor; onClos
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-tvs-charcoal-900 border border-tvs-charcoal-700 rounded-2xl shadow-cinematic p-6 space-y-4">
-        <h2 className="text-base font-bold text-tvs-charcoal-50">Delete Sponsor?</h2>
-        <p className="text-sm text-tvs-charcoal-400">
-          Remove <strong className="text-tvs-charcoal-200">{sponsor.name}</strong> permanently? This cannot be undone.
+      <div className="relative w-full max-w-sm bg-hd-ink-900 border border-hd-ink-700 rounded-2xl shadow-cinematic p-6 space-y-4">
+        <h2 className="text-base font-bold text-hd-ink-50">Delete Sponsor?</h2>
+        <p className="text-sm text-hd-ink-400">
+          Remove <strong className="text-hd-ink-200">{sponsor.name}</strong> permanently? This cannot be undone.
         </p>
-        {error && <p className="text-sm text-tvs-red-400">{error}</p>}
+        {error && <p className="text-sm text-hd-ember-400">{error}</p>}
         <div className="flex gap-2 pt-1">
-          <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-tvs-charcoal-700 text-tvs-charcoal-300 hover:text-tvs-charcoal-100 text-sm font-medium transition-colors">
+          <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-hd-ink-700 text-hd-ink-300 hover:text-hd-ink-100 text-sm font-medium transition-colors">
             Cancel
           </button>
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="flex-1 py-2 rounded-lg bg-tvs-red-700 hover:bg-tvs-red-600 disabled:opacity-50 text-white text-sm font-semibold transition-colors"
+            className="flex-1 py-2 rounded-lg bg-hd-ember-700 hover:bg-hd-ember-600 disabled:opacity-50 text-white text-sm font-semibold transition-colors"
           >
             {deleting ? "Deleting…" : "Delete"}
           </button>
@@ -249,10 +249,10 @@ export function SponsorsManager({ initialSponsors }: SponsorsManagerProps) {
     <>
       {/* Header actions */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-tvs-charcoal-400">{sponsors.length} sponsors</p>
+        <p className="text-sm text-hd-ink-400">{sponsors.length} sponsors</p>
         <button
           onClick={() => setAddOpen(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-tvs-red-600 hover:bg-tvs-red-500 text-white text-sm font-semibold transition-all hover:shadow-glow-red"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 text-white text-sm font-semibold transition-all hover:shadow-glow-ember"
         >
           <Plus className="size-4" />
           Add Sponsor
@@ -262,7 +262,7 @@ export function SponsorsManager({ initialSponsors }: SponsorsManagerProps) {
       {/* Sponsors list */}
       <div className="space-y-3 max-w-2xl">
         {sponsors.length === 0 && (
-          <div className="text-center py-12 text-tvs-charcoal-600 text-sm">
+          <div className="text-center py-12 text-hd-ink-600 text-sm">
             No sponsors yet - click Add Sponsor to get started.
           </div>
         )}
@@ -270,41 +270,41 @@ export function SponsorsManager({ initialSponsors }: SponsorsManagerProps) {
         {sponsors.map((sponsor) => (
           <div
             key={sponsor.id}
-            className="flex items-center gap-4 p-4 rounded-xl gradient-card border border-tvs-charcoal-700/60"
+            className="flex items-center gap-4 p-4 rounded-xl gradient-card border border-hd-ink-700/60"
           >
             {/* Logo */}
             {sponsor.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={sponsor.logoUrl} alt={sponsor.name} className="size-12 rounded-lg object-contain bg-tvs-charcoal-800 p-1 shrink-0 border border-tvs-charcoal-700" />
+              <img src={sponsor.logoUrl} alt={sponsor.name} className="size-12 rounded-lg object-contain bg-hd-ink-800 p-1 shrink-0 border border-hd-ink-700" />
             ) : (
-              <div className="size-12 rounded-lg bg-tvs-charcoal-800 border border-tvs-charcoal-700 flex items-center justify-center shrink-0 text-sm font-bold text-tvs-charcoal-500">
+              <div className="size-12 rounded-lg bg-hd-ink-800 border border-hd-ink-700 flex items-center justify-center shrink-0 text-sm font-bold text-hd-ink-500">
                 {sponsor.name.split(" ").slice(0, 2).map((w) => w[0]).join("")}
               </div>
             )}
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-semibold text-tvs-charcoal-100">{sponsor.name}</p>
+                <p className="font-semibold text-hd-ink-100">{sponsor.name}</p>
                 <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wide", TIER_BADGE[sponsor.tier])}>
                   {sponsor.tier}
                 </span>
-                {!sponsor.logoUrl && <span className="text-[9px] text-tvs-charcoal-600 border border-tvs-charcoal-700 px-1.5 py-0.5 rounded">no logo</span>}
+                {!sponsor.logoUrl && <span className="text-[9px] text-hd-ink-600 border border-hd-ink-700 px-1.5 py-0.5 rounded">no logo</span>}
               </div>
               {sponsor.description && (
-                <p className="text-xs text-tvs-charcoal-500 mt-0.5 truncate">{sponsor.description}</p>
+                <p className="text-xs text-hd-ink-500 mt-0.5 truncate">{sponsor.description}</p>
               )}
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
               {sponsor.websiteUrl && (
-                <a href={sponsor.websiteUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-tvs-charcoal-500 hover:text-tvs-steel-400 hover:bg-tvs-charcoal-800 transition-colors" title="Visit website">
+                <a href={sponsor.websiteUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg text-hd-ink-500 hover:text-hd-slate-400 hover:bg-hd-ink-800 transition-colors" title="Visit website">
                   <Globe className="size-3.5" />
                 </a>
               )}
-              <button onClick={() => setEditSponsor(sponsor)} className="p-1.5 rounded-lg text-tvs-charcoal-500 hover:text-tvs-charcoal-100 hover:bg-tvs-charcoal-800 transition-colors" title="Edit">
+              <button onClick={() => setEditSponsor(sponsor)} className="p-1.5 rounded-lg text-hd-ink-500 hover:text-hd-ink-100 hover:bg-hd-ink-800 transition-colors" title="Edit">
                 <Pencil className="size-3.5" />
               </button>
-              <button onClick={() => setDeleteSponsorItem(sponsor)} className="p-1.5 rounded-lg text-tvs-charcoal-500 hover:text-tvs-red-400 hover:bg-tvs-red-950/40 transition-colors" title="Delete">
+              <button onClick={() => setDeleteSponsorItem(sponsor)} className="p-1.5 rounded-lg text-hd-ink-500 hover:text-hd-ember-400 hover:bg-hd-ember-950/40 transition-colors" title="Delete">
                 <Trash2 className="size-3.5" />
               </button>
             </div>

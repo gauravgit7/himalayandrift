@@ -351,14 +351,14 @@ export async function savePwaSettings(
 // Membership card actions
 // =============================================================================
 
-/** Generate a random 6-char access code: TVS-XXXXXX */
+/** Generate a random 6-char access code: HD-XXXXXX */
 function generateAccessCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I/L
   let suffix = "";
   for (let i = 0; i < 6; i++) {
     suffix += chars[Math.floor(Math.random() * chars.length)];
   }
-  return `TVS-${suffix}`;
+  return `HD-${suffix}`;
 }
 
 export interface MemberCardPayload {
