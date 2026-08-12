@@ -10,7 +10,7 @@ import { AnimateIn }              from "@/components/shared/AnimateIn";
 import { MarshalPageClient }      from "@/features/marshals/MarshalPageClient";
 
 export const metadata: Metadata = {
-  title:       "Marshals | Himalayan Drift",
+  title:       "Marshals",
   description: "Meet the marshals who lead Himalayan Drift rides.",
 };
 

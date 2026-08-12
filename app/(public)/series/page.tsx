@@ -9,10 +9,10 @@ import { Layers, ArrowRight } from "lucide-react";
 
 import { getSeries, getSeriesRideCounts } from "@/lib/supabase/queries";
 import { AnimateIn, StaggerContainer, StaggerItem } from "@/components/shared/AnimateIn";
-import { ROUTES, APP_META } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title:       `Ride Series | ${APP_META.name}`,
+  title:       "Ride Series",
   description: "Our recurring ride series, released in volumes.",
 };
 

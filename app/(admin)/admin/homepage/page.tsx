@@ -7,7 +7,7 @@ import { getHomepageContent, getRides }       from "@/lib/supabase/queries";
 import { sortRidesByDate }                    from "@/utils/ride";
 import { HomepageEditor }                     from "@/features/admin/HomepageEditor";
 
-export const metadata: Metadata = { title: "Homepage Editor | Himalayan Drift Admin" };
+export const metadata: Metadata = { title: "Homepage Editor | Admin" };
 
 export default async function AdminHomepagePage() {
   const [homepage, rides] = await Promise.all([

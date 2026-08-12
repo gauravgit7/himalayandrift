@@ -17,7 +17,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { cardNumber } = await params;
-  return { title: `Validate ${decodeURIComponent(cardNumber)} | Himalayan Drift` };
+  return { title: `Validate ${decodeURIComponent(cardNumber)}` };
 }
 
 export default async function ValidatePage({ params }: PageProps) {

@@ -7,9 +7,8 @@ import { getRides, getAllMarshals, getBrandLogos } from "@/lib/supabase/queries"
 import { computeRideStats, sortRidesByDate } from "@/utils/ride";
 import { rideIsUpcoming } from "@/utils/date";
 import { AdminDashboard } from "@/features/admin/AdminDashboard";
-import { APP_META } from "@/lib/constants";
 
-export const metadata: Metadata = { title: `Dashboard | ${APP_META.name} Admin` };
+export const metadata: Metadata = { title: "Dashboard | Admin" };
 
 export default async function AdminDashboardPage() {
   const [rides, marshals, brandLogos] = await Promise.all([

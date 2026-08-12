@@ -7,7 +7,7 @@ import { getRidesForYear }  from "@/lib/supabase/queries";
 import { sortRidesByDate }  from "@/utils/ride";
 import { AdminCalendarView } from "@/features/admin/AdminCalendarView";
 
-export const metadata: Metadata = { title: "Calendar | Himalayan Drift Admin" };
+export const metadata: Metadata = { title: "Calendar | Admin" };
 
 export default async function AdminCalendarPage() {
   const rides = sortRidesByDate(await getRidesForYear(2026));

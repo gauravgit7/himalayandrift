@@ -10,7 +10,7 @@ import { CardSettingsAdmin }          from "@/features/admin/CardSettingsAdmin";
 import { getCardSettings }            from "@/lib/supabase/queries";
 import { APP_META }                   from "@/lib/constants";
 
-export const metadata: Metadata = { title: "Settings | Himalayan Drift Admin" };
+export const metadata: Metadata = { title: "Settings | Admin" };
 
 // ---------------------------------------------------------------------------
 // Data fetching

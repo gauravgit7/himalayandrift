@@ -32,7 +32,7 @@ import { SponsorShowcase }      from "@/features/homepage/SponsorShowcase";
 import { InstallPrompt }        from "@/components/shared/InstallPrompt";
 
 export const metadata: Metadata = {
-  title:       APP_META.name,
+  title:       { absolute: APP_META.name },
   description: APP_META.description,
 };
 

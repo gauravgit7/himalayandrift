@@ -16,7 +16,7 @@ import {
 import { RideCard }   from "@/components/shared/RideCard";
 import { AnimateIn }  from "@/components/shared/AnimateIn";
 import { toRoman }    from "@/components/shared/SeriesBadge";
-import { ROUTES, APP_META } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 
 export const revalidate = 3600; // 1 hour
 
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const series   = await getSeriesBySlug(slug);
   if (!series) return { title: "Series Not Found" };
   return {
-    title:       `${series.name} | ${APP_META.name}`,
+    title:       series.name,
     description: series.description ?? `Every volume of ${series.name}.`,
   };
 }

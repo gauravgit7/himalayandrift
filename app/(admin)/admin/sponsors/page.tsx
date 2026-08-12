@@ -6,7 +6,7 @@ import type { Metadata }     from "next";
 import { getSponsors }       from "@/lib/supabase/queries";
 import { SponsorsManager }   from "@/features/admin/SponsorsManager";
 
-export const metadata: Metadata = { title: "Sponsors | Himalayan Drift Admin" };
+export const metadata: Metadata = { title: "Sponsors | Admin" };
 
 export default async function AdminSponsorsPage() {
   const sponsors = await getSponsors();

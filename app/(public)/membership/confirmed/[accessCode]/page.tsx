@@ -6,7 +6,7 @@
 import type { Metadata }  from "next";
 import { ConfirmedClient } from "@/features/membership/ConfirmedClient";
 
-export const metadata: Metadata = { title: "Application Submitted | Himalayan Drift" };
+export const metadata: Metadata = { title: "Application Submitted" };
 
 export default async function MembershipConfirmedPage({
   params,

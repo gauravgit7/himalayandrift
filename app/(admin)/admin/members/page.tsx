@@ -3,7 +3,7 @@ import { getMemberCards, getCardSettings, getBrandLogos, getAllProfiles } from "
 import { MembersAdmin }              from "@/features/admin/MembersAdmin";
 import { UserRegistrationsAdmin }    from "@/features/admin/UserRegistrationsAdmin";
 
-export const metadata: Metadata = { title: "Members | Himalayan Drift Admin" };
+export const metadata: Metadata = { title: "Members | Admin" };
 
 interface Props {
   searchParams: Promise<{ tab?: string }>;

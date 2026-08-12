@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { getSeries, getSeriesRideCounts } from "@/lib/supabase/queries";
 import { SeriesAdmin } from "@/features/admin/SeriesAdmin";
-import { APP_META } from "@/lib/constants";
 
-export const metadata: Metadata = { title: `Series | ${APP_META.name} Admin` };
+export const metadata: Metadata = { title: "Series | Admin" };
 
 export default async function AdminSeriesPage() {
   const [series, rideCounts] = await Promise.all([

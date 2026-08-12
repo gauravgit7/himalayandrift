@@ -14,7 +14,7 @@ import { getRidesForYear, getSeries } from "@/lib/supabase/queries";
 import { CalendarShell }           from "@/features/calendar/CalendarShell";
 
 export const metadata: Metadata = {
-  title:       `${DEFAULT_CALENDAR_YEAR} Ride Calendar | ${APP_META.shortName}`,
+  title:       `${DEFAULT_CALENDAR_YEAR} Ride Calendar`,
   description: `Full annual ride calendar for ${APP_META.name} · ${DEFAULT_CALENDAR_YEAR} season.`,
 };
 

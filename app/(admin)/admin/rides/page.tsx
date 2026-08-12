@@ -7,7 +7,7 @@ import { getRides, getBrandLogos } from "@/lib/supabase/queries";
 import { sortRidesByDate } from "@/utils/ride";
 import { RidesTable }     from "@/features/admin/RidesTable";
 
-export const metadata: Metadata = { title: "Rides | Himalayan Drift Admin" };
+export const metadata: Metadata = { title: "Rides | Admin" };
 
 export default async function AdminRidesPage() {
   const [rides, brandLogos] = await Promise.all([getRides().then(sortRidesByDate), getBrandLogos()]);

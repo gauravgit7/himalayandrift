@@ -2,7 +2,7 @@ import type { Metadata }   from "next";
 import { getAllMarshals }   from "@/lib/supabase/queries";
 import { MarshalsAdmin }    from "@/features/admin/MarshalsAdmin";
 
-export const metadata: Metadata = { title: "Marshals | Himalayan Drift Admin" };
+export const metadata: Metadata = { title: "Marshals | Admin" };
 
 export default async function AdminMarshalsPage() {
   const marshals = await getAllMarshals();

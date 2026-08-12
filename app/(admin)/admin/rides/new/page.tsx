@@ -9,7 +9,7 @@ import { ROUTES }        from "@/lib/constants";
 import { getMarshals, getSeries } from "@/lib/supabase/queries";
 import { RideForm }      from "@/features/admin/RideForm";
 
-export const metadata: Metadata = { title: "New Ride | Himalayan Drift Admin" };
+export const metadata: Metadata = { title: "New Ride | Admin" };
 
 export default async function NewRidePage() {
   const [marshals, series] = await Promise.all([getMarshals(), getSeries()]);

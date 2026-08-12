@@ -68,7 +68,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const ride   = await getRide(id);
   if (!ride) return { title: "Ride Not Found" };
   return {
-    title:       `${ride.title} | Himalayan Drift`,
+    title:       ride.title,
     description: ride.shortDescription ?? ride.description ?? undefined,
   };
 }

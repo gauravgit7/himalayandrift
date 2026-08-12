@@ -11,7 +11,7 @@ import { AnimateIn }           from "@/components/shared/AnimateIn";
 import { MembershipTabs }      from "@/features/membership/MembershipTabs";
 
 export const metadata: Metadata = {
-  title:       "Membership Card | Himalayan Drift",
+  title:       "Membership Card",
   description: "Apply for your Himalayan Drift membership card — a free digital ID for members.",
 };
 

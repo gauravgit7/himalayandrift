@@ -5,7 +5,7 @@
 import type { Metadata } from "next";
 import { LoginForm }     from "@/components/auth/LoginForm";
 
-export const metadata: Metadata = { title: "Sign In | Himalayan Drift Admin" };
+export const metadata: Metadata = { title: "Sign In | Admin" };
 
 export default function LoginPage() {
   return (
