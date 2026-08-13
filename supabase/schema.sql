@@ -138,7 +138,21 @@ create table if not exists rides (
   short_description   text,
   banner_image_url    text,
   expected_riders     integer not null default 0,
+  -- An external form (Google Forms and the like). Ignored when the built-in
+  -- registration below is switched on.
   registration_link   text,
+
+  -- ── Built-in registration ────────────────────────────────────────────────
+  -- Off by default: a ride announces itself long before sign-ups open.
+  registration_open      boolean not null default false,
+  -- null or 0 means a free ride: the form collects details and skips payment.
+  registration_fee       numeric(10,2),
+  -- null means unlimited. Counted against pending + approved, not rejected.
+  registration_capacity  integer,
+  -- Per-ride overrides for the club-wide payment details in payment_settings.
+  -- Set when a particular marshal is collecting for this ride.
+  payment_qr_url         text,
+  payment_instructions   text,
   route_data          jsonb,   -- RouteData  { waypoints, totalDistanceKm, … }
   itinerary           jsonb,   -- ItineraryDay[]
   marshal_id          uuid references marshals(id) on delete set null,
@@ -156,8 +170,29 @@ create table if not exists rides (
 
   constraint end_after_start check (end_date >= start_date),
   -- A volume number without a series is meaningless.
-  constraint volume_needs_series check (volume is null or series_id is not null)
+  constraint volume_needs_series check (volume is null or series_id is not null),
+  constraint fee_not_negative      check (registration_fee is null or registration_fee >= 0),
+  constraint capacity_positive     check (registration_capacity is null or registration_capacity > 0)
 );
+
+-- The registration columns above post-date the first release, so a database
+-- created before them needs them added. `create table if not exists` is a no-op
+-- on an existing table, which is why these are repeated as alters.
+alter table rides add column if not exists registration_open     boolean not null default false;
+alter table rides add column if not exists registration_fee      numeric(10,2);
+alter table rides add column if not exists registration_capacity integer;
+alter table rides add column if not exists payment_qr_url        text;
+alter table rides add column if not exists payment_instructions  text;
+
+do $$ begin
+  alter table rides add constraint fee_not_negative
+    check (registration_fee is null or registration_fee >= 0);
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table rides add constraint capacity_positive
+    check (registration_capacity is null or registration_capacity > 0);
+exception when duplicate_object then null; end $$;
 
 create index if not exists idx_rides_start_date  on rides(start_date);
 create index if not exists idx_rides_ride_type   on rides(ride_type);
@@ -358,6 +393,96 @@ create table if not exists card_settings (
 insert into card_settings (id) values (1) on conflict do nothing;
 
 -- ---------------------------------------------------------------------------
+-- Payment settings (singleton)
+--
+-- The club-wide payment details shown on every paid ride's registration form.
+-- Kept as one QR image plus one free-text block on purpose: Nepali riders pay
+-- by eSewa, Khalti or bank transfer, and a fixed set of columns would fit one
+-- and fight the others. Any ride can override both via rides.payment_qr_url /
+-- rides.payment_instructions.
+-- ---------------------------------------------------------------------------
+
+create table if not exists payment_settings (
+  id                   integer primary key default 1 check (id = 1),
+  qr_url               text,
+  -- Free text: account name and number, eSewa ID, wallet handle, whatever the
+  -- club actually uses. Rendered with line breaks preserved.
+  payment_instructions text not null default '',
+  -- Shown next to the fee, e.g. "NPR". Not a currency conversion feature.
+  currency_label       text not null default 'NPR',
+  updated_at           timestamptz not null default now()
+);
+
+insert into payment_settings (id) values (1) on conflict do nothing;
+
+drop trigger if exists payment_settings_updated_at on payment_settings;
+create trigger payment_settings_updated_at
+  before update on payment_settings
+  for each row execute function set_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- Ride registrations
+--
+-- One rider signing up for one ride. Open to signed-out visitors, so this
+-- follows member_cards: an access_code is issued at submission and is the only
+-- way the registrant can look their status up again.
+--
+-- user_id is set when a signed-in rider registers, and is only ever a
+-- convenience link - the name and phone captured here are the authoritative
+-- record for the ride, because riders register pillions and friends too.
+-- ---------------------------------------------------------------------------
+
+create table if not exists ride_registrations (
+  id                  uuid primary key default gen_random_uuid(),
+  ride_id             uuid not null references rides(id) on delete cascade,
+  -- Deleting the account keeps the registration: the marshal still needs the
+  -- roster for a ride that already happened.
+  user_id             uuid references auth.users(id) on delete set null,
+
+  access_code         text unique not null,
+
+  full_name           text not null,
+  phone               text not null,
+  email               text,
+  emergency_name      text,
+  emergency_phone     text,
+  bike_model          text,
+  -- Riders bringing someone on the back. Affects the head count, not the fee.
+  pillion_count       integer not null default 0 check (pillion_count >= 0),
+  notes               text,
+
+  -- Payment. All null on a free ride.
+  amount_paid         numeric(10,2),
+  payment_reference   text,   -- transaction ID, if the rider quotes one
+  payment_screenshot_url text,
+
+  status              text not null default 'pending'
+                      check (status in ('pending', 'approved', 'rejected')),
+  rejection_reason    text,
+  admin_notes         text,
+
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now(),
+  approved_at         timestamptz,
+  rejected_at         timestamptz
+);
+
+create index if not exists idx_ride_registrations_ride   on ride_registrations(ride_id);
+create index if not exists idx_ride_registrations_status on ride_registrations(status);
+create index if not exists idx_ride_registrations_user   on ride_registrations(user_id);
+
+-- One account cannot register twice for the same ride. Guests registering
+-- without an account are not constrained - user_id is null for them, and
+-- Postgres treats nulls as distinct in a unique index.
+create unique index if not exists idx_ride_registrations_one_per_user
+  on ride_registrations(ride_id, user_id) where user_id is not null;
+
+drop trigger if exists ride_registrations_updated_at on ride_registrations;
+create trigger ride_registrations_updated_at
+  before update on ride_registrations
+  for each row execute function set_updated_at();
+
+-- ---------------------------------------------------------------------------
 -- Web push
 -- ---------------------------------------------------------------------------
 
@@ -421,6 +546,8 @@ alter table card_settings      enable row level security;
 alter table push_subscriptions enable row level security;
 alter table push_settings      enable row level security;
 alter table pwa_settings       enable row level security;
+alter table payment_settings   enable row level security;
+alter table ride_registrations enable row level security;
 
 -- ── Public read ────────────────────────────────────────────────────────────
 drop policy if exists "public_read_marshals"         on marshals;
@@ -432,6 +559,7 @@ drop policy if exists "public_read_homepage_content" on homepage_content;
 drop policy if exists "public_read_card_settings"    on card_settings;
 drop policy if exists "public_read_push_settings"    on push_settings;
 drop policy if exists "public_read_pwa_settings"     on pwa_settings;
+drop policy if exists "public_read_payment_settings" on payment_settings;
 
 create policy "public_read_marshals"         on marshals         for select using (true);
 create policy "public_read_series"           on series           for select using (true);
@@ -442,6 +570,9 @@ create policy "public_read_homepage_content" on homepage_content for select usin
 create policy "public_read_card_settings"    on card_settings    for select using (true);
 create policy "public_read_push_settings"    on push_settings    for select using (true);
 create policy "public_read_pwa_settings"     on pwa_settings     for select using (true);
+-- The registration form must render the QR and instructions to signed-out
+-- visitors, so this one is public read too. Keep it free of anything private.
+create policy "public_read_payment_settings" on payment_settings for select using (true);
 
 -- ── Authenticated write ────────────────────────────────────────────────────
 drop policy if exists "auth_write_marshals"         on marshals;
@@ -483,6 +614,23 @@ create policy "public_insert_member_cards" on member_cards for insert
   to anon, authenticated with check (true);
 create policy "public_read_member_cards"   on member_cards for select
   to anon, authenticated using (true);
+
+-- ── Ride registrations ─────────────────────────────────────────────────────
+-- Anyone may register, including signed-out visitors, so anon needs INSERT.
+--
+-- Reads are deliberately NOT public. Unlike a membership card, which is looked
+-- up by a number the holder already has, a ride roster is a list of names,
+-- phone numbers and emergency contacts - open SELECT would hand the whole
+-- roster to anyone with the anon key. A signed-in rider may read their own
+-- rows; everything else (the admin roster, and anonymous status lookup by
+-- access code) goes through the service role, which bypasses RLS.
+drop policy if exists "public_insert_ride_registrations" on ride_registrations;
+drop policy if exists "read_own_ride_registrations"      on ride_registrations;
+
+create policy "public_insert_ride_registrations" on ride_registrations for insert
+  to anon, authenticated with check (true);
+create policy "read_own_ride_registrations"      on ride_registrations for select
+  to authenticated using (auth.uid() = user_id);
 
 -- ── Push subscriptions: write-only for the public ──────────────────────────
 -- Anyone may subscribe or unsubscribe; nobody may read the endpoint list back,

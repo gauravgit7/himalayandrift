@@ -49,9 +49,10 @@ Make a **new, empty** Supabase project. Do not reuse one from another deployment
 In the Supabase dashboard → **SQL Editor → New query**, run these two files in order:
 
 1. `supabase/schema.sql` — every table, enum, index, trigger and RLS policy.
-2. `supabase/storage-policies.sql` — the seven storage buckets and their access rules.
+2. `supabase/storage-policies.sql` — the nine storage buckets and their access rules.
 
-Both are idempotent: re-running them is safe and will not destroy data.
+Both are idempotent: re-running them is safe and will not destroy data. Re-run both after
+pulling changes — new tables and columns arrive that way.
 
 `schema.sql` seeds only the singleton settings rows and one ride series
 (*Drift in the Mist*). There is no demo content — the calendar starts genuinely empty.
@@ -96,6 +97,9 @@ Supabase dashboard → **Authentication → Users → Add user**. Use an address
   search) and a Bikram Sambat dual-date toggle
 - `/rides`, `/rides/[id]` — ride catalogue and detail pages with route maps, itineraries,
   weather, an interest counter and an `.ics` download
+- `/rides/[id]/register` — sign up for a ride: rider and emergency details, the payment QR
+  and details, and a payment screenshot upload. Free rides skip payment entirely. Open to
+  signed-out visitors, prefilled for signed-in riders
 - `/series`, `/series/[slug]` — ride series and their volumes
 - `/marshals` — the marshal roster
 - `/membership` — membership ID card applications, `/validate/[cardNumber]` to verify one
@@ -103,8 +107,13 @@ Supabase dashboard → **Authentication → Users → Add user**. Use an address
 
 **Admin** (`/admin`, gated by `ADMIN_EMAILS`)
 
-Dashboard · Rides · Series · Calendar · Homepage · Marshals · Members · Sponsors ·
-Exports (PDF and Excel) · Settings (membership card design, PWA, push).
+Dashboard · Rides · Registrations · Series · Calendar · Homepage · Marshals · Members ·
+Sponsors · Exports (PDF and Excel) · Settings (membership card design, ride payments,
+PWA, push).
+
+Registration is per ride: switch it on when editing a ride, set a fee (or leave it empty
+for a free ride) and an optional capacity. The QR and payment details come from
+**Settings → Ride Payments**, and any single ride can override them.
 
 ---
 

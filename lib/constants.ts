@@ -237,6 +237,8 @@ export const STORAGE_BUCKETS = {
   riderAvatars:  "rider-avatars",  // MarshalsAdmin + ProfileClient
   memberPhotos:  "member-photos",  // membership ApplicationForm
   pwaIcons:      "pwa-icons",      // PwaSettingsAdmin
+  paymentQr:     "payment-qr",     // PaymentSettingsAdmin + RideForm override
+  paymentScreenshots: "payment-screenshots", // ride RegistrationForm (anon upload)
   documents:     "ride-documents", // reserved: GPX / route PDFs, no uploader yet
 } as const;
 
@@ -252,7 +254,10 @@ export const ROUTES = {
   ride:           (id: string) => `/rides/${id}`,
   series:         "/series",
   seriesDetail:   (slug: string) => `/series/${slug}`,
+  rideRegister:   (id: string) => `/rides/${id}/register`,
+  registrationConfirmed: (code: string) => `/rides/registered/${code}`,
   admin:          "/admin",
+  adminRegistrations: "/admin/registrations",
   adminRides:     "/admin/rides",
   adminSeries:    "/admin/series",
   adminCalendar:  "/admin/calendar",

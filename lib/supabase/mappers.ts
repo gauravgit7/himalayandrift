@@ -10,7 +10,17 @@ import type {
   RouteData, ItineraryDay, RecurringPattern,
   RideType, RideStatus, RidePriority,
   MemberRegistrationStatus,
+  RideRegistration, RideRegistrationStatus, PaymentSettings,
 } from "@/types";
+
+/** Postgres `numeric` arrives over PostgREST as a string, to avoid the
+ *  precision loss of a JSON float. Anything unparseable becomes null rather
+ *  than NaN, which would render as "NaN" in the UI. */
+function toNumber(value: number | string | null | undefined): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
 
 // ---------------------------------------------------------------------------
 // Raw DB row types (snake_case)
@@ -77,6 +87,11 @@ export interface DbRide {
   banner_image_url:  string | null;
   expected_riders:   number;
   registration_link: string | null;
+  registration_open:      boolean | null;
+  registration_fee:       number | string | null;  // numeric arrives as a string
+  registration_capacity:  number | null;
+  payment_qr_url:         string | null;
+  payment_instructions:   string | null;
   route_data:        RouteData | null;
   itinerary:         ItineraryDay[] | null;
   marshal_id:        string | null;
@@ -161,6 +176,11 @@ export function mapRide(row: DbRide): Ride {
     bannerImageUrl:   row.banner_image_url,
     expectedRiders:   row.expected_riders,
     registrationLink: row.registration_link,
+    registrationOpen:     row.registration_open ?? false,
+    registrationFee:      toNumber(row.registration_fee),
+    registrationCapacity: row.registration_capacity ?? null,
+    paymentQrUrl:         row.payment_qr_url ?? null,
+    paymentInstructions:  row.payment_instructions ?? null,
     routeData:        row.route_data,
     itinerary:        row.itinerary ?? [],
     marshal:          row.marshals ? mapMarshal(row.marshals) : null,
@@ -316,5 +336,83 @@ export function mapProfile(row: DbProfile): UserProfile {
     rejectedAt:    row.rejected_at  ?? null,
     createdAt:     row.created_at,
     updatedAt:     row.updated_at,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Ride registration
+// ---------------------------------------------------------------------------
+
+export interface DbRideRegistration {
+  id:                      string;
+  ride_id:                 string;
+  user_id:                 string | null;
+  access_code:             string;
+  full_name:               string;
+  phone:                   string;
+  email:                   string | null;
+  emergency_name:          string | null;
+  emergency_phone:         string | null;
+  bike_model:              string | null;
+  pillion_count:           number;
+  notes:                   string | null;
+  amount_paid:             number | string | null;
+  payment_reference:       string | null;
+  payment_screenshot_url:  string | null;
+  status:                  string;
+  rejection_reason:        string | null;
+  admin_notes:             string | null;
+  created_at:              string;
+  updated_at:              string;
+  approved_at:             string | null;
+  rejected_at:             string | null;
+  // FK join
+  rides?:                  DbRide | null;
+}
+
+export function mapRideRegistration(row: DbRideRegistration): RideRegistration {
+  return {
+    id:                   row.id,
+    rideId:               row.ride_id,
+    userId:               row.user_id ?? null,
+    accessCode:           row.access_code,
+    fullName:             row.full_name,
+    phone:                row.phone,
+    email:                row.email ?? null,
+    emergencyName:        row.emergency_name ?? null,
+    emergencyPhone:       row.emergency_phone ?? null,
+    bikeModel:            row.bike_model ?? null,
+    pillionCount:         row.pillion_count ?? 0,
+    notes:                row.notes ?? null,
+    amountPaid:           toNumber(row.amount_paid),
+    paymentReference:     row.payment_reference ?? null,
+    paymentScreenshotUrl: row.payment_screenshot_url ?? null,
+    status:               (row.status as RideRegistrationStatus) ?? "pending",
+    rejectionReason:      row.rejection_reason ?? null,
+    adminNotes:           row.admin_notes ?? null,
+    createdAt:            row.created_at,
+    updatedAt:            row.updated_at,
+    approvedAt:           row.approved_at ?? null,
+    rejectedAt:           row.rejected_at ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Payment settings
+// ---------------------------------------------------------------------------
+
+export interface DbPaymentSettings {
+  id:                   number;
+  qr_url:               string | null;
+  payment_instructions: string;
+  currency_label:       string;
+  updated_at:           string;
+}
+
+export function mapPaymentSettings(row: DbPaymentSettings): PaymentSettings {
+  return {
+    qrUrl:               row.qr_url ?? null,
+    paymentInstructions: row.payment_instructions ?? "",
+    currencyLabel:       row.currency_label || "NPR",
   };
 }

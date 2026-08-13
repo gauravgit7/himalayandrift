@@ -24,6 +24,7 @@ import {
   ChevronRight,
   LogOut,
   CreditCard,
+  ClipboardList,
 } from "lucide-react";
 import { cn }       from "@/utils/cn";
 import { ROUTES, APP_META } from "@/lib/constants";
@@ -36,6 +37,7 @@ import { signOut }  from "@/lib/supabase/actions";
 const NAV_ITEMS = [
   { href: ROUTES.admin,          label: "Dashboard", icon: LayoutDashboard, exact: true  },
   { href: ROUTES.adminRides,     label: "Rides",     icon: Flag,            exact: false },
+  { href: ROUTES.adminRegistrations, label: "Registrations", icon: ClipboardList, exact: false },
   { href: ROUTES.adminSeries,    label: "Series",    icon: Layers,          exact: false },
   { href: ROUTES.adminCalendar,  label: "Calendar",  icon: Calendar,        exact: false },
   { href: ROUTES.adminHomepage,  label: "Homepage",  icon: Globe,           exact: false },

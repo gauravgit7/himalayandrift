@@ -10,13 +10,15 @@ import { createClient }        from "@/lib/supabase/server";
 import {
   mapRide, mapSeries, mapSponsor, mapMarshal, mapHomepageContent,
   mapMemberCard, mapCardSettings, mapProfile,
+  mapRideRegistration, mapPaymentSettings,
   type DbRide, type DbSeries, type DbSponsor, type DbMarshal,
   type DbHomepageContent, type DbMemberCard, type DbCardSettings,
-  type DbProfile,
+  type DbProfile, type DbRideRegistration, type DbPaymentSettings,
 } from "@/lib/supabase/mappers";
 import type {
   Ride, Series, Sponsor, Marshal, HomepageContent, BrandLogos,
   MemberCard, CardSettings,
+  RideRegistration, RideRegistrationWithRide, PaymentSettings,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -464,3 +466,174 @@ export const getBrandLogos = cache(async (): Promise<BrandLogos> => {
     logoUrl: data?.brand_logo_url ?? null,
   };
 });
+
+// ---------------------------------------------------------------------------
+// Ride registrations
+//
+// ride_registrations has no public SELECT policy on purpose - a roster is a
+// list of phone numbers and emergency contacts. Every read below therefore
+// goes through the service role, and each one is responsible for scoping
+// itself to what the caller is allowed to see.
+// ---------------------------------------------------------------------------
+
+/** Club-wide payment details. Public — the registration form renders these
+ *  for signed-out visitors. */
+export const getPaymentSettings = cache(async (): Promise<PaymentSettings> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payment_settings")
+    .select("*")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (error) console.error("[getPaymentSettings]", error.message);
+  if (!data) {
+    return { qrUrl: null, paymentInstructions: "", currencyLabel: "NPR" };
+  }
+  return mapPaymentSettings(data as DbPaymentSettings);
+});
+
+/** Admin: every registration for one ride, oldest first (queue order). */
+export async function getRideRegistrations(
+  rideId: string,
+): Promise<RideRegistration[]> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("ride_registrations")
+    .select("*")
+    .eq("ride_id", rideId)
+    .order("created_at", { ascending: true });
+
+  if (error) { console.error("[getRideRegistrations]", error.message); return []; }
+  return (data ?? []).map((r) => mapRideRegistration(r as DbRideRegistration));
+}
+
+/** Admin: every registration across all rides, newest first. */
+export async function getAllRideRegistrations(): Promise<RideRegistrationWithRide[]> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("ride_registrations")
+    .select("*, rides(*)")
+    .order("created_at", { ascending: false });
+
+  if (error) { console.error("[getAllRideRegistrations]", error.message); return []; }
+
+  return (data ?? []).map((row) => {
+    const r = row as DbRideRegistration;
+    const ride = r.rides ? mapRide(r.rides) : null;
+    return {
+      ...mapRideRegistration(r),
+      ride: ride && {
+        id:              ride.id,
+        title:           ride.title,
+        slug:            ride.slug,
+        startDate:       ride.startDate,
+        registrationFee: ride.registrationFee,
+      },
+    };
+  });
+}
+
+/** How many seats one ride has taken. Rejected registrations free their seat,
+ *  so only pending and approved count against capacity. */
+export async function getRideRegistrationCount(rideId: string): Promise<number> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const { count, error } = await supabase
+    .from("ride_registrations")
+    .select("id", { count: "exact", head: true })
+    .eq("ride_id", rideId)
+    .in("status", ["pending", "approved"]);
+
+  if (error) { console.error("[getRideRegistrationCount]", error.message); return 0; }
+  return count ?? 0;
+}
+
+/** Taken-seat counts for many rides at once, keyed by ride id. Used by the
+ *  admin list so it does not fire one count query per ride. */
+export async function getRideRegistrationCounts(): Promise<Record<string, number>> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("ride_registrations")
+    .select("ride_id")
+    .in("status", ["pending", "approved"]);
+
+  if (error) { console.error("[getRideRegistrationCounts]", error.message); return {}; }
+
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    const id = (row as { ride_id: string }).ride_id;
+    counts[id] = (counts[id] ?? 0) + 1;
+  }
+  return counts;
+}
+
+/** Look a registration up by the access code issued at submission. This is how
+ *  a signed-out registrant checks their own status, so it must never return
+ *  anything the code holder should not see. */
+export async function getRegistrationByAccessCode(
+  accessCode: string,
+): Promise<RideRegistrationWithRide | null> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("ride_registrations")
+    .select("*, rides(*)")
+    .eq("access_code", accessCode.trim().toUpperCase())
+    .maybeSingle();
+
+  if (error) { console.error("[getRegistrationByAccessCode]", error.message); return null; }
+  if (!data) return null;
+
+  const r    = data as DbRideRegistration;
+  const ride = r.rides ? mapRide(r.rides) : null;
+  return {
+    ...mapRideRegistration(r),
+    ride: ride && {
+      id:              ride.id,
+      title:           ride.title,
+      slug:            ride.slug,
+      startDate:       ride.startDate,
+      registrationFee: ride.registrationFee,
+    },
+  };
+}
+
+/** The signed-in rider's own registrations. Uses the anon client so the
+ *  read_own_ride_registrations policy does the scoping. */
+export async function getMyRideRegistrations(): Promise<RideRegistrationWithRide[]> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("ride_registrations")
+    .select("*, rides(*)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) { console.error("[getMyRideRegistrations]", error.message); return []; }
+
+  return (data ?? []).map((row) => {
+    const r = row as DbRideRegistration;
+    const ride = r.rides ? mapRide(r.rides) : null;
+    return {
+      ...mapRideRegistration(r),
+      ride: ride && {
+        id:              ride.id,
+        title:           ride.title,
+        slug:            ride.slug,
+        startDate:       ride.startDate,
+        registrationFee: ride.registrationFee,
+      },
+    };
+  });
+}

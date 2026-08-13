@@ -110,6 +110,38 @@ be an overnight and the next a multi-day. Two consequences worth knowing:
 Nothing hardcodes *Drift in the Mist* except the one seed row. Adding a second series is
 data entry.
 
+### Ride registration
+
+A ride can collect sign-ups on the site instead of pointing at an external form.
+`rides.registration_open` is the switch; while it is on, `registration_link` is ignored
+and the ride page links to `/rides/[id]/register` instead. Only one front door ever shows.
+
+- **Free or paid per ride.** `registration_fee` null or 0 means free, and the form drops
+  the payment step and the screenshot requirement entirely. Both representations collapse
+  to null on save so "is this paid?" has one answer.
+- **Payment details resolve per field**, not all-or-nothing: `resolvePaymentDetails()` in
+  `utils/ride.ts` falls back from `rides.payment_qr_url` / `rides.payment_instructions` to
+  the club-wide `payment_settings` singleton. A ride can borrow a different QR while
+  keeping the standard instructions — the common case when one marshal collects.
+- **Capacity** counts pending + approved, so rejecting frees the seat. `null` is unlimited.
+- **The server re-decides everything.** `submitRideRegistration` re-reads the ride and
+  re-checks open/cancelled/finished/full/fee/screenshot from the database. A client can
+  post whatever it likes to a server action, so nothing in the payload is trusted. The
+  capacity check races by design: two riders can take the last seat simultaneously rather
+  than have the table locked, and the admin rejects the extra.
+- **Guests are first-class.** Registration is open to signed-out visitors; a signed-in
+  rider gets their details prefilled but stays editable, because riders register pillions
+  and friends. `user_id` is a convenience link, and the name and phone on the row are the
+  authoritative record for the ride. A partial unique index stops one *account* registering
+  twice; guests are unconstrained, since nulls are distinct in Postgres.
+- **`access_code`** (`HD-R-XXXXXX`) is issued at submission and is the only way a
+  signed-out registrant reaches their status, at `/rides/registered/[code]`.
+
+`ride_registrations` has **no public SELECT policy**, unlike `member_cards`. A roster is a
+list of names, phone numbers and emergency contacts; open SELECT would hand the lot to
+anyone holding the anon key. Signed-in riders may read their own rows, and everything else
+goes through the service role.
+
 ### Marshals
 
 Community-wide, not assigned to a region. `role` is free text so the community can invent
@@ -158,14 +190,18 @@ If you add another column that only an admin may set, add it to that trigger.
 
 ## 6. Storage
 
-Seven buckets, created by `storage-policies.sql`:
+Nine buckets, created by `storage-policies.sql`:
 
 `ride-banners` · `hero-banners` · `brand-logos` · `sponsor-logos` · `rider-avatars` ·
-`member-photos` · `pwa-icons`
+`member-photos` · `pwa-icons` · `payment-qr` · `payment-screenshots`
 
-All are publicly readable with authenticated write, **except `member-photos`**, which also
-allows anonymous INSERT — membership applicants are signed out when they upload their
-photo. Deletes there stay authenticated-only.
+All are publicly readable with authenticated write, **except `member-photos` and
+`payment-screenshots`**, which also allow anonymous INSERT — membership applicants and
+ride registrants are both signed out when they upload. Deletes stay authenticated-only.
+
+Public read on `payment-screenshots` is worth a thought before you decide what a payment
+screenshot is allowed to show. Object keys are random, so one is unguessable, but it is
+not secret to anyone holding the link.
 
 `STORAGE_BUCKETS` in `lib/constants.ts` mirrors this list. The `documents` entry is
 reserved; no uploader targets it yet.

@@ -2,7 +2,10 @@
 // Ride utility functions - status colors, filtering helpers, stats
 // =============================================================================
 
-import type { Ride, CalendarFilters, RideStatus, RidePriority, RideType } from "@/types";
+import type {
+  Ride, CalendarFilters, RideStatus, RidePriority, RideType,
+  PaymentSettings, ResolvedPaymentDetails,
+} from "@/types";
 import { RIDE_STATUSES, RIDE_PRIORITIES } from "@/lib/constants";
 import { rideIsActive, rideIsUpcoming, rideIsPast } from "@/utils/date";
 
@@ -130,4 +133,64 @@ export function computeRideStats(rides: Ride[]): RideStats {
   });
 
   return stats;
+}
+
+// ---------------------------------------------------------------------------
+// Registration and payment
+// ---------------------------------------------------------------------------
+
+/**
+ * Work out what one ride's registration form should show, by resolving the
+ * per-ride payment override against the club-wide default.
+ *
+ * Override is per field, not all-or-nothing: a ride can point at a different
+ * QR while keeping the club's standard instructions, which is the common case
+ * when one marshal collects for one ride.
+ */
+export function resolvePaymentDetails(
+  ride: Pick<Ride, "registrationFee" | "paymentQrUrl" | "paymentInstructions">,
+  settings: PaymentSettings,
+): ResolvedPaymentDetails {
+  const fee = ride.registrationFee;
+  return {
+    qrUrl:               ride.paymentQrUrl       ?? settings.qrUrl,
+    paymentInstructions: ride.paymentInstructions ?? settings.paymentInstructions,
+    currencyLabel:       settings.currencyLabel,
+    fee,
+    // A fee of 0 is a free ride, not a paid ride costing nothing - the form
+    // skips the payment step and the screenshot requirement entirely.
+    isPaid:              fee !== null && fee > 0,
+  };
+}
+
+/** Seats left, or null when the ride has no capacity limit. */
+export function seatsRemaining(
+  ride: Pick<Ride, "registrationCapacity">,
+  taken: number,
+): number | null {
+  if (ride.registrationCapacity === null) return null;
+  return Math.max(0, ride.registrationCapacity - taken);
+}
+
+export type RegistrationClosedReason =
+  | "not_open"      // organiser has not switched registration on
+  | "full"          // capacity reached
+  | "ride_over"     // the ride has already finished
+  | "cancelled";    // the ride was cancelled
+
+/**
+ * Whether sign-ups are currently accepted, and if not, why. Returning the
+ * reason rather than a bare boolean lets the page explain itself instead of
+ * silently hiding the button.
+ */
+export function registrationClosedReason(
+  ride: Pick<Ride, "registrationOpen" | "registrationCapacity" | "endDate" | "status">,
+  taken: number,
+): RegistrationClosedReason | null {
+  if (!ride.registrationOpen)       return "not_open";
+  if (ride.status === "cancelled")  return "cancelled";
+  if (rideIsPast(ride.endDate))     return "ride_over";
+  const left = seatsRemaining(ride, taken);
+  if (left !== null && left <= 0)  return "full";
+  return null;
 }

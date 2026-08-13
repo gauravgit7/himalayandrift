@@ -66,6 +66,12 @@ export interface RidePayload {
   volume:           number | null;
   bannerImageUrl:   string | null;
   routeData:        RouteData | null;
+  // Built-in registration
+  registrationOpen:     boolean;
+  registrationFee:      number | null;
+  registrationCapacity: number | null;
+  paymentQrUrl:         string | null;
+  paymentInstructions:  string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +103,17 @@ export async function saveRide(
     volume:            payload.seriesId ? payload.volume ?? null : null,
     banner_image_url:  payload.bannerImageUrl          ?? null,
     route_data:        payload.routeData               ?? null,
+    registration_open:     payload.registrationOpen,
+    // 0 and null both mean free; store null so the check constraint and the
+    // "is this paid?" test agree on one representation.
+    registration_fee:      payload.registrationFee && payload.registrationFee > 0
+                             ? payload.registrationFee
+                             : null,
+    registration_capacity: payload.registrationCapacity && payload.registrationCapacity > 0
+                             ? payload.registrationCapacity
+                             : null,
+    payment_qr_url:        payload.paymentQrUrl        || null,
+    payment_instructions:  payload.paymentInstructions?.trim() || null,
     // Generate slug only when creating - preserve existing slug on edit
     ...(!rideId && {
       slug: payload.title
@@ -854,5 +871,300 @@ export async function sendPasswordReset(
   const redirectTo = `${base}/auth/callback?next=/reset-password`;
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
   if (error) return { error: error.message };
+  return { error: null };
+}
+
+// =============================================================================
+// Ride registrations
+// =============================================================================
+
+/** Generate a random registration code: HD-R-XXXXXX */
+function generateRegistrationCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I/L
+  let suffix = "";
+  for (let i = 0; i < 6; i++) {
+    suffix += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `HD-R-${suffix}`;
+}
+
+export interface RideRegistrationPayload {
+  rideId:          string;
+  fullName:        string;
+  phone:           string;
+  email?:          string | null;
+  emergencyName?:  string | null;
+  emergencyPhone?: string | null;
+  bikeModel?:      string | null;
+  pillionCount?:   number;
+  notes?:          string | null;
+  paymentReference?:     string | null;
+  paymentScreenshotUrl?: string | null;
+}
+
+/**
+ * Public - register for a ride. Open to signed-out visitors.
+ *
+ * Everything the form decided is re-decided here. A client can post whatever it
+ * likes to a server action, so the fee, the capacity check and the "screenshot
+ * required" rule are all re-read from the database rather than trusted from
+ * the payload.
+ */
+export async function submitRideRegistration(
+  payload: RideRegistrationPayload,
+): Promise<{ accessCode: string | null; error: string | null }> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  if (!payload.fullName.trim()) return { accessCode: null, error: "Please enter your name." };
+  if (!payload.phone.trim())    return { accessCode: null, error: "Please enter a phone number." };
+
+  // -- Re-read the ride; never trust the client's idea of it -----------------
+  const { data: rideRow, error: rideError } = await admin
+    .from("rides")
+    .select("id, slug, status, end_date, registration_open, registration_fee, registration_capacity")
+    .eq("id", payload.rideId)
+    .maybeSingle();
+
+  if (rideError) return { accessCode: null, error: rideError.message };
+  if (!rideRow)  return { accessCode: null, error: "That ride no longer exists." };
+
+  const ride = rideRow as {
+    id: string; slug: string | null; status: string; end_date: string;
+    registration_open: boolean;
+    registration_fee: number | string | null;
+    registration_capacity: number | null;
+  };
+
+  if (!ride.registration_open) {
+    return { accessCode: null, error: "Registration is not open for this ride." };
+  }
+  if (ride.status === "cancelled") {
+    return { accessCode: null, error: "This ride has been cancelled." };
+  }
+  if (ride.end_date < new Date().toISOString().slice(0, 10)) {
+    return { accessCode: null, error: "This ride has already finished." };
+  }
+
+  const fee    = ride.registration_fee === null ? null : Number(ride.registration_fee);
+  const isPaid = fee !== null && fee > 0;
+
+  if (isPaid && !payload.paymentScreenshotUrl) {
+    return { accessCode: null, error: "Please upload a screenshot of your payment." };
+  }
+
+  // -- Capacity --------------------------------------------------------------
+  // Checked immediately before the insert. Two riders taking the last seat in
+  // the same instant can still both get in; that is a deliberate trade against
+  // locking the table, and the admin can reject the extra one.
+  if (ride.registration_capacity !== null) {
+    const { count } = await admin
+      .from("ride_registrations")
+      .select("id", { count: "exact", head: true })
+      .eq("ride_id", ride.id)
+      .in("status", ["pending", "approved"]);
+
+    if ((count ?? 0) >= ride.registration_capacity) {
+      return { accessCode: null, error: "This ride is full." };
+    }
+  }
+
+  // -- Link to the signed-in rider, if there is one --------------------------
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    const { data: existing } = await admin
+      .from("ride_registrations")
+      .select("id")
+      .eq("ride_id", ride.id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (existing) {
+      return { accessCode: null, error: "You have already registered for this ride." };
+    }
+  }
+
+  const base = {
+    ride_id:          ride.id,
+    user_id:          user?.id ?? null,
+    full_name:        payload.fullName.trim(),
+    phone:            payload.phone.trim(),
+    email:            payload.email?.trim()          || null,
+    emergency_name:   payload.emergencyName?.trim()  || null,
+    emergency_phone:  payload.emergencyPhone?.trim() || null,
+    bike_model:       payload.bikeModel?.trim()      || null,
+    pillion_count:    Math.max(0, payload.pillionCount ?? 0),
+    notes:            payload.notes?.trim()          || null,
+    // Taken from the ride, not the form, so the roster records what was
+    // actually owed even if the fee is edited afterwards.
+    amount_paid:            isPaid ? fee : null,
+    payment_reference:      isPaid ? payload.paymentReference?.trim() || null : null,
+    payment_screenshot_url: isPaid ? payload.paymentScreenshotUrl     || null : null,
+    status:           "pending",
+  };
+
+  // Retry on the (very unlikely) access-code collision.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const accessCode = generateRegistrationCode();
+    const { error } = await admin
+      .from("ride_registrations")
+      .insert({ ...base, access_code: accessCode });
+
+    if (!error) {
+      revalidatePath(ROUTES.adminRegistrations);
+      // The ride page is ISR and reachable by both id and slug, so the seat
+      // count is cached under whichever one was requested. Flush both.
+      revalidatePath(`/rides/${ride.id}`);
+      if (ride.slug) revalidatePath(`/rides/${ride.slug}`);
+      return { accessCode, error: null };
+    }
+
+    // 23505 = unique_violation. Either the access code, or the one-per-rider
+    // index if the same account raced itself in two tabs.
+    if ((error as { code?: string }).code !== "23505") {
+      return { accessCode: null, error: error.message };
+    }
+    if ((error as { message?: string }).message?.includes("one_per_user")) {
+      return { accessCode: null, error: "You have already registered for this ride." };
+    }
+  }
+
+  return { accessCode: null, error: "Could not generate a unique code. Please try again." };
+}
+
+/** Flush the public ride page after a registration changes, so the seat count
+ *  and the "full" badge do not sit stale behind ISR. The page is reachable by
+ *  both id and slug, so both are flushed. */
+async function revalidateRideForRegistration(registrationId: string) {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const { data } = await supabase
+    .from("ride_registrations")
+    .select("rides(id, slug)")
+    .eq("id", registrationId)
+    .maybeSingle();
+
+  const ride = (data as { rides?: { id: string; slug: string | null } | null } | null)?.rides;
+  if (!ride) return;
+
+  revalidatePath(`/rides/${ride.id}`);
+  if (ride.slug) revalidatePath(`/rides/${ride.slug}`);
+}
+
+/** Admin: approve a ride registration. */
+export async function approveRideRegistration(
+  id: string,
+): Promise<{ error: string | null }> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("ride_registrations")
+    .update({
+      status:           "approved",
+      approved_at:      new Date().toISOString(),
+      rejected_at:      null,
+      rejection_reason: null,
+    })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  await revalidateRideForRegistration(id);
+  revalidatePath(ROUTES.adminRegistrations);
+  return { error: null };
+}
+
+/** Admin: reject a ride registration, which frees its seat. */
+export async function rejectRideRegistration(
+  id:     string,
+  reason: string,
+): Promise<{ error: string | null }> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("ride_registrations")
+    .update({
+      status:           "rejected",
+      rejected_at:      new Date().toISOString(),
+      approved_at:      null,
+      rejection_reason: reason.trim() || null,
+    })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  await revalidateRideForRegistration(id);
+  revalidatePath(ROUTES.adminRegistrations);
+  return { error: null };
+}
+
+/** Admin: attach an internal note to a registration. */
+export async function updateRideRegistrationNotes(
+  id:    string,
+  notes: string,
+): Promise<{ error: string | null }> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const { error } = await supabase
+    .from("ride_registrations")
+    .update({ admin_notes: notes.trim() || null })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  revalidatePath(ROUTES.adminRegistrations);
+  return { error: null };
+}
+
+/** Admin: delete a registration outright. Rejecting is usually the right move -
+ *  this is for duplicates and test entries that should not sit in the roster. */
+export async function deleteRideRegistration(
+  id: string,
+): Promise<{ error: string | null }> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  // Resolve the ride before the row is gone.
+  await revalidateRideForRegistration(id);
+
+  const { error } = await supabase.from("ride_registrations").delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  revalidatePath(ROUTES.adminRegistrations);
+  return { error: null };
+}
+
+// =============================================================================
+// Payment settings
+// =============================================================================
+
+export interface PaymentSettingsPayload {
+  qrUrl:               string | null;
+  paymentInstructions: string;
+  currencyLabel:       string;
+}
+
+/** Admin: save the club-wide payment details. */
+export async function savePaymentSettings(
+  payload: PaymentSettingsPayload,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("payment_settings")
+    .upsert({
+      id:                   1,
+      qr_url:               payload.qrUrl || null,
+      payment_instructions: payload.paymentInstructions.trim(),
+      currency_label:       payload.currencyLabel.trim() || "NPR",
+      updated_at:           new Date().toISOString(),
+    });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(ROUTES.adminSettings);
+  revalidatePath("/rides");
   return { error: null };
 }

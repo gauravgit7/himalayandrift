@@ -125,7 +125,19 @@ export interface Ride {
   shortDescription: string | null;
   bannerImageUrl: string | null;
   expectedRiders: number;
+  /** External sign-up form. Ignored while `registrationOpen` is true. */
   registrationLink: string | null;
+
+  /** Built-in registration: off until the organiser opens sign-ups. */
+  registrationOpen: boolean;
+  /** Null or 0 means a free ride — the form skips the payment step. */
+  registrationFee: number | null;
+  /** Null means unlimited. Counts pending + approved. */
+  registrationCapacity: number | null;
+  /** Per-ride overrides for the club-wide payment details. */
+  paymentQrUrl: string | null;
+  paymentInstructions: string | null;
+
   routeData: RouteData | null;
   itinerary: ItineraryDay[];
   marshal: Marshal | null;
@@ -231,6 +243,67 @@ export interface MemberCard {
   updatedAt:          string;
   approvedAt:         string | null;
   validUntil:         string | null;  // ISO date
+}
+
+// ---------------------------------------------------------------------------
+// Ride registration
+// ---------------------------------------------------------------------------
+
+export type RideRegistrationStatus = "pending" | "approved" | "rejected";
+
+export interface RideRegistration {
+  id:              string;
+  rideId:          string;
+  /** Set when a signed-in rider registered. Guests register with this null. */
+  userId:          string | null;
+  /** Issued at submission; the only way a guest can look their status up. */
+  accessCode:      string;
+
+  fullName:        string;
+  phone:           string;
+  email:           string | null;
+  emergencyName:   string | null;
+  emergencyPhone:  string | null;
+  bikeModel:       string | null;
+  /** People riding pillion with them. Head count, not a fee multiplier. */
+  pillionCount:    number;
+  notes:           string | null;
+
+  // Payment — all null on a free ride.
+  amountPaid:            number | null;
+  paymentReference:      string | null;
+  paymentScreenshotUrl:  string | null;
+
+  status:          RideRegistrationStatus;
+  rejectionReason: string | null;
+  adminNotes:      string | null;
+
+  createdAt:       string;
+  updatedAt:       string;
+  approvedAt:      string | null;
+  rejectedAt:      string | null;
+}
+
+/** A registration with the ride it belongs to, for the admin list. */
+export interface RideRegistrationWithRide extends RideRegistration {
+  ride: Pick<Ride, "id" | "title" | "slug" | "startDate" | "registrationFee"> | null;
+}
+
+/** Club-wide payment details, overridable per ride. */
+export interface PaymentSettings {
+  qrUrl:               string | null;
+  paymentInstructions: string;
+  currencyLabel:       string;
+}
+
+/** What the registration form actually shows for one ride, after the
+ *  per-ride override has been resolved against the club default. */
+export interface ResolvedPaymentDetails {
+  qrUrl:               string | null;
+  paymentInstructions: string;
+  currencyLabel:       string;
+  fee:                 number | null;
+  isPaid:              boolean;
 }
 
 export interface CardSettings {

@@ -26,19 +26,25 @@ values
   ('sponsor-logos', 'sponsor-logos', true,  5242880, array['image/jpeg','image/png','image/webp','image/svg+xml']),
   ('rider-avatars', 'rider-avatars', true,  5242880, array['image/jpeg','image/png','image/webp']),
   ('member-photos', 'member-photos', true,  5242880, array['image/jpeg','image/png','image/webp']),
-  ('pwa-icons',     'pwa-icons',     true,  2097152, array['image/png','image/webp'])
+  ('pwa-icons',     'pwa-icons',     true,  2097152, array['image/png','image/webp']),
+  ('payment-qr',    'payment-qr',    true,  2097152, array['image/jpeg','image/png','image/webp']),
+  ('payment-screenshots', 'payment-screenshots', true, 5242880, array['image/jpeg','image/png','image/webp'])
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
 -- 2. Policies
 --
 -- Two shapes:
---   admin buckets  — public read, authenticated write
---   member-photos  — public read, ANON write
+--   admin buckets        — public read, authenticated write
+--   member-photos        — public read, ANON write
+--   payment-screenshots  — public read, ANON write
 --
--- member-photos is the exception on purpose. Membership applications come from
--- signed-out visitors, so the applicant's identity photo is uploaded with the
--- anon key. Restricting it to authenticated would break public applications.
+-- The two anon-write buckets are exceptions on purpose. Membership
+-- applications and ride registrations both come from signed-out visitors, so
+-- the identity photo and the payment screenshot are uploaded with the anon
+-- key. Restricting either to authenticated would break public submissions.
+--
+-- payment-qr is an admin bucket: only the club uploads a QR to collect on.
 -- ---------------------------------------------------------------------------
 
 do $$
@@ -47,7 +53,7 @@ declare
 begin
   foreach admin_bucket in array array[
     'ride-banners', 'hero-banners', 'brand-logos',
-    'sponsor-logos', 'rider-avatars', 'pwa-icons'
+    'sponsor-logos', 'rider-avatars', 'pwa-icons', 'payment-qr'
   ] loop
     execute format('drop policy if exists %I on storage.objects', 'public_read_'   || admin_bucket);
     execute format('drop policy if exists %I on storage.objects', 'auth_upload_'   || admin_bucket);
@@ -92,6 +98,29 @@ create policy "auth_delete_member-photos"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'member-photos');
+
+-- ── payment-screenshots: anon upload, public read ──────────────────────────
+drop policy if exists "public_read_payment-screenshots"   on storage.objects;
+drop policy if exists "public_upload_payment-screenshots" on storage.objects;
+drop policy if exists "auth_delete_payment-screenshots"   on storage.objects;
+
+-- Public read matches member-photos. The object key is a random UUID, so a
+-- screenshot is unguessable, but it is not secret to someone holding the link.
+-- Worth knowing before you decide what a payment screenshot may show.
+create policy "public_read_payment-screenshots"
+  on storage.objects for select
+  using (bucket_id = 'payment-screenshots');
+
+-- Registrants are signed out when they upload proof of payment.
+create policy "public_upload_payment-screenshots"
+  on storage.objects for insert
+  to anon, authenticated
+  with check (bucket_id = 'payment-screenshots');
+
+create policy "auth_delete_payment-screenshots"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'payment-screenshots');
 
 -- =============================================================================
 -- Done. Remaining setup is in .env.local.example:

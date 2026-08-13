@@ -15,7 +15,8 @@ import {
   ExternalLink, Navigation, Star, ChevronRight,
 } from "lucide-react";
 
-import { getRide, getBrandLogos } from "@/lib/supabase/queries";
+import { getRide, getBrandLogos, getRideRegistrationCount } from "@/lib/supabase/queries";
+import { registrationClosedReason, seatsRemaining } from "@/utils/ride";
 import {
   fetchRideWeather,
   getRideCoords,
@@ -87,16 +88,31 @@ export default async function RideDetailPage({ params }: PageProps) {
   const isUpcoming      = rideIsUpcoming(ride.startDate);
   const hasRoute        = !!(ride.routeData?.waypoints?.length);
   const hasItinerary    = ride.itinerary.length > 0;
-  const hasRegistration = !!(ride.registrationLink &&
+  // Built-in registration takes precedence over the external link. Only one of
+  // the two ever shows, so riders never get a choice of two front doors.
+  const registrationTaken  = ride.registrationOpen
+    ? await getRideRegistrationCount(ride.id)
+    : 0;
+  const registrationClosed = registrationClosedReason(ride, registrationTaken);
+  const useBuiltIn         = ride.registrationOpen && !registrationClosed;
+  const seatsLeft          = seatsRemaining(ride, registrationTaken);
+
+  const hasRegistration = !useBuiltIn && !!(ride.registrationLink &&
     (ride.status === "confirmed" || ride.status === "planned" || ride.status === "tentative"));
 
   // Pre-format labels for share panel
   const adDateLabel = formatRideDateRange(ride.startDate, ride.endDate);
   const bsDateLabel = formatBsDateRange(ride.startDate, ride.endDate);
 
-  // QR code URL: registration link if available, otherwise the ride detail page (relative → resolved client-side)
-  const qrUrl   = ride.registrationLink ?? `/rides/${ride.slug}`;
-  const qrLabel = ride.registrationLink ? "Scan to Register" : "Scan to View Details";
+  // QR code URL: the built-in registration form first, then an external link,
+  // otherwise the ride page itself. On a printed poster this is the whole point
+  // — scanning it should land a rider on the sign-up form, not a brochure.
+  const qrUrl = useBuiltIn
+    ? `/rides/${ride.slug}/register`
+    : ride.registrationLink ?? `/rides/${ride.slug}`;
+  const qrLabel = useBuiltIn || ride.registrationLink
+    ? "Scan to Register"
+    : "Scan to View Details";
 
   // Live weather for upcoming rides
   let weather = null;
@@ -233,6 +249,39 @@ export default async function RideDetailPage({ params }: PageProps) {
 
           {/* Registration CTA + Interest + iCal — hidden on print */}
           <div className="print:hidden mt-6 flex flex-wrap items-center gap-3">
+            {useBuiltIn && (
+              <Link
+                href={ROUTES.rideRegister(ride.slug || ride.id)}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-hd-ember-600 hover:bg-hd-ember-500 text-white font-bold text-sm shadow-glow-ember transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Flag className="size-4" />
+                Register for this Ride
+                {ride.registrationFee ? (
+                  <span className="ml-1 px-2 py-0.5 rounded-full bg-black/20 text-[11px] font-semibold">
+                    Rs {ride.registrationFee.toLocaleString()}
+                  </span>
+                ) : (
+                  <span className="ml-1 px-2 py-0.5 rounded-full bg-black/20 text-[11px] font-semibold">
+                    Free
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {useBuiltIn && seatsLeft !== null && seatsLeft <= 5 && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-950/40 border border-amber-800/40 text-amber-300 text-xs font-semibold">
+                <Users className="size-3.5" />
+                {seatsLeft} {seatsLeft === 1 ? "place" : "places"} left
+              </span>
+            )}
+
+            {ride.registrationOpen && registrationClosed === "full" && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-hd-ink-800 border border-hd-ink-700 text-hd-ink-400 text-xs font-semibold">
+                <Users className="size-3.5" />
+                Ride is full
+              </span>
+            )}
+
             {hasRegistration && (
               <a
                 href={ride.registrationLink!}
@@ -435,7 +484,43 @@ export default async function RideDetailPage({ params }: PageProps) {
               rideTitle={ride.title}
             />
 
-            {/* Registration card */}
+            {/* Registration card — built-in */}
+            {useBuiltIn && (
+              <div className={cn("print:hidden p-5 rounded-xl gradient-card border", accentBorder)}>
+                <h3 className="text-sm font-bold text-hd-ink-50 mb-1">Register Now</h3>
+                <p className="text-xs text-hd-ink-400 mb-4">
+                  {formatRideDate(ride.startDate)} · {ride.location}
+                </p>
+
+                <div className="flex items-baseline justify-between mb-4 pb-4 border-b border-hd-ink-700/60">
+                  <span className="text-[10px] uppercase tracking-widest text-hd-ink-500">
+                    Entry
+                  </span>
+                  <span className="text-lg font-black text-hd-ember-400">
+                    {ride.registrationFee
+                      ? `Rs ${ride.registrationFee.toLocaleString()}`
+                      : "Free"}
+                  </span>
+                </div>
+
+                {seatsLeft !== null && (
+                  <p className="text-xs text-hd-ink-400 mb-3 flex items-center gap-1.5">
+                    <Users className="size-3.5 text-hd-ink-500" />
+                    {seatsLeft} of {ride.registrationCapacity} places left
+                  </p>
+                )}
+
+                <Link
+                  href={ROUTES.rideRegister(ride.slug || ride.id)}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 text-white font-bold text-sm transition-all hover:shadow-glow-ember"
+                >
+                  <Flag className="size-4" />
+                  Register
+                </Link>
+              </div>
+            )}
+
+            {/* Registration card — external link */}
             {hasRegistration && (
               <div className={cn("print:hidden p-5 rounded-xl gradient-card border", accentBorder)}>
                 <h3 className="text-sm font-bold text-hd-ink-50 mb-3">Register Now</h3>

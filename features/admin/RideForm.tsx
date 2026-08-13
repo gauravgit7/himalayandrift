@@ -50,6 +50,12 @@ interface FormState {
   seriesId:         string;
   volume:           string;
   bannerImageUrl:   string | null;
+  // Built-in registration
+  registrationOpen:     boolean;
+  registrationFee:      string;
+  registrationCapacity: string;
+  paymentQrUrl:         string | null;
+  paymentInstructions:  string;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,6 +80,11 @@ function toFormState(data?: Partial<Ride>): FormState {
     seriesId:         data?.series?.id       ?? "",
     volume:           data?.volume != null   ? String(data.volume) : "",
     bannerImageUrl:   data?.bannerImageUrl   ?? null,
+    registrationOpen:     data?.registrationOpen ?? false,
+    registrationFee:      data?.registrationFee != null      ? String(data.registrationFee) : "",
+    registrationCapacity: data?.registrationCapacity != null ? String(data.registrationCapacity) : "",
+    paymentQrUrl:         data?.paymentQrUrl        ?? null,
+    paymentInstructions:  data?.paymentInstructions ?? "",
   };
 }
 
@@ -178,6 +189,11 @@ export function RideForm({ mode, initialData, rideId, marshals, series }: RideFo
         volume:           form.volume ? parseInt(form.volume, 10) || null : null,
         bannerImageUrl:   form.bannerImageUrl,
         routeData:        routeData,
+        registrationOpen:     form.registrationOpen,
+        registrationFee:      form.registrationFee      ? parseFloat(form.registrationFee)      || null : null,
+        registrationCapacity: form.registrationCapacity ? parseInt(form.registrationCapacity, 10) || null : null,
+        paymentQrUrl:         form.paymentQrUrl,
+        paymentInstructions:  form.paymentInstructions || null,
       },
       rideId,
     );
@@ -350,7 +366,7 @@ export function RideForm({ mode, initialData, rideId, marshals, series }: RideFo
             />
           </FieldGroup>
 
-          <FieldGroup label="Registration Link">
+          <FieldGroup label="External Registration Link">
             <input
               type="url"
               value={form.registrationLink}
@@ -358,6 +374,9 @@ export function RideForm({ mode, initialData, rideId, marshals, series }: RideFo
               placeholder="https://forms.gle/…"
               className={inputClass}
             />
+            <p className="text-[11px] text-hd-ink-500">
+              Only used while built-in registration below is switched off.
+            </p>
           </FieldGroup>
 
           <FieldGroup label="Series">
@@ -447,6 +466,102 @@ export function RideForm({ mode, initialData, rideId, marshals, series }: RideFo
           compressThresholdMb={0.5}
           cropAspect={16 / 9}
         />
+      </Section>
+
+      {/* ── Section: Registration ── */}
+      <Section title="Registration">
+        <p className="text-xs text-hd-ink-500 -mt-2">
+          Turn this on to collect sign-ups on the site. While it is on, the
+          external link above is ignored and the ride page links to the built-in
+          form instead.
+        </p>
+
+        <label className="flex items-start gap-3 p-4 rounded-xl bg-hd-ink-900/60 border border-hd-ink-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.registrationOpen}
+            onChange={(e) => set("registrationOpen", e.target.checked)}
+            className="mt-0.5 size-4 accent-hd-ember-600 cursor-pointer"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-hd-ink-100">
+              Open registration for this ride
+            </span>
+            <span className="block text-xs text-hd-ink-500 mt-0.5">
+              Riders can sign up until the ride finishes, or until it is full.
+            </span>
+          </span>
+        </label>
+
+        {form.registrationOpen && (
+          <div className="space-y-5 pl-1 border-l-2 border-hd-ember-800/40 ml-1.5">
+            <div className="pl-4 grid sm:grid-cols-2 gap-4">
+              <FieldGroup label="Entry Fee">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.registrationFee}
+                  onChange={(e) => set("registrationFee", e.target.value)}
+                  placeholder="Leave empty for a free ride"
+                  className={inputClass}
+                />
+                <p className="text-[11px] text-hd-ink-500">
+                  Empty or 0 makes it free — the form skips payment entirely.
+                </p>
+              </FieldGroup>
+
+              <FieldGroup label="Capacity">
+                <input
+                  type="number"
+                  min={1}
+                  value={form.registrationCapacity}
+                  onChange={(e) => set("registrationCapacity", e.target.value)}
+                  placeholder="Leave empty for unlimited"
+                  className={inputClass}
+                />
+                <p className="text-[11px] text-hd-ink-500">
+                  Registration closes once this many places are taken.
+                </p>
+              </FieldGroup>
+            </div>
+
+            <div className="pl-4 space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-hd-ink-400 uppercase tracking-wide mb-1">
+                  Payment override
+                </p>
+                <p className="text-[11px] text-hd-ink-500 mb-3">
+                  Leave both empty to use the club-wide QR and details from
+                  Settings. Fill either one in when someone else is collecting
+                  for this ride.
+                </p>
+              </div>
+
+              <FieldGroup label="QR Code for this ride">
+                <ImageUpload
+                  bucket="payment-qr"
+                  currentUrl={form.paymentQrUrl}
+                  onUpload={(url) => set("paymentQrUrl", url)}
+                  compressMaxPx={800}
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Payment Details for this ride">
+                <textarea
+                  value={form.paymentInstructions}
+                  onChange={(e) => set("paymentInstructions", e.target.value)}
+                  rows={4}
+                  placeholder={"eSewa: 98XXXXXXXX\nBank: Himalayan Drift, NIC Asia, 1234567890"}
+                  className={cn(inputClass, "h-auto py-2 resize-y font-mono text-xs")}
+                />
+                <p className="text-[11px] text-hd-ink-500">
+                  Shown exactly as typed, line breaks and all.
+                </p>
+              </FieldGroup>
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* ── Section: Route ── */}

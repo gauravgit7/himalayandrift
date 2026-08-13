@@ -7,7 +7,8 @@ import { createClient }               from "@/lib/supabase/server";
 import { PwaSettingsAdmin }           from "@/features/admin/PwaSettingsAdmin";
 import { PushNotificationsAdmin }     from "@/features/admin/PushNotificationsAdmin";
 import { CardSettingsAdmin }          from "@/features/admin/CardSettingsAdmin";
-import { getCardSettings }            from "@/lib/supabase/queries";
+import { PaymentSettingsAdmin }       from "@/features/admin/PaymentSettingsAdmin";
+import { getCardSettings, getPaymentSettings } from "@/lib/supabase/queries";
 import { APP_META }                   from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Settings | Admin" };
@@ -61,8 +62,8 @@ async function getPushData() {
 // ---------------------------------------------------------------------------
 
 export default async function AdminSettingsPage() {
-  const [pwa, push, cardSettings] = await Promise.all([
-    getPwaSettings(), getPushData(), getCardSettings(),
+  const [pwa, push, cardSettings, paymentSettings] = await Promise.all([
+    getPwaSettings(), getPushData(), getCardSettings(), getPaymentSettings(),
   ]);
 
   return (
@@ -71,7 +72,7 @@ export default async function AdminSettingsPage() {
       <div>
         <h1 className="text-2xl font-black text-hd-ink-50">Settings</h1>
         <p className="text-sm text-hd-ink-400 mt-0.5">
-          PWA app identity and push notification configuration
+          App identity, push notifications, membership cards and ride payments
         </p>
       </div>
 
@@ -109,6 +110,17 @@ export default async function AdminSettingsPage() {
           </h2>
         </div>
         <CardSettingsAdmin initial={cardSettings} />
+      </section>
+
+      {/* ── Ride Payments ── */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="block w-3 h-px bg-hd-ember-600 rounded-full" />
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-hd-ember-400">
+            Ride Payments
+          </h2>
+        </div>
+        <PaymentSettingsAdmin initialSettings={paymentSettings} />
       </section>
 
     </div>
