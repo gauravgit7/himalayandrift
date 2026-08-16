@@ -242,7 +242,30 @@ Brand strings — name, short name, motto, tagline — come from `APP_META` in
 
 ---
 
-## 9. Known issues
+## 9. Changing the schema
+
+`supabase/schema.sql` is the whole schema in one idempotent file, re-run rather than
+migrated. That has one sharp edge worth internalising:
+
+> **`create table if not exists` does nothing on a table that already exists.** Adding a
+> column to a create-table block only affects brand-new databases. Every existing install
+> silently lacks it, and PostgREST reports *"could not find the 'x' column … in the schema
+> cache"* the first time something writes to it.
+
+So a new column needs **two** edits: the create-table block, for fresh databases, and
+
+```sql
+alter table <table> add column if not exists <column> <type>;
+```
+
+immediately after it, for existing ones. Same for constraints, wrapped in a
+`do $$ … exception when duplicate_object then null; end $$;` block. `marshals.role_icon_url`
+and the `rides.registration_*` columns are the worked examples.
+
+To check a live database against the file, diff the column list PostgREST publishes at
+`/rest/v1/` (`Accept: application/openapi+json`) against the create-table blocks.
+
+## 10. Known issues
 
 **An empty `ADMIN_EMAILS` opens the admin panel to every signed-in rider.** See §5. Not a
 problem while the variable is set, which it must be; called out here because the failure
@@ -257,7 +280,7 @@ on those two routes, so it is flagged rather than changed.
 
 ---
 
-## 10. Provenance
+## 11. Provenance
 
 Forked from a multi-community ride-calendar platform and reduced to a single community.
 Removed in the fork: the community split, the chapter taxonomy, and all seed and mock

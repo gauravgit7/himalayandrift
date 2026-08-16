@@ -10,6 +10,13 @@
 -- needless risk.
 --
 -- Safe to re-run: every statement is idempotent.
+--
+-- IMPORTANT when adding a column later: `create table if not exists` does
+-- nothing at all on a table that already exists, so editing a create-table
+-- block only affects brand-new databases. Every column added after a release
+-- must ALSO appear as `alter table <t> add column if not exists <c> <type>;`
+-- right after its table, or existing installs will silently lack it and
+-- PostgREST will report it "not found in the schema cache".
 -- =============================================================================
 
 create extension if not exists "pgcrypto";
@@ -74,6 +81,13 @@ create table if not exists marshals (
   is_active         boolean not null default true,
   created_at        timestamptz not null default now()
 );
+
+-- role_icon_url post-dates the first release. `create table if not exists` is a
+-- no-op on a table that already exists, so it never ADDS a column - a database
+-- created before this column would silently lack it, and the admin form would
+-- fail with "could not find the 'role_icon_url' column in the schema cache".
+-- Every column added after a release needs an alter like this one.
+alter table marshals add column if not exists role_icon_url text;
 
 create index if not exists idx_marshals_is_active on marshals(is_active);
 
