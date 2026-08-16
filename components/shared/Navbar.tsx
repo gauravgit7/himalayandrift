@@ -122,18 +122,20 @@ export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
           <div className="hidden md:flex items-center gap-2">
             <ThemeToggle />
 
-            {user?.isAdmin ? (
-              /* ── Admin browsing the public site: back-link only, no rider UI ── */
-              <Link
-                href={ROUTES.admin}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-hd-ember-400 hover:text-hd-ember-300 border border-hd-ember-800/50 hover:border-hd-ember-700 hover:bg-hd-ember-950/30 transition-all"
-              >
-                <Shield className="size-3.5" />
-                Admin Panel
-              </Link>
-            ) : user ? (
-              /* ── Signed-in rider: profile dropdown + Admin button ── */
+            {user ? (
+              /* ── Signed in. Admins get the panel link AS WELL AS the rider
+                   menu: a committee member is still a rider, with their own
+                   profile, rides and membership card to reach. ── */
               <>
+                {user.isAdmin && (
+                  <Link
+                    href={ROUTES.admin}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-hd-ember-400 hover:text-hd-ember-300 border border-hd-ember-800/50 hover:border-hd-ember-700 hover:bg-hd-ember-950/30 transition-all"
+                  >
+                    <Shield className="size-3.5" />
+                    Admin Panel
+                  </Link>
+                )}
                 <div className="relative">
                   <button
                     type="button"
@@ -177,9 +179,6 @@ export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
                     </div>
                   )}
                 </div>
-                <Button variant="outline" size="sm" onClick={() => window.location.href = ROUTES.login}>
-                  Admin
-                </Button>
               </>
             ) : (
               /* ── Signed out: Riders + Admin buttons ── */
@@ -234,17 +233,18 @@ export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
             })}
 
             <div className="pt-2 pb-1 border-t border-hd-ink-800 mt-1 flex flex-col gap-1">
-              {user?.isAdmin ? (
-                /* Admin on public site — back-link only */
-                <Link
-                  href={ROUTES.admin}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-hd-ember-400 border border-hd-ember-800/40 hover:bg-hd-ember-950/30 transition-colors"
-                >
-                  <Shield className="size-4 shrink-0" /> Admin Panel
-                </Link>
-              ) : user ? (
-                /* Signed-in rider */
+              {user ? (
+                /* Signed in. Admins keep the panel link and ALSO get the rider
+                   menu - a committee member has their own profile too. */
                 <>
+                  {user.isAdmin && (
+                    <Link
+                      href={ROUTES.admin}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-hd-ember-400 border border-hd-ember-800/40 hover:bg-hd-ember-950/30 transition-colors"
+                    >
+                      <Shield className="size-4 shrink-0" /> Admin Panel
+                    </Link>
+                  )}
                   <Link
                     href={ROUTES.profile}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-hd-ink-300 hover:text-white hover:bg-hd-ink-800 transition-colors"
@@ -259,12 +259,6 @@ export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
                       <LogOut className="size-4 shrink-0" /> Sign Out
                     </button>
                   </form>
-                  <Link
-                    href={ROUTES.login}
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-hd-ember-400 border border-hd-ember-700/50 hover:bg-hd-ember-600/10 transition-colors"
-                  >
-                    Admin Panel
-                  </Link>
                 </>
               ) : (
                 /* Signed out */
