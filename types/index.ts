@@ -220,6 +220,8 @@ export type MemberCardStatus = "pending" | "approved" | "rejected";
 
 export interface MemberCard {
   id:                 string;
+  /** Set when a signed-in rider requested it, so it can show on their profile. */
+  userId:             string | null;
   accessCode:         string;
   cardNumber:         string | null;  // assigned on approval
 
@@ -326,6 +328,13 @@ export interface ResolvedPaymentDetails {
   isPaid:              boolean;
 }
 
+/** A profile field the membership card needs. Reported back by
+ *  requestMemberCard so the UI can say what is missing rather than just
+ *  disabling a button. */
+export type CardRequirement =
+  | "photo" | "fullName" | "dateOfBirth" | "bloodGroup"
+  | "emergencyPhone" | "licenseNumber";
+
 export interface CardSettings {
   tagline:            string;
   disclaimer:         string;
@@ -430,6 +439,13 @@ export interface UserProfile {
   bikeModel:      string | null;
   dateOfBirth:    string | null;   // ISO date "YYYY-MM-DD"
   licenseNumber:  string | null;
+  // Captured at sign-up so a membership card can be issued without asking
+  // for anything twice.
+  bloodGroup:     string | null;
+  emergencyName:  string | null;
+  emergencyPhone: string | null;
+  /** Committee member. Drives every RLS write policy. */
+  isAdmin:        boolean;
   // Admin approval workflow
   memberStatus:   MemberRegistrationStatus;
   adminNotes:     string | null;

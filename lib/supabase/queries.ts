@@ -396,6 +396,10 @@ export async function getProfile(): Promise<import("@/types").UserProfileWithEma
       bikeModel:     null,
       dateOfBirth:   null,
       licenseNumber: null,
+      bloodGroup:     null,
+      emergencyName:  null,
+      emergencyPhone: null,
+      isAdmin:        false,
       memberStatus:  "pending",
       adminNotes:    null,
       approvedAt:    null,
@@ -653,3 +657,26 @@ export const getAnthemSettings = cache(async (): Promise<AnthemSettings> => {
   }
   return mapAnthemSettings(data as DbAnthemSettings);
 });
+
+/** The signed-in rider's membership card, if they have requested one.
+ *  Uses the service role: member_cards is publicly readable for QR validation,
+ *  but scoping by user_id is the point here, not the read permission. */
+export async function getMyMemberCard(): Promise<MemberCard | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { data, error } = await admin
+    .from("member_cards")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) { console.error("[getMyMemberCard]", error.message); return null; }
+  return data ? mapMemberCard(data as DbMemberCard) : null;
+}

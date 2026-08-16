@@ -12,7 +12,7 @@ import { revalidatePath } from "next/cache";
 import { redirect }       from "next/navigation";
 import { createClient }   from "@/lib/supabase/server";
 import { ROUTES }         from "@/lib/constants";
-import type { HomepageContent, RouteData, MemberCard, CardSettings } from "@/types";
+import type { HomepageContent, RouteData, MemberCard, CardSettings, CardRequirement } from "@/types";
 import type { PushOptInSettings }          from "@/components/shared/PushOptIn";
 import type { PwaSettings }               from "@/features/admin/PwaSettingsAdmin";
 import { MEMBER_CARD_PREFIX }             from "@/lib/constants";
@@ -658,6 +658,11 @@ export interface SignUpPayload {
   bikeModel?:    string | null;
   dateOfBirth?:  string | null;
   licenseNumber?: string | null;
+  // Asked at sign-up only so a membership card can be issued later without
+  // making the rider fill in a second form.
+  bloodGroup?:     string | null;
+  emergencyName?:  string | null;
+  emergencyPhone?: string | null;
 }
 
 /** Register a new community member. Creates auth user + profile row. */
@@ -690,6 +695,9 @@ export async function signUpPublic(
     bike_model:     payload.bikeModel?.trim() ?? null,
     date_of_birth:  payload.dateOfBirth    ?? null,
     license_number: payload.licenseNumber?.trim() ?? null,
+    blood_group:     payload.bloodGroup?.trim()     ?? null,
+    emergency_name:  payload.emergencyName?.trim()  ?? null,
+    emergency_phone: payload.emergencyPhone?.trim() ?? null,
     member_status:  "pending",
   });
 
@@ -751,6 +759,9 @@ export async function updateProfile(data: {
   bikeModel?:    string | null;
   dateOfBirth?:  string | null;
   licenseNumber?: string | null;
+  bloodGroup?:     string | null;
+  emergencyName?:  string | null;
+  emergencyPhone?: string | null;
 }): Promise<{ error: string | null }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -772,6 +783,9 @@ export async function updateProfile(data: {
       bike_model:     data.bikeModel?.trim() ?? null,
       date_of_birth:  data.dateOfBirth     ?? null,
       license_number: data.licenseNumber?.trim() ?? null,
+      blood_group:     data.bloodGroup?.trim()     ?? null,
+      emergency_name:  data.emergencyName?.trim()  ?? null,
+      emergency_phone: data.emergencyPhone?.trim() ?? null,
       updated_at:     new Date().toISOString(),
     });
 
@@ -1229,4 +1243,107 @@ export async function saveAnthemSettings(
   revalidatePath("/home");
   revalidatePath("/");
   return { error: null };
+}
+
+/**
+ * Public — request a membership card using the details already on the profile.
+ *
+ * The point of this action is that a signed-in rider never re-types anything:
+ * everything the card needs was captured at sign-up. Accounts created before
+ * those fields existed will be missing some, which is why this reports exactly
+ * what is absent rather than failing vaguely.
+ */
+export async function requestMemberCard(): Promise<{
+  accessCode: string | null;
+  missing:    CardRequirement[];
+  error:      string | null;
+}> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { accessCode: null, missing: [], error: "Please sign in first." };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { data: row, error: profileError } = await admin
+    .from("profiles")
+    .select("full_name, avatar_url, date_of_birth, blood_group, emergency_phone, license_number")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) return { accessCode: null, missing: [], error: profileError.message };
+  if (!row) {
+    return { accessCode: null, missing: [], error: "Complete your profile before requesting a card." };
+  }
+
+  const p = row as {
+    full_name: string | null; avatar_url: string | null; date_of_birth: string | null;
+    blood_group: string | null; emergency_phone: string | null; license_number: string | null;
+  };
+
+  const missing: CardRequirement[] = [];
+  if (!p.avatar_url)              missing.push("photo");
+  if (!p.full_name?.trim())       missing.push("fullName");
+  if (!p.date_of_birth)           missing.push("dateOfBirth");
+  if (!p.blood_group?.trim())     missing.push("bloodGroup");
+  if (!p.emergency_phone?.trim()) missing.push("emergencyPhone");
+  if (!p.license_number?.trim())  missing.push("licenseNumber");
+
+  if (missing.length) {
+    return { accessCode: null, missing, error: null };
+  }
+
+  // One live card per account. A rejected one does not block a fresh attempt,
+  // which is the whole point of rejecting rather than deleting.
+  const { data: existing } = await admin
+    .from("member_cards")
+    .select("id, status, access_code")
+    .eq("user_id", user.id)
+    .neq("status", "rejected")
+    .maybeSingle();
+
+  if (existing) {
+    const e = existing as { status: string; access_code: string };
+    return {
+      accessCode: e.access_code,
+      missing: [],
+      error: e.status === "approved"
+        ? "You already have a membership card."
+        : "Your card request is already with the committee.",
+    };
+  }
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const accessCode = generateAccessCode();
+    const { error } = await admin.from("member_cards").insert({
+      user_id:          user.id,
+      access_code:      accessCode,
+      full_name:        p.full_name!.trim(),
+      photo_url:        p.avatar_url!,
+      date_of_birth:    p.date_of_birth!,
+      blood_group:      p.blood_group!.trim(),
+      emergency_phone:  p.emergency_phone!.trim(),
+      license_number:   p.license_number!.trim(),
+      // Requesting from your own profile page is the consent - the button says
+      // what it does, and the details being submitted are on screen above it.
+      consent_accepted: true,
+      status:           "pending",
+    });
+
+    if (!error) {
+      revalidatePath(ROUTES.profile);
+      revalidatePath(ROUTES.adminMembers);
+      return { accessCode, missing: [], error: null };
+    }
+    if ((error as { code?: string }).code !== "23505") {
+      return { accessCode: null, missing: [], error: error.message };
+    }
+    // 23505 could be the access code, or the one-card-per-account index if the
+    // rider double-clicked.
+    if ((error as { message?: string }).message?.includes("one_per_user")) {
+      return { accessCode: null, missing: [], error: "You already have a card request in progress." };
+    }
+  }
+
+  return { accessCode: null, missing: [], error: "Could not generate a unique code. Please try again." };
 }

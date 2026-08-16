@@ -5,7 +5,7 @@ import Link             from "next/link";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn }           from "@/utils/cn";
 import { signUpPublic } from "@/lib/supabase/actions";
-import { ROUTES, APP_META } from "@/lib/constants";
+import { ROUTES, APP_META, BLOOD_GROUPS } from "@/lib/constants";
 
 export function SignUpForm() {
   const [fullName,       setFullName]       = useState("");
@@ -17,6 +17,9 @@ export function SignUpForm() {
   const [address,        setAddress]        = useState("");
   const [bikeModel,      setBikeModel]      = useState("");
   const [phone,          setPhone]          = useState("");
+  const [bloodGroup,     setBloodGroup]     = useState("");
+  const [emergencyName,  setEmergencyName]  = useState("");
+  const [emergencyPhone, setEmergencyPhone] = useState("");
   const [loading,        setLoading]        = useState(false);
   const [error,          setError]          = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
@@ -36,6 +39,9 @@ export function SignUpForm() {
       bikeModel:     bikeModel     || null,
       dateOfBirth:   dateOfBirth   || null,
       licenseNumber: licenseNumber || null,
+      bloodGroup:     bloodGroup     || null,
+      emergencyName:  emergencyName  || null,
+      emergencyPhone: emergencyPhone || null,
     });
 
     if (result?.error) { setError(result.error); setLoading(false); return; }
@@ -176,13 +182,47 @@ export function SignUpForm() {
         <div className="border-t border-hd-ink-800 pt-3">
           <p className="text-[11px] uppercase tracking-widest text-hd-ink-500 mb-3">Contact</p>
 
-          {/* Phone */}
-          <div className="space-y-1">
-            <label htmlFor="phone" className={labelClass}>Phone</label>
-            <input id="phone" type="tel" value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+977 98XXXXXXXX" disabled={loading} className={inputClass} />
+          {/* Phone + blood group */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label htmlFor="phone" className={labelClass}>Phone</label>
+              <input id="phone" type="tel" value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+977 98XXXXXXXX" disabled={loading} className={inputClass} />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="bloodGroup" className={labelClass}>Blood Group</label>
+              <select id="bloodGroup" value={bloodGroup}
+                onChange={(e) => setBloodGroup(e.target.value)}
+                disabled={loading} className={selectClass}>
+                <option value="" className="bg-hd-ink-900">Select…</option>
+                {BLOOD_GROUPS.map((g) => (
+                  <option key={g} value={g} className="bg-hd-ink-900">{g}</option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          {/* Emergency contact */}
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="space-y-1">
+              <label htmlFor="emergencyName" className={labelClass}>Emergency Contact</label>
+              <input id="emergencyName" type="text" value={emergencyName}
+                onChange={(e) => setEmergencyName(e.target.value)}
+                placeholder="Who should we call?" disabled={loading} className={inputClass} />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="emergencyPhone" className={labelClass}>Their Number</label>
+              <input id="emergencyPhone" type="tel" value={emergencyPhone}
+                onChange={(e) => setEmergencyPhone(e.target.value)}
+                placeholder="+977 98XXXXXXXX" disabled={loading} className={inputClass} />
+            </div>
+          </div>
+
+          <p className="text-[11px] text-hd-ink-500 mt-2.5 leading-relaxed">
+            Blood group and emergency contact are carried on your membership card,
+            so filling them in now means one click to request the card later.
+          </p>
         </div>
 
         <p className="text-[11px] text-hd-ink-500 leading-relaxed">

@@ -298,6 +298,12 @@ create table if not exists profiles (
   bike_model      text,
   date_of_birth   date,
   license_number  text,
+  -- Collected at sign-up purely so a membership card can be issued later
+  -- without asking for anything twice. Nullable: accounts created before this
+  -- existed have neither, and the card request tells them what is missing.
+  blood_group     text,
+  emergency_name  text,
+  emergency_phone text,
   -- Committee access. This is the ONLY thing the database uses to tell an
   -- admin from a rider - RLS cannot read environment variables, so a policy
   -- has no way to consult ADMIN_EMAILS. Frozen by the trigger below, so a
@@ -315,7 +321,10 @@ create table if not exists profiles (
 
 -- Post-dates the first release; see the note at the top of this file about
 -- create-table blocks being a no-op on existing tables.
-alter table profiles add column if not exists is_admin boolean not null default false;
+alter table profiles add column if not exists is_admin        boolean not null default false;
+alter table profiles add column if not exists blood_group     text;
+alter table profiles add column if not exists emergency_name  text;
+alter table profiles add column if not exists emergency_phone text;
 
 create index if not exists idx_profiles_member_status on profiles(member_status);
 
@@ -390,6 +399,11 @@ create trigger profiles_guard_approval
 
 create table if not exists member_cards (
   id                  uuid primary key default gen_random_uuid(),
+  -- Set when a signed-in rider requests a card, so it can be shown back to
+  -- them on their profile. Null for applications from signed-out visitors,
+  -- who have only their access_code. Deleting the account keeps the card
+  -- record - it may already be printed and in a wallet.
+  user_id             uuid references auth.users(id) on delete set null,
   -- Private code shown once after submission; used to check status later.
   access_code         text unique not null,
   -- Public number assigned on approval: HD-26-00001
@@ -416,6 +430,16 @@ create table if not exists member_cards (
 );
 
 create index if not exists idx_member_cards_status on member_cards(status);
+
+alter table member_cards add column if not exists user_id uuid references auth.users(id) on delete set null;
+
+create index if not exists idx_member_cards_user on member_cards(user_id);
+
+-- One live card per account. A rejected application does not count, so a rider
+-- can fix what was wrong and ask again; nulls are distinct, so signed-out
+-- applicants are unconstrained.
+create unique index if not exists idx_member_cards_one_per_user
+  on member_cards(user_id) where user_id is not null and status <> 'rejected';
 
 drop trigger if exists member_cards_updated_at on member_cards;
 create trigger member_cards_updated_at

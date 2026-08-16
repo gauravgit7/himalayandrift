@@ -12,6 +12,17 @@ import type {
 // Blood groups
 // ---------------------------------------------------------------------------
 
+export const CARD_REQUIREMENT_LABELS: Record<
+  import("@/types").CardRequirement, string
+> = {
+  photo:          "A profile photo",
+  fullName:       "Your full name",
+  dateOfBirth:    "Date of birth",
+  bloodGroup:     "Blood group",
+  emergencyPhone: "An emergency contact number",
+  licenseNumber:  "Licence number",
+};
+
 export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] as const;
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 

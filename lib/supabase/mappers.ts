@@ -204,6 +204,7 @@ export function mapRide(row: DbRide): Ride {
 
 export interface DbMemberCard {
   id:                  string;
+  user_id:             string | null;
   access_code:         string;
   card_number:         string | null;
   full_name:           string;
@@ -226,6 +227,7 @@ export interface DbMemberCard {
 export function mapMemberCard(row: DbMemberCard): MemberCard {
   return {
     id:                row.id,
+    userId:            row.user_id ?? null,
     accessCode:        row.access_code,
     cardNumber:        row.card_number        ?? null,
     fullName:          row.full_name,
@@ -312,6 +314,10 @@ export interface DbProfile {
   bike_model:      string | null;
   date_of_birth:   string | null;
   license_number:  string | null;
+  blood_group:     string | null;
+  emergency_name:  string | null;
+  emergency_phone: string | null;
+  is_admin:        boolean | null;
   member_status:   string;
   admin_notes:     string | null;
   approved_at:     string | null;
@@ -331,6 +337,10 @@ export function mapProfile(row: DbProfile): UserProfile {
     bikeModel:     row.bike_model   ?? null,
     dateOfBirth:   row.date_of_birth ?? null,
     licenseNumber: row.license_number ?? null,
+    bloodGroup:     row.blood_group     ?? null,
+    emergencyName:  row.emergency_name  ?? null,
+    emergencyPhone: row.emergency_phone ?? null,
+    isAdmin:        row.is_admin ?? false,
     memberStatus:  (row.member_status as MemberRegistrationStatus) ?? "pending",
     adminNotes:    row.admin_notes  ?? null,
     approvedAt:    row.approved_at  ?? null,
