@@ -9,15 +9,18 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Calendar, ArrowRight, MapPin, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Calendar, ArrowRight, MapPin, Users, Thermometer } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatRideDateRange } from "@/utils/date";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { RideQrCodeInline } from "@/components/shared/RideQrCode";
+import { RouteSparkline }   from "@/components/shared/RouteSparkline";
 import { RideCountdown }    from "@/features/homepage/RideCountdown";
-import { ROUTES, RIDE_TYPES } from "@/lib/constants";
-import type { Ride, HomepageContent, BrandLogos } from "@/types";
+import { ROUTES, RIDE_TYPES, APP_META } from "@/lib/constants";
+import { CONDITION_META }     from "@/lib/weather/openweather";
+import type { Ride, HomepageContent, BrandLogos, RideWeather } from "@/types";
 
 interface HeroBannerStats {
   totalRides:    number;
@@ -32,6 +35,8 @@ interface HeroBannerProps {
   brandLogos?:  BrandLogos;
   stats?:       HeroBannerStats;
   nextRide?:    Ride | null;
+  /** Weather for the featured ride, when it falls inside the forecast window. */
+  featuredWeather?: RideWeather | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -52,7 +57,7 @@ const container = {
 // Component
 // ---------------------------------------------------------------------------
 
-export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextRide }: HeroBannerProps) {
+export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextRide, featuredWeather }: HeroBannerProps) {
   const hasPhoto = !!heroContent.backgroundImageUrl;
 
   return (
@@ -245,7 +250,7 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
               transition={{ duration: 0.75, delay: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="w-full"
             >
-              <HeroRideCard ride={featuredRide} brandLogos={brandLogos} />
+              <HeroRideCard ride={featuredRide} brandLogos={brandLogos} weather={featuredWeather} />
             </motion.div>
           )}
         </div>
@@ -275,10 +280,28 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
 // Sub-component: featured ride card inside the hero
 // ---------------------------------------------------------------------------
 
-function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogos | null }) {
+function HeroRideCard({
+  ride,
+  brandLogos,
+  weather,
+}: {
+  ride: Ride;
+  brandLogos?: BrandLogos | null;
+  weather?: RideWeather | null;
+}) {
+  const router     = useRouter();
   const dateLabel  = formatRideDateRange(ride.startDate, ride.endDate);
   const isMarquee  = ride.rideType === "marquee";
   const waypoints  = ride.routeData?.waypoints ?? [];
+
+  // Built-in registration wins over the external link, matching the ride page.
+  // "Full" is not checked here - that needs a seat count, and the register page
+  // already explains itself when a rider lands on a full ride.
+  const useBuiltIn   = ride.registrationOpen && ride.status !== "cancelled";
+  const registerHref = useBuiltIn ? ROUTES.rideRegister(ride.slug || ride.id) : null;
+  const qrTarget     = registerHref ?? ride.registrationLink;
+
+  const conditionMeta = weather ? CONDITION_META[weather.ridingCondition] : null;
 
   return (
     <Link
@@ -311,7 +334,25 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
 
       <div className="relative flex flex-col gap-4 p-6 pt-5">
         {/* Top badges row */}
-        <div className="flex items-start gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Brand mark — the card gets screenshotted and shared, so it should
+              carry the community's name off-site. */}
+          <BrandLogo
+            logoUrl={brandLogos?.logoUrl}
+            alt={APP_META.name}
+            className="h-6 w-auto max-w-[26px] object-contain shrink-0 opacity-90"
+            fallback={
+              <span className="inline-flex items-center justify-center size-6 rounded-md bg-hd-ember-600 shrink-0">
+                <span className="text-[9px] font-black text-white leading-none">
+                  {APP_META.shortName}
+                </span>
+              </span>
+            }
+          />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
+            {APP_META.name}
+          </span>
+
           {isMarquee && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-900/50 text-yellow-400 border border-yellow-700/40">
               ★ MARQUEE
@@ -327,7 +368,9 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
           <h3 className="text-lg font-black text-white leading-tight group-hover:text-hd-ember-100 transition-colors duration-200">
             {ride.title}
           </h3>
-          {ride.shortDescription && (
+          {/* Only worth showing when it says something the title does not. */}
+          {ride.shortDescription &&
+           ride.shortDescription.trim().toLowerCase() !== ride.title.trim().toLowerCase() && (
             <p className="mt-1.5 text-sm text-hd-ink-300/90 line-clamp-2 leading-snug">
               {ride.shortDescription}
             </p>
@@ -337,40 +380,74 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
         {/* Meta + QR */}
         <div className="flex items-start gap-3">
           {/* Left: ride meta */}
-          <div className="flex flex-col gap-1.5 flex-1">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <div className="flex items-center gap-2 text-xs text-hd-ink-300">
               <Calendar className="size-3.5 text-hd-ember-500 shrink-0" />
               <span>{dateLabel}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-hd-ink-300">
               <MapPin className="size-3.5 text-hd-ember-500 shrink-0" />
-              <span>{ride.location}</span>
+              <span className="truncate">{ride.location}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-hd-ink-300">
               <Users className="size-3.5 text-hd-ember-500 shrink-0" />
               <span>{ride.expectedRiders} riders expected</span>
             </div>
+
+            {/* Weather — only when the ride is inside the forecast window. */}
+            {weather && conditionMeta && (
+              <div className="flex items-center gap-2 text-xs text-hd-ink-300">
+                <Thermometer className="size-3.5 text-hd-ember-500 shrink-0" />
+                <span className="truncate">
+                  {Math.round(weather.temperatureCelsius)}°C
+                  <span className="text-hd-ink-500"> · </span>
+                  {weather.conditions[0]?.description ?? conditionMeta.label}
+                </span>
+                <span
+                  className={cn(
+                    "shrink-0 px-1.5 py-px rounded text-[9px] font-bold uppercase tracking-wide border",
+                    conditionMeta.bg, conditionMeta.color,
+                  )}
+                >
+                  {conditionMeta.label}
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Right: QR code (only when registration link exists) */}
-          {ride.registrationLink && (
+          {/* Right: QR — to the built-in form when open, else the external link */}
+          {qrTarget && (
             <RideQrCodeInline
-              url={ride.registrationLink}
+              url={qrTarget}
               label="Scan to Register"
               size={96}
             />
           )}
         </div>
 
-        {/* Route waypoints (marquee only) */}
+        {/* Route: the shape, then the names */}
         {waypoints.length > 0 && (
           <div className="pt-3 border-t border-white/10">
-            <p className="text-[9px] uppercase tracking-widest text-hd-ink-500 mb-2">
-              Route
-            </p>
+            <div className="flex items-baseline justify-between gap-2 mb-1.5">
+              <p className="text-[9px] uppercase tracking-widest text-hd-ink-500">
+                Route
+              </p>
+              {ride.routeData?.totalDistanceKm && (
+                <p className="text-[10px] text-hd-ink-400 font-medium">
+                  {ride.routeData.totalDistanceKm} km
+                </p>
+              )}
+            </div>
+
+            <RouteSparkline
+              waypoints={waypoints}
+              tone={isMarquee ? "violet" : "ember"}
+              className="mb-2 max-h-16"
+            />
+
             <div className="flex items-center gap-1 flex-wrap">
               {waypoints.map((wp, i) => (
-                <span key={wp.name} className="flex items-center gap-1">
+                <span key={`${wp.name}-${i}`} className="flex items-center gap-1">
                   <span className="text-[11px] font-medium text-hd-ink-200">
                     {wp.name}
                   </span>
@@ -380,17 +457,31 @@ function HeroRideCard({ ride, brandLogos }: { ride: Ride; brandLogos?: BrandLogo
                 </span>
               ))}
             </div>
-            {ride.routeData?.totalDistanceKm && (
-              <p className="text-[10px] text-hd-ink-500 mt-1">
-                {ride.routeData.totalDistanceKm} km total
-              </p>
-            )}
           </div>
         )}
 
         {/* Bottom: register + view details */}
         <div className="flex items-center justify-between mt-1">
-          {ride.registrationLink ? (
+          {registerHref ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // The whole card is already a Link, so this cannot be a nested
+                // anchor. Route client-side rather than reloading the page.
+                router.push(registerHref);
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 text-white transition-colors duration-150"
+            >
+              Register
+              {ride.registrationFee
+                ? <span className="px-1.5 py-px rounded bg-black/25 text-[10px]">
+                    Rs {ride.registrationFee.toLocaleString()}
+                  </span>
+                : <span className="px-1.5 py-px rounded bg-black/25 text-[10px]">Free</span>}
+            </button>
+          ) : ride.registrationLink ? (
             <button
               type="button"
               onClick={(e) => {
