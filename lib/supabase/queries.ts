@@ -536,7 +536,9 @@ export async function getAllRideRegistrations(): Promise<RideRegistrationWithRid
         title:           ride.title,
         slug:            ride.slug,
         startDate:       ride.startDate,
+        endDate:         ride.endDate,
         registrationFee: ride.registrationFee,
+        routeData:       ride.routeData,
       },
     };
   });
@@ -606,7 +608,9 @@ export async function getRegistrationByAccessCode(
       title:           ride.title,
       slug:            ride.slug,
       startDate:       ride.startDate,
+      endDate:         ride.endDate,
       registrationFee: ride.registrationFee,
+      routeData:       ride.routeData,
     },
   };
 }
@@ -636,7 +640,9 @@ export async function getMyRideRegistrations(): Promise<RideRegistrationWithRide
         title:           ride.title,
         slug:            ride.slug,
         startDate:       ride.startDate,
+        endDate:         ride.endDate,
         registrationFee: ride.registrationFee,
+        routeData:       ride.routeData,
       },
     };
   });

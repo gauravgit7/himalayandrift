@@ -39,52 +39,50 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // ── Admin allow-list (ADMIN_EMAILS=a@b.com,c@d.com) ───────────────────────
-  // Fails CLOSED. This used to treat an empty list as "everyone is an admin",
-  // which was survivable when the owner held the only account - and became a
-  // hole the moment the public could sign up. An unset variable now means
-  // nobody reaches /admin, which is noisy but safe.
+  // ── Who is an admin ───────────────────────────────────────────────────────
+  // profiles.is_admin is the single answer, the same one RLS uses. ADMIN_EMAILS
+  // only bootstraps it, once, at sign-in - see signInPublic. One source means
+  // the page gate and the data gate can never disagree.
   //
-  // This guards the admin PAGES only. Write access to the data is a separate
-  // gate: profiles.is_admin, enforced by RLS, because a policy cannot read an
-  // environment variable. Both need to be set for an admin to be useful.
-  const adminEmailsEnv = process.env.ADMIN_EMAILS;
-  const adminEmails = adminEmailsEnv
-    ? adminEmailsEnv.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
-    : [];
+  // Only looked up on the paths that actually care, so public pages do not pay
+  // for a query they never read.
+  const NEEDS_ROLE = ["/admin", "/profile", "/signin", "/signup", "/login"];
+  const roleMatters = NEEDS_ROLE.some((p) => pathname.startsWith(p));
 
-  const isAdminUser =
-    !!user &&
-    adminEmails.length > 0 &&
-    adminEmails.includes((user.email ?? "").toLowerCase());
+  let isAdminUser = false;
+  if (user && roleMatters) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+    isAdminUser = !!(profile as { is_admin?: boolean } | null)?.is_admin;
+  }
 
   // ── Route guards ──────────────────────────────────────────────────────────
 
-  // 1. Admin routes: must be authenticated AND be an admin
+  /** Where a signed-in user belongs. Used everywhere instead of "/", so nobody
+   *  is ever dumped on the homepage wondering what happened. */
+  const homeFor = (admin: boolean) => (admin ? "/admin" : "/profile");
+
+  // 1. Admin routes: authenticated AND an admin
   if (pathname.startsWith("/admin")) {
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
+      url.pathname = "/signin";
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
     if (!isAdminUser) {
-      // Visible in dev-server terminal — compare with your ADMIN_EMAILS value
-      console.warn(`[middleware] Admin blocked: user="${user.email}" | ADMIN_EMAILS="${adminEmailsEnv ?? "(not set)"}"`);
+      // Send them to their own profile rather than the homepage: landing back
+      // on the marketing page after clicking something reads as a dead end.
       const url = request.nextUrl.clone();
-      url.pathname = "/";
+      url.pathname = "/profile";
       return NextResponse.redirect(url);
     }
   }
 
-  // 2. Admin login page: authenticated admin → /admin, authenticated non-admin → /
-  if (pathname === "/login" && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = isAdminUser ? "/admin" : "/";
-    return NextResponse.redirect(url);
-  }
-
-  // 3. Profile page: must be authenticated (any user)
+  // 2. Profile: any authenticated user
   if (pathname.startsWith("/profile") && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/signin";
@@ -92,10 +90,14 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 4. Auth pages (signin/signup): already signed in → admin or home
-  if ((pathname === "/signin" || pathname === "/signup") && user) {
+  // 3. Already signed in and asking for an auth page → go where you belong.
+  //    Honour ?redirect= so signing in mid-journey returns you to the ride you
+  //    were looking at.
+  if ((pathname === "/signin" || pathname === "/signup" || pathname === "/login") && user) {
     const url = request.nextUrl.clone();
-    url.pathname = isAdminUser ? "/admin" : "/";
+    const wanted = request.nextUrl.searchParams.get("redirect");
+    url.pathname = wanted && wanted.startsWith("/") ? wanted : homeFor(isAdminUser);
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

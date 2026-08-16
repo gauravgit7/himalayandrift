@@ -288,7 +288,10 @@ export interface RideRegistration {
 
 /** A registration with the ride it belongs to, for the admin list. */
 export interface RideRegistrationWithRide extends RideRegistration {
-  ride: Pick<Ride, "id" | "title" | "slug" | "startDate" | "registrationFee"> | null;
+  ride: Pick<
+    Ride,
+    "id" | "title" | "slug" | "startDate" | "endDate" | "registrationFee" | "routeData"
+  > | null;
 }
 
 // ---------------------------------------------------------------------------

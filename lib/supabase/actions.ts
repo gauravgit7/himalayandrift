@@ -18,23 +18,6 @@ import type { PwaSettings }               from "@/features/admin/PwaSettingsAdmi
 import { MEMBER_CARD_PREFIX }             from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
-// Auth - Sign In
-// ---------------------------------------------------------------------------
-
-export async function signIn(
-  email:    string,
-  password: string,
-): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) return { error: error.message };
-
-  revalidatePath(ROUTES.admin, "layout");
-  redirect(ROUTES.admin);
-}
-
-// ---------------------------------------------------------------------------
 // Auth - Sign Out
 // ---------------------------------------------------------------------------
 
@@ -729,16 +712,53 @@ export async function signInPublic(
   });
   if (error) return { error: error.message };
 
-  // If the signed-in user is an admin, send them to the admin dashboard
-  const adminEmailsEnv = process.env.ADMIN_EMAILS;
-  if (adminEmailsEnv) {
-    const adminEmails = adminEmailsEnv.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-    if (adminEmails.includes((data.user?.email ?? "").toLowerCase())) {
-      revalidatePath(ROUTES.admin, "layout");
-      redirect(ROUTES.admin);
-    }
+  const user = data.user;
+  if (!user) return { error: "Sign in failed. Please try again." };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  // ADMIN_EMAILS is a BOOTSTRAP, not a runtime check. Being on the list
+  // promotes the account here, once; from then on profiles.is_admin is the
+  // single answer to "is this an admin", used by the middleware and by every
+  // RLS policy alike. Two independent sources for one question is how they
+  // drift, and how someone ends up seeing an admin panel that cannot save.
+  const listed = (process.env.ADMIN_EMAILS ?? "")
+    .split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
+    .includes((user.email ?? "").toLowerCase());
+
+  // An account created in the Supabase dashboard has no profile row at all,
+  // so this upserts rather than updates.
+  const { data: existing } = await admin
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!existing) {
+    await admin.from("profiles").insert({
+      id:            user.id,
+      email:         user.email ?? null,
+      full_name:     (user.user_metadata?.full_name as string | undefined) ?? "",
+      is_admin:      listed,
+      // A bootstrapped admin is a member by definition; nobody approves them.
+      member_status: listed ? "approved" : "pending",
+    });
+  } else if (listed && !(existing as { is_admin: boolean }).is_admin) {
+    await admin
+      .from("profiles")
+      .update({ is_admin: true, member_status: "approved" })
+      .eq("id", user.id);
   }
 
+  const isAdmin = listed || !!(existing as { is_admin?: boolean } | null)?.is_admin;
+
+  if (isAdmin) {
+    revalidatePath(ROUTES.admin, "layout");
+    redirect(ROUTES.admin);
+  }
+
+  revalidatePath(ROUTES.profile);
   redirect(ROUTES.profile);
 }
 

@@ -14,7 +14,7 @@ import Link from "next/link";
 import {
   User, Phone, Save, AlertCircle, CheckCircle2, Clock, XCircle,
   Bike, Calendar, FileText, Home, Droplet, ShieldAlert, CreditCard,
-  Flag, ChevronRight, Loader2, Mail,
+  Flag, ChevronRight, Loader2, Mail, Route, Trophy, Printer,
 } from "lucide-react";
 
 import { cn }              from "@/utils/cn";
@@ -165,9 +165,9 @@ function CardPanel({
         <CardRenderer card={card} settings={settings} brandLogos={brandLogos} mode="compact" />
         <Link
           href={ROUTES.memberCard(card.accessCode)}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-hd-ember-400 hover:text-hd-ember-300 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-hd-ink-800 hover:bg-hd-ink-700 border border-hd-ink-700 hover:border-hd-ink-500 text-sm font-semibold text-hd-ink-100 transition-colors"
         >
-          Open full card <ChevronRight className="size-3" />
+          <Printer className="size-4" /> Download or print card
         </Link>
       </div>
     );
@@ -304,14 +304,24 @@ export function ProfileClient({
     ? form.fullName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
     : "?";
 
-  const { upcoming, past } = useMemo(() => {
+  const { upcoming, past, stats } = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
+    const year  = today.slice(0, 4);
     const up: RideRegistrationWithRide[] = [];
     const pa: RideRegistrationWithRide[] = [];
     for (const r of registrations) {
       if (r.ride && r.ride.startDate >= today) up.push(r); else pa.push(r);
     }
-    return { upcoming: up, past: pa };
+
+    // Only confirmed rides that have actually happened count towards the
+    // totals - a pending request is not a ride you have ridden.
+    const ridden = pa.filter((r) => r.status === "approved" && r.ride);
+    const km = ridden.reduce(
+      (sum, r) => sum + (r.ride?.routeData?.totalDistanceKm ?? 0), 0,
+    );
+    const thisYear = ridden.filter((r) => r.ride!.startDate.startsWith(year)).length;
+
+    return { upcoming: up, past: pa, stats: { rides: ridden.length, km, thisYear } };
   }, [registrations]);
 
   const handleSave = useCallback(async () => {
@@ -387,6 +397,26 @@ export function ProfileClient({
         brandLogos={brandLogos}
         onRequested={() => window.location.reload()}
       />
+
+      {/* ── Stats ── */}
+      {stats.rides > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { icon: Trophy, label: "Rides ridden", value: String(stats.rides) },
+            { icon: Route,  label: "Distance",
+              value: stats.km > 0 ? `${Math.round(stats.km).toLocaleString()} km` : "—" },
+            { icon: Calendar, label: "This year", value: String(stats.thisYear) },
+          ].map(({ icon: Icon, label, value }) => (
+            <div key={label} className="gradient-card rounded-xl border border-hd-ink-700 p-4 text-center">
+              <Icon className="size-4 text-hd-ember-500 mx-auto mb-2" />
+              <p className="text-xl font-black text-hd-ink-50 leading-none">{value}</p>
+              <p className="text-[10px] uppercase tracking-widest text-hd-ink-500 mt-1.5">
+                {label}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Rides ── */}
       <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-5">

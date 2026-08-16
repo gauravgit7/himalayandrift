@@ -13,7 +13,6 @@ import { Menu, X, Calendar, Map, BookOpen, Layers,
          Shield, CreditCard, LogOut, User } from "lucide-react";
 import { cn }                   from "@/utils/cn";
 import { ROUTES, APP_META }     from "@/lib/constants";
-import { Button }               from "@/components/ui/Button";
 import { ThemeToggle }          from "@/components/theme/ThemeToggle";
 import { signOutPublic }        from "@/lib/supabase/actions";
 import type { BrandLogos }      from "@/types";
@@ -181,18 +180,16 @@ export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
                 </div>
               </>
             ) : (
-              /* ── Signed out: Riders + Admin buttons ── */
-              <>
-                <Link
-                  href={ROUTES.signin}
-                  className="px-3 py-1.5 rounded-lg text-sm font-semibold text-hd-ink-200 hover:text-white border border-hd-ink-700 hover:border-hd-ink-500 transition-all"
-                >
-                  Riders
-                </Link>
-                <Button variant="outline" size="sm" onClick={() => window.location.href = ROUTES.login}>
-                  Admin
-                </Button>
-              </>
+              /* ── Signed out: one door. Two buttons could not work - the
+                   middleware routes by the session you already hold, so
+                   whichever you picked, it bounced you. Sign in here and you
+                   are sent wherever you belong. ── */
+              <Link
+                href={ROUTES.signin}
+                className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-hd-ember-600 hover:bg-hd-ember-500 transition-all"
+              >
+                Sign In
+              </Link>
             )}
           </div>
 
@@ -261,21 +258,13 @@ export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
                   </form>
                 </>
               ) : (
-                /* Signed out */
-                <>
-                  <Link
-                    href={ROUTES.signin}
-                    className="flex items-center justify-center px-3 py-2.5 rounded-lg text-sm font-semibold text-hd-ink-200 border border-hd-ink-700 hover:border-hd-ink-500 transition-all"
-                  >
-                    Riders
-                  </Link>
-                  <Link
-                    href={ROUTES.login}
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-hd-ember-400 border border-hd-ember-700/50 hover:bg-hd-ember-600/10 transition-colors"
-                  >
-                    Admin Panel
-                  </Link>
-                </>
+                /* Signed out — one door */
+                <Link
+                  href={ROUTES.signin}
+                  className="flex items-center justify-center px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-hd-ember-600 hover:bg-hd-ember-500 transition-all"
+                >
+                  Sign In
+                </Link>
               )}
               <div className="flex justify-end mt-1 px-1">
                 <ThemeToggle />
