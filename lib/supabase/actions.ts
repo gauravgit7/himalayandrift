@@ -1168,3 +1168,65 @@ export async function savePaymentSettings(
   revalidatePath("/rides");
   return { error: null };
 }
+
+// =============================================================================
+// Anthem
+// =============================================================================
+
+export interface AnthemLyricLinePayload {
+  time: number | null;
+  text: string;
+}
+
+export interface AnthemSettingsPayload {
+  title:     string;
+  audioUrl:  string | null;
+  credits:   string | null;
+  lyrics:    AnthemLyricLinePayload[];
+  isEnabled: boolean;
+}
+
+/** Admin: save the community anthem and its lyrics. */
+export async function saveAnthemSettings(
+  payload: AnthemSettingsPayload,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  // Stored as { t, text } to keep each timestamp attached to its own line, so
+  // reordering or inserting a line can never shift the timings underneath it.
+  //
+  // Blank lines are KEPT - they are the stanza breaks, and dropping them would
+  // reflow the whole anthem into one block. Only the empty lines top and tail
+  // are trimmed, since those are just paste artefacts.
+  const trimmed = [...payload.lyrics];
+  while (trimmed.length && !trimmed[0].text.trim())              trimmed.shift();
+  while (trimmed.length && !trimmed[trimmed.length - 1].text.trim()) trimmed.pop();
+
+  const lyrics = trimmed
+    .map((l) => ({
+      t: typeof l.time === "number" && Number.isFinite(l.time) && l.time >= 0
+        ? Math.round(l.time * 100) / 100   // centiseconds is plenty for singing
+        : null,
+      text: l.text.trim(),
+    }));
+
+  const { error } = await supabase
+    .from("anthem_settings")
+    .upsert({
+      id:         1,
+      title:      payload.title.trim() || "Our Anthem",
+      audio_url:  payload.audioUrl || null,
+      credits:    payload.credits?.trim() || null,
+      lyrics,
+      // Nothing to play without audio, so the switch cannot be on without it.
+      is_enabled: payload.isEnabled && !!payload.audioUrl,
+      updated_at: new Date().toISOString(),
+    });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(ROUTES.adminSettings);
+  revalidatePath("/home");
+  revalidatePath("/");
+  return { error: null };
+}

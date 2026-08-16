@@ -11,6 +11,7 @@ import type {
   RideType, RideStatus, RidePriority,
   MemberRegistrationStatus,
   RideRegistration, RideRegistrationStatus, PaymentSettings,
+  AnthemSettings, AnthemLyricLine,
 } from "@/types";
 
 /** Postgres `numeric` arrives over PostgREST as a string, to avoid the
@@ -414,5 +415,46 @@ export function mapPaymentSettings(row: DbPaymentSettings): PaymentSettings {
     qrUrl:               row.qr_url ?? null,
     paymentInstructions: row.payment_instructions ?? "",
     currencyLabel:       row.currency_label || "NPR",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Anthem
+// ---------------------------------------------------------------------------
+
+export interface DbAnthemSettings {
+  id:         number;
+  title:      string;
+  audio_url:  string | null;
+  credits:    string | null;
+  lyrics:     unknown;
+  is_enabled: boolean;
+  updated_at: string;
+}
+
+/** Lyrics come out of jsonb, so they are whatever was last written - possibly
+ *  from an older shape. Anything unrecognisable is dropped rather than allowed
+ *  to reach the player, where a missing `text` would render "undefined". */
+function parseLyrics(raw: unknown): AnthemLyricLine[] {
+  if (!Array.isArray(raw)) return [];
+  const lines: AnthemLyricLine[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const row  = item as { t?: unknown; text?: unknown };
+    const text = typeof row.text === "string" ? row.text : null;
+    if (text === null) continue;
+    const t = typeof row.t === "number" && Number.isFinite(row.t) ? row.t : null;
+    lines.push({ time: t, text });
+  }
+  return lines;
+}
+
+export function mapAnthemSettings(row: DbAnthemSettings): AnthemSettings {
+  return {
+    title:     row.title || "Our Anthem",
+    audioUrl:  row.audio_url ?? null,
+    credits:   row.credits   ?? null,
+    lyrics:    parseLyrics(row.lyrics),
+    isEnabled: row.is_enabled ?? false,
   };
 }

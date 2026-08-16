@@ -10,15 +10,15 @@ import { createClient }        from "@/lib/supabase/server";
 import {
   mapRide, mapSeries, mapSponsor, mapMarshal, mapHomepageContent,
   mapMemberCard, mapCardSettings, mapProfile,
-  mapRideRegistration, mapPaymentSettings,
+  mapRideRegistration, mapPaymentSettings, mapAnthemSettings,
   type DbRide, type DbSeries, type DbSponsor, type DbMarshal,
   type DbHomepageContent, type DbMemberCard, type DbCardSettings,
-  type DbProfile, type DbRideRegistration, type DbPaymentSettings,
+  type DbProfile, type DbRideRegistration, type DbPaymentSettings, type DbAnthemSettings,
 } from "@/lib/supabase/mappers";
 import type {
   Ride, Series, Sponsor, Marshal, HomepageContent, BrandLogos,
   MemberCard, CardSettings,
-  RideRegistration, RideRegistrationWithRide, PaymentSettings,
+  RideRegistration, RideRegistrationWithRide, PaymentSettings, AnthemSettings,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -637,3 +637,19 @@ export async function getMyRideRegistrations(): Promise<RideRegistrationWithRide
     };
   });
 }
+
+/** The community anthem. Public — the hero renders the play control from this. */
+export const getAnthemSettings = cache(async (): Promise<AnthemSettings> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("anthem_settings")
+    .select("*")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (error) console.error("[getAnthemSettings]", error.message);
+  if (!data) {
+    return { title: "Our Anthem", audioUrl: null, credits: null, lyrics: [], isEnabled: false };
+  }
+  return mapAnthemSettings(data as DbAnthemSettings);
+});

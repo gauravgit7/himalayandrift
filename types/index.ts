@@ -289,6 +289,26 @@ export interface RideRegistrationWithRide extends RideRegistration {
   ride: Pick<Ride, "id" | "title" | "slug" | "startDate" | "registrationFee"> | null;
 }
 
+// ---------------------------------------------------------------------------
+// Anthem
+// ---------------------------------------------------------------------------
+
+/** One line of the anthem. `time` is the second it starts at, or null when it
+ *  has not been synced yet — untimed lines still render, just without
+ *  highlighting, so lyrics are useful before anyone sits down to sync them. */
+export interface AnthemLyricLine {
+  time: number | null;
+  text: string;
+}
+
+export interface AnthemSettings {
+  title:     string;
+  audioUrl:  string | null;
+  credits:   string | null;
+  lyrics:    AnthemLyricLine[];
+  isEnabled: boolean;
+}
+
 /** Club-wide payment details, overridable per ride. */
 export interface PaymentSettings {
   qrUrl:               string | null;

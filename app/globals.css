@@ -371,6 +371,18 @@ html.light .glass-dark {
   100% { background-position: 200% 0; }
 }
 
+/* Equaliser bars on the anthem control. Scaled from the bottom so the bars
+   grow upward off a shared baseline. Only applied under motion-safe. */
+@keyframes anthem-bar {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1); }
+}
+
+.animate-anthem-bar {
+  transform-origin: bottom;
+  animation: anthem-bar 0.9s ease-in-out infinite;
+}
+
 .animate-fade-in {
   animation: fade-in 0.4s ease-out both;
 }

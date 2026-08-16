@@ -18,9 +18,10 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { RideQrCodeInline } from "@/components/shared/RideQrCode";
 import { RouteSparkline }   from "@/components/shared/RouteSparkline";
 import { RideCountdown }    from "@/features/homepage/RideCountdown";
+import { AnthemPlayer }     from "@/features/homepage/AnthemPlayer";
 import { ROUTES, RIDE_TYPES, APP_META } from "@/lib/constants";
 import { CONDITION_META }     from "@/lib/weather/openweather";
-import type { Ride, HomepageContent, BrandLogos, RideWeather } from "@/types";
+import type { Ride, HomepageContent, BrandLogos, RideWeather, AnthemSettings } from "@/types";
 
 interface HeroBannerStats {
   totalRides:    number;
@@ -37,6 +38,7 @@ interface HeroBannerProps {
   nextRide?:    Ride | null;
   /** Weather for the featured ride, when it falls inside the forecast window. */
   featuredWeather?: RideWeather | null;
+  anthem?:          AnthemSettings | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -57,7 +59,7 @@ const container = {
 // Component
 // ---------------------------------------------------------------------------
 
-export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextRide, featuredWeather }: HeroBannerProps) {
+export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextRide, featuredWeather, anthem }: HeroBannerProps) {
   const hasPhoto = !!heroContent.backgroundImageUrl;
 
   return (
@@ -213,6 +215,17 @@ export function HeroBanner({ heroContent, featuredRide, brandLogos, stats, nextR
                 </Link>
               )}
             </motion.div>
+
+            {/* Anthem — sits under the CTAs, quiet by design. Renders nothing
+                until an anthem is uploaded and switched on in Settings. */}
+            {anthem && (
+              <motion.div
+                variants={fadeUp}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <AnthemPlayer anthem={anthem} />
+              </motion.div>
+            )}
 
             {/* Quick stats strip - live from DB */}
             <motion.div

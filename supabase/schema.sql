@@ -407,6 +407,37 @@ create table if not exists card_settings (
 insert into card_settings (id) values (1) on conflict do nothing;
 
 -- ---------------------------------------------------------------------------
+-- Anthem (singleton)
+--
+-- The community anthem: one audio file plus its lyrics. Lyrics are stored as a
+-- jsonb array of { t, text } - `t` is the second the line starts at, or null
+-- when that line has not been synced yet. Keeping the timing beside the text
+-- rather than in a parallel array means a line can never drift away from its
+-- own timestamp when lines are added or reordered.
+--
+-- Untimed lyrics are valid and render as a static sheet, so the anthem is
+-- usable the moment the words are pasted in, before anything is synced.
+-- ---------------------------------------------------------------------------
+
+create table if not exists anthem_settings (
+  id          integer primary key default 1 check (id = 1),
+  title       text not null default 'Our Anthem',
+  audio_url   text,
+  credits     text,                        -- writer, vocalist, year
+  lyrics      jsonb not null default '[]', -- [{ "t": 12.4, "text": "…" }, …]
+  -- Off until there is something to play. The hero shows no control while off.
+  is_enabled  boolean not null default false,
+  updated_at  timestamptz not null default now()
+);
+
+insert into anthem_settings (id) values (1) on conflict do nothing;
+
+drop trigger if exists anthem_settings_updated_at on anthem_settings;
+create trigger anthem_settings_updated_at
+  before update on anthem_settings
+  for each row execute function set_updated_at();
+
+-- ---------------------------------------------------------------------------
 -- Payment settings (singleton)
 --
 -- The club-wide payment details shown on every paid ride's registration form.
@@ -561,6 +592,7 @@ alter table push_subscriptions enable row level security;
 alter table push_settings      enable row level security;
 alter table pwa_settings       enable row level security;
 alter table payment_settings   enable row level security;
+alter table anthem_settings    enable row level security;
 alter table ride_registrations enable row level security;
 
 -- ── Public read ────────────────────────────────────────────────────────────
@@ -574,6 +606,7 @@ drop policy if exists "public_read_card_settings"    on card_settings;
 drop policy if exists "public_read_push_settings"    on push_settings;
 drop policy if exists "public_read_pwa_settings"     on pwa_settings;
 drop policy if exists "public_read_payment_settings" on payment_settings;
+drop policy if exists "public_read_anthem_settings"  on anthem_settings;
 
 create policy "public_read_marshals"         on marshals         for select using (true);
 create policy "public_read_series"           on series           for select using (true);
@@ -587,6 +620,7 @@ create policy "public_read_pwa_settings"     on pwa_settings     for select usin
 -- The registration form must render the QR and instructions to signed-out
 -- visitors, so this one is public read too. Keep it free of anything private.
 create policy "public_read_payment_settings" on payment_settings for select using (true);
+create policy "public_read_anthem_settings"  on anthem_settings  for select using (true);
 
 -- ── Authenticated write ────────────────────────────────────────────────────
 drop policy if exists "auth_write_marshals"         on marshals;
@@ -595,6 +629,7 @@ drop policy if exists "auth_write_sponsors"         on sponsors;
 drop policy if exists "auth_write_rides"            on rides;
 drop policy if exists "auth_write_ride_sponsors"    on ride_sponsors;
 drop policy if exists "auth_write_homepage_content" on homepage_content;
+drop policy if exists "auth_write_anthem_settings"   on anthem_settings;
 
 create policy "auth_write_marshals"         on marshals         for all to authenticated using (true) with check (true);
 create policy "auth_write_series"           on series           for all to authenticated using (true) with check (true);
@@ -602,6 +637,7 @@ create policy "auth_write_sponsors"         on sponsors         for all to authe
 create policy "auth_write_rides"            on rides            for all to authenticated using (true) with check (true);
 create policy "auth_write_ride_sponsors"    on ride_sponsors    for all to authenticated using (true) with check (true);
 create policy "auth_write_homepage_content" on homepage_content for all to authenticated using (true) with check (true);
+create policy "auth_write_anthem_settings"   on anthem_settings  for all to authenticated using (true) with check (true);
 
 -- ── Profiles: each rider sees and edits only their own row ─────────────────
 -- Admin listing of all riders uses the service-role client, which bypasses RLS.

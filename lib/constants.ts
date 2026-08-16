@@ -239,6 +239,7 @@ export const STORAGE_BUCKETS = {
   pwaIcons:      "pwa-icons",      // PwaSettingsAdmin
   paymentQr:     "payment-qr",     // PaymentSettingsAdmin + RideForm override
   paymentScreenshots: "payment-screenshots", // ride RegistrationForm (anon upload)
+  anthem:        "anthem",         // AnthemAdmin - the community anthem audio
   documents:     "ride-documents", // reserved: GPX / route PDFs, no uploader yet
 } as const;
 
