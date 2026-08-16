@@ -39,10 +39,15 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // ── Admin email allow-list (set ADMIN_EMAILS=a@b.com,c@d.com in .env.local) ──
-  // If the env var is not set, any authenticated user can access admin
-  // (backwards-compatible with single-admin setups). Set it once you have
-  // public users to keep them out of the admin panel.
+  // ── Admin allow-list (ADMIN_EMAILS=a@b.com,c@d.com) ───────────────────────
+  // Fails CLOSED. This used to treat an empty list as "everyone is an admin",
+  // which was survivable when the owner held the only account - and became a
+  // hole the moment the public could sign up. An unset variable now means
+  // nobody reaches /admin, which is noisy but safe.
+  //
+  // This guards the admin PAGES only. Write access to the data is a separate
+  // gate: profiles.is_admin, enforced by RLS, because a policy cannot read an
+  // environment variable. Both need to be set for an admin to be useful.
   const adminEmailsEnv = process.env.ADMIN_EMAILS;
   const adminEmails = adminEmailsEnv
     ? adminEmailsEnv.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
@@ -50,7 +55,8 @@ export async function updateSession(request: NextRequest) {
 
   const isAdminUser =
     !!user &&
-    (adminEmails.length === 0 || adminEmails.includes((user.email ?? "").toLowerCase()));
+    adminEmails.length > 0 &&
+    adminEmails.includes((user.email ?? "").toLowerCase());
 
   // ── Route guards ──────────────────────────────────────────────────────────
 

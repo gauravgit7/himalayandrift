@@ -298,6 +298,11 @@ create table if not exists profiles (
   bike_model      text,
   date_of_birth   date,
   license_number  text,
+  -- Committee access. This is the ONLY thing the database uses to tell an
+  -- admin from a rider - RLS cannot read environment variables, so a policy
+  -- has no way to consult ADMIN_EMAILS. Frozen by the trigger below, so a
+  -- rider cannot promote themselves.
+  is_admin        boolean not null default false,
   -- Approval workflow
   member_status   text not null default 'pending'
                   check (member_status in ('pending', 'approved', 'rejected')),
@@ -308,7 +313,29 @@ create table if not exists profiles (
   updated_at      timestamptz not null default now()
 );
 
+-- Post-dates the first release; see the note at the top of this file about
+-- create-table blocks being a no-op on existing tables.
+alter table profiles add column if not exists is_admin boolean not null default false;
+
 create index if not exists idx_profiles_member_status on profiles(member_status);
+
+-- Is the caller a committee member? Used by every write policy below.
+--
+-- SECURITY DEFINER on purpose: it runs as the owner, so it can read profiles
+-- without tripping that table's own RLS. Without it, a policy that consults
+-- profiles while profiles is itself protected would recurse.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select coalesce(
+    (select p.is_admin from profiles p where p.id = auth.uid()),
+    false
+  );
+$$;
 
 drop trigger if exists profiles_updated_at on profiles;
 create trigger profiles_updated_at
@@ -339,6 +366,10 @@ begin
     return new;  -- admin client
   end if;
 
+  -- is_admin is the important one: without it, a rider could PATCH themselves
+  -- into the committee with the public anon key and gain write access to every
+  -- table on the site.
+  new.is_admin      := old.is_admin;
   new.member_status := old.member_status;
   new.admin_notes   := old.admin_notes;
   new.approved_at   := old.approved_at;
@@ -631,13 +662,32 @@ drop policy if exists "auth_write_ride_sponsors"    on ride_sponsors;
 drop policy if exists "auth_write_homepage_content" on homepage_content;
 drop policy if exists "auth_write_anthem_settings"   on anthem_settings;
 
-create policy "auth_write_marshals"         on marshals         for all to authenticated using (true) with check (true);
-create policy "auth_write_series"           on series           for all to authenticated using (true) with check (true);
-create policy "auth_write_sponsors"         on sponsors         for all to authenticated using (true) with check (true);
-create policy "auth_write_rides"            on rides            for all to authenticated using (true) with check (true);
-create policy "auth_write_ride_sponsors"    on ride_sponsors    for all to authenticated using (true) with check (true);
-create policy "auth_write_homepage_content" on homepage_content for all to authenticated using (true) with check (true);
-create policy "auth_write_anthem_settings"   on anthem_settings  for all to authenticated using (true) with check (true);
+-- `to authenticated` is NOT enough. Any rider who signs up on the public site
+-- is authenticated, holds the anon key that ships in every page, and could
+-- otherwise delete every ride straight from the browser console without ever
+-- visiting /admin. The middleware guards the admin PAGES; only these policies
+-- guard the DATA. They must require committee membership, not merely a login.
+create policy "auth_write_marshals"         on marshals         for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_series"           on series           for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_sponsors"         on sponsors         for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_rides"            on rides            for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_ride_sponsors"    on ride_sponsors    for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_homepage_content" on homepage_content for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_anthem_settings"  on anthem_settings  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- These four had public read and NO write policy at all, while their admin
+-- forms write through the anon client - so every save was silently refused by
+-- RLS. Adding the missing policies fixes that and gates them behind the
+-- committee flag at the same time.
+drop policy if exists "auth_write_card_settings"    on card_settings;
+drop policy if exists "auth_write_payment_settings" on payment_settings;
+drop policy if exists "auth_write_pwa_settings"     on pwa_settings;
+drop policy if exists "auth_write_push_settings"    on push_settings;
+
+create policy "auth_write_card_settings"    on card_settings    for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_payment_settings" on payment_settings for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_pwa_settings"     on pwa_settings     for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_push_settings"    on push_settings    for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- ── Profiles: each rider sees and edits only their own row ─────────────────
 -- Admin listing of all riders uses the service-role client, which bypasses RLS.
@@ -692,6 +742,35 @@ create policy "public_insert_push_subscriptions" on push_subscriptions for inser
   to anon, authenticated with check (true);
 create policy "public_delete_push_subscriptions" on push_subscriptions for delete
   to anon, authenticated using (true);
+
+-- =============================================================================
+-- Bootstrapping the first admin
+--
+-- Write access is gated on profiles.is_admin, and nobody has it on a fresh
+-- database — including you. Run this ONCE, with your own address, or the admin
+-- panel will load and then refuse to save anything.
+--
+-- An account created through the Supabase dashboard has no profiles row at all
+-- (only public sign-up creates one), so this inserts rather than updates.
+-- Deliberately not run automatically: a hardcoded email does not belong in a
+-- committed file, and "promote whoever exists" is not something a schema file
+-- should decide on its own.
+--
+--   insert into profiles (id, email, full_name, is_admin, member_status)
+--   select u.id,
+--          u.email,
+--          coalesce(u.raw_user_meta_data->>'full_name', ''),
+--          true,
+--          'approved'
+--     from auth.users u
+--    where lower(u.email) = lower('YOU@EXAMPLE.COM')
+--   on conflict (id) do update
+--      set is_admin = true,
+--          member_status = 'approved';
+--
+-- To add a committee member later, do the same with their address, or flip
+-- is_admin on their existing row once they have signed up.
+-- =============================================================================
 
 -- =============================================================================
 -- Next: run storage-policies.sql to create the storage buckets.

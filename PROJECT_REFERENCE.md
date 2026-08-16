@@ -170,16 +170,31 @@ If you add another column that only an admin may set, add it to that trigger.
 ## 5. Auth and access control
 
 - **Riders** sign up at `/signup`, sign in at `/signin`, manage themselves at `/profile`.
-- **Admins** sign in at `/login`. Admin identity is `ADMIN_EMAILS` — a comma-separated
-  list of full email addresses, read from the environment at server start. There is no
-  admin role in the database.
+- **Admins** sign in at `/login`. Admin identity is checked in **two independent places**,
+  and both must be set for an admin to be useful:
 
-  > **`ADMIN_EMAILS` must always be set.** When it is empty the middleware falls open:
-  > *any* authenticated user passes the `/admin/*` check, so any rider who signs up gets
-  > the admin panel by typing the URL. The navbar will not show them the link — that code
-  > path fails closed — which makes the hole quiet rather than obvious. Inherited from the
-  > source project, where it was deliberate backwards compatibility for single-admin
-  > installs that predate public sign-up. This platform has public sign-up.
+  | Gate | Source | Guards |
+  | --- | --- | --- |
+  | Page access | `ADMIN_EMAILS` env var | reaching `/admin/*` |
+  | Data writes | `profiles.is_admin` | every RLS write policy |
+
+  Two sources because RLS cannot read environment variables — a Postgres policy has no way
+  to consult `ADMIN_EMAILS`, so the database needs its own flag. `is_admin` is frozen by
+  `guard_profile_approval_columns`, so a rider cannot promote themselves.
+
+  **`to authenticated` is not an admin check.** Any rider who signs up is authenticated and
+  holds the anon key that ships in every page; a write policy of `using (true)` would let
+  them rewrite the site from the browser console without ever visiting `/admin`. Every write
+  policy calls `public.is_admin()`.
+
+  Bootstrapping the first admin needs a manual SQL insert — see the block at the foot of
+  `schema.sql`. A dashboard-created account has no `profiles` row, so it must insert.
+
+  > **`ADMIN_EMAILS` must always be set.** The middleware fails closed — an empty list
+  > means nobody reaches `/admin`. It used to treat empty as "everyone is an admin",
+  > inherited from the source project where it was backwards compatibility for
+  > single-admin installs predating public sign-up. That was fixed when public sign-up
+  > went live.
 - `middleware.ts` refreshes the Supabase session on every request and redirects
   unauthenticated visitors away from `/admin/*` and `/profile`.
 - RLS: public tables are readable by everyone and writable by any authenticated user;
@@ -266,10 +281,6 @@ To check a live database against the file, diff the column list PostgREST publis
 `/rest/v1/` (`Accept: application/openapi+json`) against the create-table blocks.
 
 ## 10. Known issues
-
-**An empty `ADMIN_EMAILS` opens the admin panel to every signed-in rider.** See §5. Not a
-problem while the variable is set, which it must be; called out here because the failure
-is silent.
 
 **Unknown ride and series slugs return HTTP 200.** `/rides/[id]` and `/series/[slug]`
 call `notFound()` correctly and render the 404 page, but because those routes are ISR
