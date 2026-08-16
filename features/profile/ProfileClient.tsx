@@ -134,11 +134,12 @@ function RideRow({ reg }: { reg: RideRegistrationWithRide }) {
 // ---------------------------------------------------------------------------
 
 function CardPanel({
-  card, settings, brandLogos, onRequested,
+  card, settings, brandLogos, isAdmin, onRequested,
 }: {
   card: MemberCard | null;
   settings: CardSettings;
   brandLogos: BrandLogos;
+  isAdmin: boolean;
   onRequested: () => void;
 }) {
   const [busy,    setBusy]    = useState(false);
@@ -208,7 +209,10 @@ function CardPanel({
       {!card && (
         <p className="text-sm text-hd-ink-400 leading-relaxed">
           Your card is built from the details already on this page — nothing else
-          to fill in. One click sends it to the committee.
+          to fill in.{" "}
+          {isAdmin
+            ? "As a committee member yours is issued straight away."
+            : "One click sends it to the committee."}
         </p>
       )}
 
@@ -248,8 +252,9 @@ function CardPanel({
           )}
         >
           {busy
-            ? <><Loader2 className="size-4 animate-spin" /> Sending…</>
-            : <><CreditCard className="size-4" /> Request membership card</>}
+            ? <><Loader2 className="size-4 animate-spin" /> {isAdmin ? "Issuing…" : "Sending…"}</>
+            : <><CreditCard className="size-4" />
+                {isAdmin ? "Issue my membership card" : "Request membership card"}</>}
         </button>
       )}
     </div>
@@ -395,6 +400,7 @@ export function ProfileClient({
         card={card}
         settings={cardSettings}
         brandLogos={brandLogos}
+        isAdmin={profile.isAdmin}
         onRequested={() => window.location.reload()}
       />
 

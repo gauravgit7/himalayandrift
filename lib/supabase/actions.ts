@@ -1287,7 +1287,7 @@ export async function requestMemberCard(): Promise<{
 
   const { data: row, error: profileError } = await admin
     .from("profiles")
-    .select("full_name, avatar_url, date_of_birth, blood_group, emergency_phone, license_number")
+    .select("full_name, avatar_url, date_of_birth, blood_group, emergency_phone, license_number, is_admin")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -1299,6 +1299,7 @@ export async function requestMemberCard(): Promise<{
   const p = row as {
     full_name: string | null; avatar_url: string | null; date_of_birth: string | null;
     blood_group: string | null; emergency_phone: string | null; license_number: string | null;
+    is_admin: boolean | null;
   };
 
   const missing: CardRequirement[] = [];
@@ -1333,6 +1334,32 @@ export async function requestMemberCard(): Promise<{
     };
   }
 
+  // A committee member is the person who would approve this. Queuing their own
+  // card for their own approval is a loop with one participant, so theirs is
+  // issued on the spot, card number and all.
+  const selfIssue = !!p.is_admin;
+
+  let cardNumber: string | null = null;
+  let validUntil: string | null = null;
+
+  if (selfIssue) {
+    const { data: settings } = await admin
+      .from("card_settings").select("validity_years").eq("id", 1).single();
+
+    const yearShort = String(new Date().getFullYear()).slice(2);
+    const prefix    = `${MEMBER_CARD_PREFIX}-${yearShort}-`;
+    const { count } = await admin
+      .from("member_cards")
+      .select("id", { count: "exact", head: true })
+      .like("card_number", `${prefix}%`);
+
+    cardNumber = `${prefix}${String((count ?? 0) + 1).padStart(5, "0")}`;
+
+    const until = new Date();
+    until.setFullYear(until.getFullYear() + (settings?.validity_years ?? 2));
+    validUntil = until.toISOString().slice(0, 10);
+  }
+
   for (let attempt = 0; attempt < 5; attempt++) {
     const accessCode = generateAccessCode();
     const { error } = await admin.from("member_cards").insert({
@@ -1347,7 +1374,10 @@ export async function requestMemberCard(): Promise<{
       // Requesting from your own profile page is the consent - the button says
       // what it does, and the details being submitted are on screen above it.
       consent_accepted: true,
-      status:           "pending",
+      status:           selfIssue ? "approved" : "pending",
+      card_number:      cardNumber,
+      valid_until:      validUntil,
+      approved_at:      selfIssue ? new Date().toISOString() : null,
     });
 
     if (!error) {

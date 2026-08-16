@@ -425,21 +425,18 @@ export async function getNavbarUser(): Promise<{
 
   const { data } = await supabase
     .from("profiles")
-    .select("full_name, avatar_url")
+    .select("full_name, avatar_url, is_admin")
     .eq("id", user.id)
     .maybeSingle();
 
-  // Require ADMIN_EMAILS to be explicitly set and matching — if not set, no one
-  // is treated as admin on the public site (avoids showing Admin Panel link to riders).
-  const adminEmailsEnv = process.env.ADMIN_EMAILS;
-  const isAdmin = !!adminEmailsEnv &&
-    adminEmailsEnv.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
-      .includes((user.email ?? "").toLowerCase());
+  const row = data as { full_name?: string; avatar_url?: string | null; is_admin?: boolean } | null;
 
   return {
-    fullName:  data?.full_name  ?? (user.user_metadata?.full_name as string | undefined) ?? "",
-    avatarUrl: data?.avatar_url ?? null,
-    isAdmin,
+    fullName:  row?.full_name  ?? (user.user_metadata?.full_name as string | undefined) ?? "",
+    avatarUrl: row?.avatar_url ?? null,
+    // Same source as the middleware and RLS. ADMIN_EMAILS only bootstraps this
+    // at sign-in; it is never consulted at render time.
+    isAdmin:   !!row?.is_admin,
   };
 }
 
