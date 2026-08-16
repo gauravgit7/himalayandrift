@@ -6,6 +6,10 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { APP_META }      from "@/lib/constants";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AnthemProvider } from "@/features/anthem/AnthemProvider";
+import { AnthemDock }     from "@/features/anthem/AnthemDock";
+import { AnthemLyrics }   from "@/features/anthem/AnthemLyrics";
+import { getAnthemSettings, getBrandLogos } from "@/lib/supabase/queries";
 
 // ---------------------------------------------------------------------------
 // Metadata
@@ -70,11 +74,19 @@ export const viewport: Viewport = {
 // Layout
 // ---------------------------------------------------------------------------
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Fetched here rather than in a page because the player has to outlive every
+  // route change. Both queries are React-cache()d, so the public layout's own
+  // call to getBrandLogos costs nothing extra.
+  const [anthem, brandLogos] = await Promise.all([
+    getAnthemSettings(),
+    getBrandLogos(),
+  ]);
+
   return (
     // suppressHydrationWarning: the inline script below may add "light" to the
     // class list before React hydrates, so the server/client class can differ.
@@ -93,7 +105,13 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider>
-          {children}
+          <AnthemProvider anthem={anthem}>
+            {children}
+            {/* Both render nothing until the anthem is switched on and started,
+                so every other page is untouched. */}
+            <AnthemDock logoUrl={brandLogos.logoUrl} />
+            <AnthemLyrics />
+          </AnthemProvider>
         </ThemeProvider>
       </body>
     </html>

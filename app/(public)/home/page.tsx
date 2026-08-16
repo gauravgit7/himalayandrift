@@ -15,7 +15,6 @@ import { rideIsUpcoming }       from "@/utils/date";
 import {
   getHomepageContent,
   getRides,
-  getAnthemSettings,
   getSponsors,
 } from "@/lib/supabase/queries";
 
@@ -83,8 +82,6 @@ export default async function HomePage() {
   // Weather for the hero's featured ride. Usually already in weatherRides, so
   // reuse that result rather than paying for a second lookup; only fetch when
   // the featured ride is further out than the three soonest.
-  const anthem = await getAnthemSettings();
-
   const featuredWeather = featuredRide
     ? weatherItems.find((w) => w.ride.id === featuredRide.id)?.weather
       ?? (await fetchWeatherForRides([featuredRide]))[0]
@@ -99,7 +96,6 @@ export default async function HomePage() {
         brandLogos={homepage.brandLogos}
         nextRide={nextRide}
         featuredWeather={featuredWeather}
-        anthem={anthem}
         stats={{
           totalRides:    stats.total,
           upcomingRides: stats.upcoming,
