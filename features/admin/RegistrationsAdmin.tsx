@@ -11,6 +11,7 @@ import {
   CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, Search,
   Phone, Mail, Bike, Users, ShieldAlert, Wallet, Receipt, Trash2,
   AlertCircle, Save, X, StickyNote, ExternalLink, ClipboardList,
+  BadgeCheck, HelpCircle,
 } from "lucide-react";
 
 import { cn } from "@/utils/cn";
@@ -93,6 +94,23 @@ function RegistrationCard({
             {r.pillionCount > 0 && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-hd-slate-900/60 text-hd-slate-300 border border-hd-slate-700/50">
                 <Users className="size-2.5" />+{r.pillionCount}
+              </span>
+            )}
+            {/* The rate this rider claimed. Green where the system could check
+                it — an approved card on their own account — amber where it is
+                still only a claim, which is the one you actually have to look
+                into before approving a reduced fee. */}
+            {r.tierLabel && (
+              <span className={cn(
+                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border",
+                r.tierVerified
+                  ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/40"
+                  : "bg-amber-950/40 text-amber-400 border-amber-800/40",
+              )}>
+                {r.tierVerified
+                  ? <BadgeCheck className="size-2.5" />
+                  : <HelpCircle className="size-2.5" />}
+                {r.tierLabel}
               </span>
             )}
           </div>

@@ -8,6 +8,9 @@ import type {
 } from "@/types";
 import { RIDE_STATUSES, RIDE_PRIORITIES } from "@/lib/constants";
 import { rideIsActive, rideIsUpcoming, rideIsPast } from "@/utils/date";
+import {
+  standardPrice, listPrice, usableTiers, isPaidRide,
+} from "@/lib/rides/pricing";
 
 // ---------------------------------------------------------------------------
 // Status helpers
@@ -148,18 +151,27 @@ export function computeRideStats(rides: Ride[]): RideStats {
  * when one marshal collects for one ride.
  */
 export function resolvePaymentDetails(
-  ride: Pick<Ride, "registrationFee" | "paymentQrUrl" | "paymentInstructions">,
+  ride: Pick<Ride,
+    "registrationFee" | "registrationDiscount" | "registrationTiers" |
+    "paymentQrUrl" | "paymentInstructions">,
   settings: PaymentSettings,
 ): ResolvedPaymentDetails {
-  const fee = ride.registrationFee;
+  const pricing = {
+    registrationFee:      ride.registrationFee,
+    registrationDiscount: ride.registrationDiscount,
+    registrationTiers:    ride.registrationTiers,
+  };
   return {
     qrUrl:               ride.paymentQrUrl       ?? settings.qrUrl,
     paymentInstructions: ride.paymentInstructions ?? settings.paymentInstructions,
     currencyLabel:       settings.currencyLabel,
-    fee,
+    // What a rider claiming no class pays: the list fee less any discount.
+    fee:                 standardPrice(pricing),
+    listFee:             listPrice(pricing),
     // A fee of 0 is a free ride, not a paid ride costing nothing - the form
     // skips the payment step and the screenshot requirement entirely.
-    isPaid:              fee !== null && fee > 0,
+    isPaid:              isPaidRide(pricing),
+    tiers:               usableTiers(pricing),
   };
 }
 

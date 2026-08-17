@@ -7,7 +7,7 @@
 
 import { useState }  from "react";
 import { useRouter } from "next/navigation";
-import { Save, ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Save, ArrowLeft, AlertCircle, CheckCircle2, Plus, Minus, Copy } from "lucide-react";
 import { ImageUpload }  from "@/components/ui/ImageUpload";
 import { RouteBuilder } from "@/features/admin/RouteBuilder";
 import { cn }          from "@/utils/cn";
@@ -17,6 +17,7 @@ import {
 import { saveRide }  from "@/lib/supabase/actions";
 import type {
   Ride, RideType, RideStatus, RidePriority, Marshal, Series, RouteData,
+  RidePriceTier,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -31,6 +32,9 @@ interface RideFormProps {
   rideId?:     string;
   marshals:    Marshal[];
   series:      Series[];
+  /** The club-wide set of rider classes, offered as a one-click starting point
+   *  so a new ride does not need them retyped. */
+  defaultTiers?: RidePriceTier[];
 }
 
 interface FormState {
@@ -53,6 +57,7 @@ interface FormState {
   // Built-in registration
   registrationOpen:     boolean;
   registrationFee:      string;
+  registrationDiscount: string;
   registrationCapacity: string;
   paymentQrUrl:         string | null;
   paymentInstructions:  string;
@@ -82,6 +87,7 @@ function toFormState(data?: Partial<Ride>): FormState {
     bannerImageUrl:   data?.bannerImageUrl   ?? null,
     registrationOpen:     data?.registrationOpen ?? false,
     registrationFee:      data?.registrationFee != null      ? String(data.registrationFee) : "",
+    registrationDiscount: data?.registrationDiscount != null ? String(data.registrationDiscount) : "",
     registrationCapacity: data?.registrationCapacity != null ? String(data.registrationCapacity) : "",
     paymentQrUrl:         data?.paymentQrUrl        ?? null,
     paymentInstructions:  data?.paymentInstructions ?? "",
@@ -128,10 +134,13 @@ const textareaClass = cn(
 // Main component
 // ---------------------------------------------------------------------------
 
-export function RideForm({ mode, initialData, rideId, marshals, series }: RideFormProps) {
+export function RideForm({
+  mode, initialData, rideId, marshals, series, defaultTiers = [],
+}: RideFormProps) {
   const router = useRouter();
 
   const [form,        setForm]        = useState<FormState>(() => toFormState(initialData));
+  const [tiers,       setTiers]       = useState<RidePriceTier[]>(initialData?.registrationTiers ?? []);
   const [routeData,   setRouteData]   = useState<RouteData | null>(initialData?.routeData ?? null);
   const [errors,      setErrors]      = useState<Partial<Record<keyof FormState, string>>>({});
   const [saving,      setSaving]      = useState(false);
@@ -149,6 +158,14 @@ export function RideForm({ mode, initialData, rideId, marshals, series }: RideFo
     set("startDate", v);
     if (!form.endDate || form.endDate < v) set("endDate", v);
   };
+
+  const patchTier = (i: number, patch: Partial<RidePriceTier>) =>
+    setTiers((prev) => prev.map((t, j) => (j === i ? { ...t, ...patch } : t)));
+
+  // Parsed once for the live "everyone pays…" line and the default price on a
+  // freshly added rate. NaN on an empty field, so || 0 rather than ?? 0.
+  const feeNum      = parseFloat(form.registrationFee)      || 0;
+  const discountNum = parseFloat(form.registrationDiscount) || 0;
 
   // ── Validation ─────────────────────────────────────────────────────────────
   const validate = (): boolean => {
@@ -191,6 +208,8 @@ export function RideForm({ mode, initialData, rideId, marshals, series }: RideFo
         routeData:        routeData,
         registrationOpen:     form.registrationOpen,
         registrationFee:      form.registrationFee      ? parseFloat(form.registrationFee)      || null : null,
+        registrationDiscount: form.registrationDiscount ? parseFloat(form.registrationDiscount) || null : null,
+        registrationTiers:    tiers.filter((t) => t.label.trim()),
         registrationCapacity: form.registrationCapacity ? parseInt(form.registrationCapacity, 10) || null : null,
         paymentQrUrl:         form.paymentQrUrl,
         paymentInstructions:  form.paymentInstructions || null,
@@ -511,6 +530,24 @@ export function RideForm({ mode, initialData, rideId, marshals, series }: RideFo
                 </p>
               </FieldGroup>
 
+              <FieldGroup label="Discount">
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.registrationDiscount}
+                  onChange={(e) => set("registrationDiscount", e.target.value)}
+                  placeholder="Leave empty for none"
+                  className={inputClass}
+                />
+                <p className="text-[11px] text-hd-ink-500">
+                  Comes off the fee for everybody.{" "}
+                  {feeNum > 0 && discountNum > 0
+                    ? `Everyone pays Rs ${Math.max(0, feeNum - discountNum).toLocaleString("en-IN")}, against Rs ${feeNum.toLocaleString("en-IN")} struck through.`
+                    : "Kept separate from the fee so the page can still show what it was."}
+                </p>
+              </FieldGroup>
+
               <FieldGroup label="Capacity">
                 <input
                   type="number"
@@ -524,6 +561,104 @@ export function RideForm({ mode, initialData, rideId, marshals, series }: RideFo
                   Registration closes once this many places are taken.
                 </p>
               </FieldGroup>
+            </div>
+
+            {/* ── Rider classes ──
+                 The list of rates a rider can claim on the sign-up form. Empty
+                 means one price for everybody and the form asks nothing. */}
+            <div className="pl-4 space-y-3">
+              <div>
+                <p className="text-xs font-semibold text-hd-ink-400 uppercase tracking-wide mb-1">
+                  Rates by rider class
+                </p>
+                <p className="text-[11px] text-hd-ink-500">
+                  Add a rate and the sign-up form asks which one applies. Prices
+                  are absolute, not discounts — a number that cannot drift when
+                  the fee above is edited. Leave this empty for one price for all.
+                </p>
+              </div>
+
+              {tiers.map((tier, i) => (
+                <div key={tier.id} className="p-3 rounded-xl bg-hd-ink-900/60 border border-hd-ink-800 space-y-2.5">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <input
+                        value={tier.label}
+                        onChange={(e) => patchTier(i, { label: e.target.value })}
+                        placeholder="HD Member"
+                        className={cn(inputClass, "h-9")}
+                      />
+                      <input
+                        value={tier.note ?? ""}
+                        onChange={(e) => patchTier(i, { note: e.target.value })}
+                        placeholder="Who this is for — shown under the label"
+                        className={cn(inputClass, "h-9 text-xs")}
+                      />
+                    </div>
+                    <div className="w-28 shrink-0">
+                      <span className="block text-[9px] uppercase tracking-wide text-hd-ink-500 mb-1">
+                        Pays
+                      </span>
+                      <input
+                        type="number" min={0} step="0.01"
+                        value={String(tier.price)}
+                        onChange={(e) => patchTier(i, { price: Number(e.target.value) || 0 })}
+                        className={cn(inputClass, "h-9")}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTiers((prev) => prev.filter((_, j) => j !== i))}
+                      aria-label="Remove this rate"
+                      className="mt-5 size-9 shrink-0 flex items-center justify-center rounded-lg border border-hd-ink-700 text-hd-ink-500 hover:text-hd-ember-400 hover:border-hd-ember-800 transition-colors"
+                    >
+                      <Minus className="size-3.5" />
+                    </button>
+                  </div>
+
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={tier.requiresMemberCard}
+                      onChange={(e) => patchTier(i, { requiresMemberCard: e.target.checked })}
+                      className="mt-0.5 size-3.5 accent-hd-ember-600"
+                    />
+                    <span className="text-[11px] text-hd-ink-400 leading-relaxed">
+                      Needs an approved membership card. This is the one claim the
+                      system can actually check — it is enforced at sign-up rather
+                      than taken on trust. Everything else is recorded as a claim
+                      for you to look at on the roster.
+                    </span>
+                  </label>
+                </div>
+              ))}
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTiers((prev) => [...prev, {
+                    id: `t${Date.now().toString(36)}`,
+                    label: "", note: null, price: feeNum || 0, requiresMemberCard: false,
+                  }])}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-hd-ink-700 hover:border-hd-ink-500 text-xs font-semibold text-hd-ink-300 hover:text-hd-ink-100 transition-colors"
+                >
+                  <Plus className="size-3.5" /> Add a rate
+                </button>
+
+                {/* The club-wide set, so "HD Member / Veteran / Marshal riding
+                    along" is typed once and copied per ride. Copied, not
+                    referenced: editing the defaults must never reprice a ride
+                    whose sign-ups are already open. */}
+                {defaultTiers.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setTiers(defaultTiers.map((t) => ({ ...t })))}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-hd-ink-700 hover:border-hd-ember-700 text-xs font-semibold text-hd-ink-400 hover:text-hd-ember-300 transition-colors"
+                  >
+                    <Copy className="size-3.5" /> Load the club defaults
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="pl-4 space-y-4">

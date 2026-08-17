@@ -492,7 +492,7 @@ export const getPaymentSettings = cache(async (): Promise<PaymentSettings> => {
 
   if (error) console.error("[getPaymentSettings]", error.message);
   if (!data) {
-    return { qrUrl: null, paymentInstructions: "", currencyLabel: "NPR" };
+    return { qrUrl: null, paymentInstructions: "", currencyLabel: "NPR", defaultTiers: [] };
   }
   return mapPaymentSettings(data as DbPaymentSettings);
 });

@@ -167,6 +167,20 @@ create table if not exists rides (
   -- Set when a particular marshal is collecting for this ride.
   payment_qr_url         text,
   payment_instructions   text,
+
+  -- A flat amount off the list fee, for everyone. Kept separate from the fee
+  -- itself so the page can honestly show "was 10,000, now 8,000" - one edited
+  -- number loses the fact that there is a discount at all.
+  registration_discount  numeric(10,2),
+  -- Rider classes with their own price: members, veterans, marshals riding
+  -- along rather than leading. Shape:
+  --   [{ id, label, note, price, requiresMemberCard }]
+  -- Empty means one price for everybody and the form asks nothing.
+  --
+  -- jsonb rather than a table on purpose: these are only ever read as a whole
+  -- set alongside their ride, never queried across rides, and a ride's price
+  -- list is part of that ride's own record.
+  registration_tiers     jsonb not null default '[]',
   route_data          jsonb,   -- RouteData  { waypoints, totalDistanceKm, … }
   itinerary           jsonb,   -- ItineraryDay[]
   marshal_id          uuid references marshals(id) on delete set null,
@@ -213,6 +227,12 @@ create index if not exists idx_rides_ride_type   on rides(ride_type);
 create index if not exists idx_rides_status      on rides(status);
 create index if not exists idx_rides_is_featured on rides(is_featured);
 create index if not exists idx_rides_series      on rides(series_id);
+
+-- Tiered ride pricing post-dates the first release. `create table if not
+-- exists` is a no-op on a table that already exists, so the block above only
+-- reaches brand-new databases; these reach the rest.
+alter table rides add column if not exists registration_discount numeric(10,2);
+alter table rides add column if not exists registration_tiers jsonb not null default '[]';
 
 drop trigger if exists rides_updated_at on rides;
 create trigger rides_updated_at
@@ -632,10 +652,17 @@ create table if not exists payment_settings (
   payment_instructions text not null default '',
   -- Shown next to the fee, e.g. "NPR". Not a currency conversion feature.
   currency_label       text not null default 'NPR',
+  -- A reusable set of rider classes, so a new ride does not need "HD Member /
+  -- Veteran / Marshal riding along" retyped from scratch. The ride form copies
+  -- these in; the ride then owns its own copy, so editing the defaults never
+  -- silently reprices a ride whose sign-ups are already open.
+  default_tiers        jsonb not null default '[]',
   updated_at           timestamptz not null default now()
 );
 
 insert into payment_settings (id) values (1) on conflict do nothing;
+
+alter table payment_settings add column if not exists default_tiers jsonb not null default '[]';
 
 drop trigger if exists payment_settings_updated_at on payment_settings;
 create trigger payment_settings_updated_at
@@ -673,7 +700,20 @@ create table if not exists ride_registrations (
   pillion_count       integer not null default 0 check (pillion_count >= 0),
   notes               text,
 
+  -- Which rider class was claimed, and what it cost. The label is copied
+  -- rather than referenced: a ride's price list can be edited after sign-ups
+  -- open, and the roster has to keep saying what was actually owed.
+  --
+  -- tier_verified is true only where the system could CHECK the claim - today
+  -- that means an approved membership card on the rider's own account. An
+  -- unverifiable claim is still recorded; it is flagged for the committee
+  -- rather than quietly trusted.
+  tier_id             text,
+  tier_label          text,
+  tier_verified       boolean not null default false,
+
   -- Payment. All null on a free ride.
+
   amount_paid         numeric(10,2),
   payment_reference   text,   -- transaction ID, if the rider quotes one
   payment_screenshot_url text,
@@ -692,6 +732,10 @@ create table if not exists ride_registrations (
 create index if not exists idx_ride_registrations_ride   on ride_registrations(ride_id);
 create index if not exists idx_ride_registrations_status on ride_registrations(status);
 create index if not exists idx_ride_registrations_user   on ride_registrations(user_id);
+
+alter table ride_registrations add column if not exists tier_id text;
+alter table ride_registrations add column if not exists tier_label text;
+alter table ride_registrations add column if not exists tier_verified boolean not null default false;
 
 -- One account cannot register twice for the same ride. Guests registering
 -- without an account are not constrained - user_id is null for them, and

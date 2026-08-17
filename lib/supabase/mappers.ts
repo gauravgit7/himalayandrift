@@ -14,6 +14,7 @@ import type {
   AnthemSettings, AnthemLyricLine, AnthemTrack,
   Product, ProductVariant, ShopSettings, ShopOrder, ShopOrderItem, ShopOrderStatus,
 } from "@/types";
+import { parseTiers } from "@/lib/rides/pricing";
 
 /** Postgres `numeric` arrives over PostgREST as a string, to avoid the
  *  precision loss of a JSON float. Anything unparseable becomes null rather
@@ -23,6 +24,7 @@ function toNumber(value: number | string | null | undefined): number | null {
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : null;
 }
+
 
 // ---------------------------------------------------------------------------
 // Raw DB row types (snake_case)
@@ -91,6 +93,8 @@ export interface DbRide {
   registration_link: string | null;
   registration_open:      boolean | null;
   registration_fee:       number | string | null;  // numeric arrives as a string
+  registration_discount:  number | string | null;
+  registration_tiers:     unknown;
   registration_capacity:  number | null;
   payment_qr_url:         string | null;
   payment_instructions:   string | null;
@@ -180,6 +184,8 @@ export function mapRide(row: DbRide): Ride {
     registrationLink: row.registration_link,
     registrationOpen:     row.registration_open ?? false,
     registrationFee:      toNumber(row.registration_fee),
+    registrationDiscount: toNumber(row.registration_discount),
+    registrationTiers:    parseTiers(row.registration_tiers),
     registrationCapacity: row.registration_capacity ?? null,
     paymentQrUrl:         row.payment_qr_url ?? null,
     paymentInstructions:  row.payment_instructions ?? null,
@@ -385,6 +391,9 @@ export interface DbRideRegistration {
   updated_at:              string;
   approved_at:             string | null;
   rejected_at:             string | null;
+  tier_id:                 string | null;
+  tier_label:              string | null;
+  tier_verified:           boolean | null;
   // FK join
   rides?:                  DbRide | null;
 }
@@ -413,6 +422,9 @@ export function mapRideRegistration(row: DbRideRegistration): RideRegistration {
     updatedAt:            row.updated_at,
     approvedAt:           row.approved_at ?? null,
     rejectedAt:           row.rejected_at ?? null,
+    tierId:               row.tier_id ?? null,
+    tierLabel:            row.tier_label ?? null,
+    tierVerified:         row.tier_verified ?? false,
   };
 }
 
@@ -425,6 +437,7 @@ export interface DbPaymentSettings {
   qr_url:               string | null;
   payment_instructions: string;
   currency_label:       string;
+  default_tiers:        unknown;
   updated_at:           string;
 }
 
@@ -433,6 +446,7 @@ export function mapPaymentSettings(row: DbPaymentSettings): PaymentSettings {
     qrUrl:               row.qr_url ?? null,
     paymentInstructions: row.payment_instructions ?? "",
     currencyLabel:       row.currency_label || "NPR",
+    defaultTiers:        parseTiers(row.default_tiers),
   };
 }
 

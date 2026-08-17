@@ -12,9 +12,13 @@ import { revalidatePath } from "next/cache";
 import { redirect }       from "next/navigation";
 import { createClient }   from "@/lib/supabase/server";
 import { requireAdmin }   from "@/lib/supabase/guards";
+import { parseTiers, priceForTier } from "@/lib/rides/pricing";
 import { ROUTES }         from "@/lib/constants";
 import type { AccountCandidate } from "@/lib/membership/link";
-import type { HomepageContent, RouteData, MemberCard, CardSettings, CardRequirement } from "@/types";
+import type {
+  HomepageContent, RouteData, MemberCard, CardSettings, CardRequirement,
+  RidePriceTier,
+} from "@/types";
 import type { PushOptInSettings }          from "@/components/shared/PushOptIn";
 import type { PwaSettings }               from "@/features/admin/PwaSettingsAdmin";
 import { MEMBER_CARD_PREFIX }             from "@/lib/constants";
@@ -54,6 +58,9 @@ export interface RidePayload {
   // Built-in registration
   registrationOpen:     boolean;
   registrationFee:      number | null;
+  registrationDiscount: number | null;
+  /** Rider classes with their own price. Re-parsed server-side. */
+  registrationTiers?:   RidePriceTier[];
   registrationCapacity: number | null;
   paymentQrUrl:         string | null;
   paymentInstructions:  string | null;
@@ -94,6 +101,13 @@ export async function saveRide(
     registration_fee:      payload.registrationFee && payload.registrationFee > 0
                              ? payload.registrationFee
                              : null,
+    registration_discount: payload.registrationDiscount && payload.registrationDiscount > 0
+                             ? payload.registrationDiscount
+                             : null,
+    // Re-parsed rather than stored as sent: it is jsonb, so the column will
+    // accept whatever shape arrives, and a malformed rate would only be found
+    // later by a rider staring at "Rs NaN" on the sign-up form.
+    registration_tiers:    parseTiers(payload.registrationTiers ?? []),
     registration_capacity: payload.registrationCapacity && payload.registrationCapacity > 0
                              ? payload.registrationCapacity
                              : null,
@@ -996,6 +1010,9 @@ export interface RideRegistrationPayload {
   notes?:          string | null;
   paymentReference?:     string | null;
   paymentScreenshotUrl?: string | null;
+  /** Which rider class the registrant says applies to them. An id only — the
+   *  price behind it is looked up here, never sent. */
+  tierId?:         string | null;
 }
 
 /**
@@ -1018,17 +1035,22 @@ export async function submitRideRegistration(
   // -- Re-read the ride; never trust the client's idea of it -----------------
   const { data: rideRow, error: rideError } = await admin
     .from("rides")
-    .select("id, slug, status, end_date, registration_open, registration_fee, registration_capacity")
+    .select(
+      "id, slug, status, end_date, registration_open, registration_fee, " +
+      "registration_discount, registration_tiers, registration_capacity",
+    )
     .eq("id", payload.rideId)
     .maybeSingle();
 
   if (rideError) return { accessCode: null, error: rideError.message };
   if (!rideRow)  return { accessCode: null, error: "That ride no longer exists." };
 
-  const ride = rideRow as {
+  const ride = rideRow as unknown as {
     id: string; slug: string | null; status: string; end_date: string;
     registration_open: boolean;
     registration_fee: number | string | null;
+    registration_discount: number | string | null;
+    registration_tiers: unknown;
     registration_capacity: number | null;
   };
 
@@ -1042,7 +1064,48 @@ export async function submitRideRegistration(
     return { accessCode: null, error: "This ride has already finished." };
   }
 
-  const fee    = ride.registration_fee === null ? null : Number(ride.registration_fee);
+  // -- What this rider actually owes ------------------------------------------
+  // The form was allowed to show a price. It is not allowed to decide one: only
+  // a tier id crosses the wire, and the number behind it is looked up here.
+  const pricing = {
+    registrationFee:      ride.registration_fee === null ? null : Number(ride.registration_fee),
+    registrationDiscount: ride.registration_discount === null ? null : Number(ride.registration_discount),
+    registrationTiers:    parseTiers(ride.registration_tiers),
+  };
+
+  const { price: rawPrice, tier } = priceForTier(pricing, payload.tierId ?? null);
+
+  // A membership-backed class is the one privilege the system can actually
+  // check, now that cards are linked to accounts. Everything else is a claim
+  // recorded for the committee to look at, not a discount silently granted.
+  let tierVerified = false;
+  const sessionClient = await createClient();
+  const { data: { user: claimant } } = await sessionClient.auth.getUser();
+
+  if (tier?.requiresMemberCard) {
+    if (!claimant) {
+      return {
+        accessCode: null,
+        error: `"${tier.label}" is for signed-in members. Sign in first, or pick another option.`,
+      };
+    }
+    const { data: card } = await admin
+      .from("member_cards")
+      .select("id")
+      .eq("user_id", claimant.id)
+      .eq("status", "approved")
+      .maybeSingle();
+
+    if (!card) {
+      return {
+        accessCode: null,
+        error: `"${tier.label}" needs an approved membership card on your account. Request one from your profile, or pick another option.`,
+      };
+    }
+    tierVerified = true;
+  }
+
+  const fee    = rawPrice;
   const isPaid = fee !== null && fee > 0;
 
   if (isPaid && !payload.paymentScreenshotUrl) {
@@ -1066,8 +1129,8 @@ export async function submitRideRegistration(
   }
 
   // -- Link to the signed-in rider, if there is one --------------------------
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Already looked up above, for the membership-card check.
+  const user = claimant;
 
   if (user) {
     const { data: existing } = await admin
@@ -1095,6 +1158,9 @@ export async function submitRideRegistration(
     // Taken from the ride, not the form, so the roster records what was
     // actually owed even if the fee is edited afterwards.
     amount_paid:            isPaid ? fee : null,
+    tier_id:                tier?.id ?? null,
+    tier_label:             tier?.label ?? null,
+    tier_verified:          tierVerified,
     payment_reference:      isPaid ? payload.paymentReference?.trim() || null : null,
     payment_screenshot_url: isPaid ? payload.paymentScreenshotUrl     || null : null,
     status:           "pending",
@@ -1240,6 +1306,8 @@ export interface PaymentSettingsPayload {
   qrUrl:               string | null;
   paymentInstructions: string;
   currencyLabel:       string;
+  /** The reusable rider classes the ride form copies in. */
+  defaultTiers?:       RidePriceTier[];
 }
 
 /** Admin: save the club-wide payment details. */
@@ -1255,6 +1323,9 @@ export async function savePaymentSettings(
       qr_url:               payload.qrUrl || null,
       payment_instructions: payload.paymentInstructions.trim(),
       currency_label:       payload.currencyLabel.trim() || "NPR",
+      // Re-parsed rather than stored as sent: jsonb accepts any shape, and a
+      // malformed class would only surface later on a rider's sign-up form.
+      default_tiers:        parseTiers(payload.defaultTiers ?? []),
       updated_at:           new Date().toISOString(),
     });
 

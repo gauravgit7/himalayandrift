@@ -199,6 +199,38 @@ the photos. `lib/membership/link.ts` is the plumbing around that decision — cl
 backfill (empty profile fields only, never overwriting the rider's own answer), rank
 candidates, link, unlink.
 
+### Ride pricing
+
+One ride can charge several prices. `rides.registration_fee` is the list fee,
+`registration_discount` is a flat amount off it for everybody, and
+`registration_tiers` (jsonb) is a set of **rider classes** each with its own absolute
+price — members, veterans, a marshal riding along rather than leading.
+
+All of it resolves through [`lib/rides/pricing.ts`](lib/rides/pricing.ts), which imports
+nothing. Two rules:
+
+- **Prices are absolute per tier, not discounts off the fee.** An absolute number is the
+  one thing that cannot drift when the fee above it is edited.
+- **The discount is stored separately from the fee**, so the page can honestly show
+  "was 10,000, now 8,000". Baking it into the fee loses the fact that there is a discount.
+
+**A tier is claimed, not granted.** The rider picks the class they say applies; the
+browser sends an id and nothing else, and `submitRideRegistration` looks the price up
+from the ride. `requires_member_card` is the one privilege the system can actually
+check — it verifies an approved card on the claimant's own account and refuses the rate
+otherwise. Every other claim is recorded with `tier_verified = false` and shown amber on
+the roster for a human to look into before approving a reduced fee. Anything else would
+mean either trusting a radio button with the club's money or building an entitlements
+system nobody asked for.
+
+`payment_settings.default_tiers` holds a reusable set the ride form copies in with one
+click. **Copied, not referenced** — editing the defaults must never silently reprice a
+ride whose sign-ups are already open. The registration stores `tier_label` for the same
+reason: the roster has to keep saying what was actually owed.
+
+A tier priced at zero makes that rider's registration skip the payment step entirely,
+even on a paid ride. That is the point of a marshal rate.
+
 ### Music
 
 `anthem_settings` is now just `is_enabled` — the master switch for whether the player

@@ -130,8 +130,12 @@ export interface Ride {
 
   /** Built-in registration: off until the organiser opens sign-ups. */
   registrationOpen: boolean;
-  /** Null or 0 means a free ride — the form skips the payment step. */
+  /** The list fee. Null or 0 means a free ride — the form skips payment. */
   registrationFee: number | null;
+  /** A flat amount off the list fee, for everyone. Null for no discount. */
+  registrationDiscount: number | null;
+  /** Rider classes with their own price. Empty means one price for everybody. */
+  registrationTiers: RidePriceTier[];
   /** Null means unlimited. Counts pending + approved. */
   registrationCapacity: number | null;
   /** Per-ride overrides for the club-wide payment details. */
@@ -290,6 +294,12 @@ export interface RideRegistration {
   updatedAt:       string;
   approvedAt:      string | null;
   rejectedAt:      string | null;
+  /** The rider class claimed at sign-up, if the ride offered any. */
+  tierId:          string | null;
+  tierLabel:       string | null;
+  /** True only where the system could check the claim — today, an approved
+   *  membership card on the rider's own account. */
+  tierVerified:    boolean;
 }
 
 /** A registration with the ride it belongs to, for the admin list. */
@@ -425,11 +435,41 @@ export interface CartLine {
   quantity:  number;
 }
 
+// ---------------------------------------------------------------------------
+// Ride pricing
+// ---------------------------------------------------------------------------
+
+/**
+ * One rider class with its own price for one ride: members, veterans, marshals
+ * riding along rather than leading.
+ *
+ * A tier is CLAIMED at registration, not granted. The rider picks the one they
+ * say applies; the system verifies what it can and flags the rest. Anything
+ * else would mean either trusting a form field with the club's money, or
+ * building an entitlements system nobody asked for.
+ */
+export interface RidePriceTier {
+  /** Stable within a ride. Stored on the registration so the roster still
+   *  reads correctly after the price list is edited. */
+  id:    string;
+  label: string;
+  /** The line under the label — who this is actually for. */
+  note:  string | null;
+  /** What this class pays, absolute. Not a discount off the fee: an absolute
+   *  number is the one thing that cannot drift when the fee is edited. */
+  price: number;
+  /** Checkable: true only where the rider is signed in and holds an approved
+   *  membership card. Everything else stays a claim for a human to look at. */
+  requiresMemberCard: boolean;
+}
+
 /** Club-wide payment details, overridable per ride. */
 export interface PaymentSettings {
   qrUrl:               string | null;
   paymentInstructions: string;
   currencyLabel:       string;
+  /** A reusable set of rider classes the ride form can copy in. */
+  defaultTiers:        RidePriceTier[];
 }
 
 /** What the registration form actually shows for one ride, after the
@@ -438,8 +478,13 @@ export interface ResolvedPaymentDetails {
   qrUrl:               string | null;
   paymentInstructions: string;
   currencyLabel:       string;
+  /** What a rider with no claimed class pays: the list fee less any discount. */
   fee:                 number | null;
+  /** The list fee before the discount, when there is one. Null otherwise, so
+   *  the form knows whether there is a "was" figure worth striking through. */
+  listFee:             number | null;
   isPaid:              boolean;
+  tiers:               RidePriceTier[];
 }
 
 /** A profile field the membership card needs. Reported back by

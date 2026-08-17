@@ -10,13 +10,13 @@
 
 import { useState }   from "react";
 import Image          from "next/image";
-import { Save, CheckCircle2, AlertCircle, Wallet } from "lucide-react";
+import { Save, CheckCircle2, AlertCircle, Wallet, Plus, Minus, BadgeCheck } from "lucide-react";
 
 import { cn }                      from "@/utils/cn";
 import { ImageUpload }             from "@/components/ui/ImageUpload";
 import { savePaymentSettings }     from "@/lib/supabase/actions";
 import { STORAGE_BUCKETS }         from "@/lib/constants";
-import type { PaymentSettings }    from "@/types";
+import type { PaymentSettings, RidePriceTier } from "@/types";
 
 const inputCls = cn(
   "w-full h-10 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm",
@@ -32,9 +32,13 @@ export function PaymentSettingsAdmin({ initialSettings }: Props) {
   const [qrUrl,        setQrUrl]        = useState(initialSettings.qrUrl);
   const [instructions, setInstructions] = useState(initialSettings.paymentInstructions);
   const [currency,     setCurrency]     = useState(initialSettings.currencyLabel);
+  const [tiers,        setTiers]        = useState<RidePriceTier[]>(initialSettings.defaultTiers);
   const [saving,       setSaving]       = useState(false);
   const [saved,        setSaved]        = useState(false);
   const [error,        setError]        = useState<string | null>(null);
+
+  const patchTier = (i: number, patch: Partial<RidePriceTier>) =>
+    setTiers((prev) => prev.map((t, j) => (j === i ? { ...t, ...patch } : t)));
 
   const handleSave = async () => {
     setSaving(true); setError(null); setSaved(false);
@@ -42,6 +46,7 @@ export function PaymentSettingsAdmin({ initialSettings }: Props) {
       qrUrl,
       paymentInstructions: instructions,
       currencyLabel:       currency,
+      defaultTiers:        tiers.filter((t) => t.label.trim()),
     });
     setSaving(false);
     if (res.error) { setError(res.error); return; }
@@ -133,6 +138,88 @@ export function PaymentSettingsAdmin({ initialSettings }: Props) {
             />
           </div>
         </div>
+      </div>
+
+      {/* ── Default rider classes ──
+           Typed once here, copied into a ride by the ride form. Copied and not
+           referenced on purpose: editing this list must never silently reprice
+           a ride whose sign-ups are already open. */}
+      <div className="space-y-3 pt-5 border-t border-hd-ink-800">
+        <div>
+          <p className="text-xs font-semibold text-hd-ink-400 uppercase tracking-wide mb-1">
+            Default rider classes
+          </p>
+          <p className="text-[11px] text-hd-ink-500 leading-relaxed">
+            The rates you offer again and again — members, veterans, marshals
+            riding along rather than leading. A ride can load these with one
+            click and then change the prices for that ride alone.
+          </p>
+        </div>
+
+        {tiers.map((tier, i) => (
+          <div key={tier.id} className="p-3 rounded-xl bg-hd-ink-900/60 border border-hd-ink-800 space-y-2.5">
+            <div className="flex items-start gap-2">
+              <div className="flex-1 min-w-0 space-y-2">
+                <input
+                  value={tier.label}
+                  onChange={(e) => patchTier(i, { label: e.target.value })}
+                  placeholder="HD Member"
+                  className={cn(inputCls, "h-9")}
+                />
+                <input
+                  value={tier.note ?? ""}
+                  onChange={(e) => patchTier(i, { note: e.target.value })}
+                  placeholder="Who this is for — shown under the label"
+                  className={cn(inputCls, "h-9 text-xs")}
+                />
+              </div>
+              <div className="w-28 shrink-0">
+                <span className="block text-[9px] uppercase tracking-wide text-hd-ink-500 mb-1">
+                  Pays
+                </span>
+                <input
+                  type="number" min={0} step="0.01"
+                  value={String(tier.price)}
+                  onChange={(e) => patchTier(i, { price: Number(e.target.value) || 0 })}
+                  className={cn(inputCls, "h-9")}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setTiers((prev) => prev.filter((_, j) => j !== i))}
+                aria-label="Remove this class"
+                className="mt-5 size-9 shrink-0 flex items-center justify-center rounded-lg border border-hd-ink-700 text-hd-ink-500 hover:text-hd-ember-400 hover:border-hd-ember-800 transition-colors"
+              >
+                <Minus className="size-3.5" />
+              </button>
+            </div>
+
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={tier.requiresMemberCard}
+                onChange={(e) => patchTier(i, { requiresMemberCard: e.target.checked })}
+                className="mt-0.5 size-3.5 accent-hd-ember-600"
+              />
+              <span className="text-[11px] text-hd-ink-400 leading-relaxed flex items-start gap-1.5">
+                <BadgeCheck className="size-3 shrink-0 mt-0.5 text-hd-ember-500" />
+                Needs an approved membership card — enforced at sign-up, not
+                taken on trust.
+              </span>
+            </label>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setTiers((prev) => [...prev, {
+            id: `t${Date.now().toString(36)}`,
+            label: "", note: null, price: 0, requiresMemberCard: false,
+          }])}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-hd-ink-700 hover:border-hd-ink-500 text-xs font-semibold text-hd-ink-300 hover:text-hd-ink-100 transition-colors"
+        >
+          <Plus className="size-3.5" /> Add a class
+        </button>
       </div>
 
       <button
