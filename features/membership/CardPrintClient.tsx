@@ -75,6 +75,10 @@ export function CardPrintClient({ card, settings, brandLogos }: Props) {
           settings={settings}
           brandLogos={brandLogos}
           mode="screen"
+          // This page exists to put the card on paper, so both sides, always,
+          // and no view switch to leave in a state that prints half a card.
+          defaultLayout="both"
+          showControls={false}
         />
 
         {/* Hint for PDF export */}

@@ -163,7 +163,9 @@ function CardPanel({
           <SectionTitle>Membership card</SectionTitle>
           <span className="text-xs font-mono text-hd-ember-400">{card.cardNumber}</span>
         </div>
-        <CardRenderer card={card} settings={settings} brandLogos={brandLogos} mode="compact" />
+        {/* "screen", not "compact": two 300px cards side by side overflow this
+            panel on a phone. One card with a flip button fits. */}
+        <CardRenderer card={card} settings={settings} brandLogos={brandLogos} />
         <Link
           href={ROUTES.memberCard(card.accessCode)}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-hd-ink-800 hover:bg-hd-ink-700 border border-hd-ink-700 hover:border-hd-ink-500 text-sm font-semibold text-hd-ink-100 transition-colors"

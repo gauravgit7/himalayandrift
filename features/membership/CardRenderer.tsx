@@ -10,7 +10,8 @@
 
 import { useEffect, useState }         from "react";
 import { QRCodeCanvas }                from "qrcode.react";
-import { Heart, Phone, Star, ShieldCheck, Calendar, ScanLine } from "lucide-react";
+import { Heart, Phone, Star, ShieldCheck, Calendar, ScanLine,
+         RotateCw, Columns2, Square }  from "lucide-react";
 import { cn }                          from "@/utils/cn";
 import { APP_META }                    from "@/lib/constants";
 import type { MemberCard, CardSettings, BrandLogos } from "@/types";
@@ -353,6 +354,57 @@ function InfoRow({
 }
 
 // ---------------------------------------------------------------------------
+// Flip deck — one card at a time, rotating on its vertical axis
+//
+// Both faces stay mounted and stacked; the back sits pre-rotated 180° so that
+// turning the shared parent brings it round the right way up. backface-
+// visibility is what hides whichever face is pointing away — without it the
+// two would show through each other mid-turn.
+// ---------------------------------------------------------------------------
+
+function FlipDeck({
+  front, back, flipped, onFlip,
+}: {
+  front: React.ReactNode; back: React.ReactNode;
+  flipped: boolean; onFlip: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onFlip}
+      aria-label={flipped ? "Show the front of the card" : "Show the back of the card"}
+      className="w-[300px] h-[472px] rounded-2xl cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hd-ember-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      style={{ perspective: 1400 }}
+    >
+      <div
+        className="relative w-full h-full transition-transform duration-700 ease-out motion-reduce:transition-none"
+        style={{
+          transformStyle: "preserve-3d",
+          transform:      flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+        }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+        >
+          {front}
+        </div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+          }}
+        >
+          {back}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // CardRenderer — public export
 // ---------------------------------------------------------------------------
 
@@ -361,16 +413,30 @@ interface CardRendererProps {
   settings:    CardSettings;
   brandLogos?: BrandLogos | null;
   /**
-   * "screen"  — side-by-side on sm+, stacked on mobile (public card view)
+   * "screen"  — interactive: one card, front first, with a flip button and a
+   *             switch to the side-by-side layout (public card view, profile)
    * "print"   — full-screen dark A4 layout for window.print()
-   * "compact" — always side-by-side (no sm: breakpoint), for embedding in modals/previews
+   * "compact" — always side-by-side, no controls, fixed 616px wide. Callers
+   *             scale this by a hard-coded factor, so its width must not move.
    */
   mode?:       "screen" | "print" | "compact";
+  /** "screen" only. The print/download page needs both sides on the paper. */
+  defaultLayout?: "flip" | "both";
+  /** "screen" only. Off for the print page, where the switch would be noise. */
+  showControls?:  boolean;
 }
 
-export function CardRenderer({ card, settings, brandLogos, mode = "screen" }: CardRendererProps) {
+export function CardRenderer({
+  card, settings, brandLogos,
+  mode = "screen", defaultLayout = "flip", showControls = true,
+}: CardRendererProps) {
   const [origin, setOrigin] = useState("");
   useEffect(() => { setOrigin(window.location.origin); }, []);
+
+  // A card has a front and a back, the same way a real one does. Showing both
+  // at once is the exception, so it is the option rather than the default.
+  const [layout,  setLayout]  = useState<"flip" | "both">(defaultLayout);
+  const [flipped, setFlipped] = useState(false);
 
   const front = <CardFront card={card} settings={settings} brandLogos={brandLogos} origin={origin} />;
   const back  = <CardBack  card={card} settings={settings} brandLogos={brandLogos} />;
@@ -396,14 +462,14 @@ export function CardRenderer({ card, settings, brandLogos, mode = "screen" }: Ca
     );
   }
 
-  // "compact" forces row layout regardless of viewport — used inside modals/drawers
-  // "screen" uses responsive sm:flex-row for the public card page
-  const rowClass = mode === "compact"
-    ? "flex flex-row gap-4 items-start"
-    : "flex flex-col sm:flex-row gap-6 items-center justify-center";
-
-  return (
-    <div className={rowClass}>
+  const bothSides = (
+    <div className={cn(
+      // "compact" forces the row regardless of viewport — it lives inside
+      // modals that scale it by a fixed factor.
+      mode === "compact"
+        ? "flex flex-row gap-4 items-start"
+        : "flex flex-col sm:flex-row gap-6 items-center justify-center",
+    )}>
       <div className="flex flex-col items-center gap-2">
         <span className="text-[9px] tracking-widest uppercase font-semibold text-hd-ink-500">
           Front
@@ -417,5 +483,79 @@ export function CardRenderer({ card, settings, brandLogos, mode = "screen" }: Ca
         {back}
       </div>
     </div>
+  );
+
+  if (mode === "compact") return bothSides;
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      {/* View switch */}
+      {showControls && (
+        <div className="no-print flex items-center gap-1 p-1 rounded-lg bg-hd-ink-800/70 border border-hd-ink-700">
+          <ViewTab
+            active={layout === "flip"}
+            onClick={() => setLayout("flip")}
+            icon={<Square className="size-3.5" />}
+            label="One card"
+          />
+          <ViewTab
+            active={layout === "both"}
+            onClick={() => setLayout("both")}
+            icon={<Columns2 className="size-3.5" />}
+            label="Both sides"
+          />
+        </div>
+      )}
+
+      {layout === "both" ? bothSides : (
+        <div className="flex flex-col items-center gap-3">
+          <FlipDeck
+            front={front}
+            back={back}
+            flipped={flipped}
+            onFlip={() => setFlipped((v) => !v)}
+          />
+          <button
+            type="button"
+            onClick={() => setFlipped((v) => !v)}
+            className={cn(
+              "no-print flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide",
+              "bg-hd-ink-800 border border-hd-ink-700 text-hd-ink-200",
+              "hover:border-hd-ember-600 hover:text-white transition-colors",
+            )}
+          >
+            <RotateCw className={cn(
+              "size-3.5 transition-transform duration-500 motion-reduce:transition-none",
+              flipped && "rotate-180",
+            )} />
+            {flipped ? "Show front" : "Show back"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ViewTab({
+  active, onClick, icon, label,
+}: {
+  active: boolean; onClick: () => void;
+  icon: React.ReactNode; label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors",
+        active
+          ? "bg-hd-ember-600 text-white"
+          : "text-hd-ink-400 hover:text-hd-ink-100",
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
