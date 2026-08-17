@@ -10,12 +10,86 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Pause, Play, X, Music } from "lucide-react";
+import { Pause, Play, X, Music, Maximize2 } from "lucide-react";
 import { cn }        from "@/utils/cn";
 import { useAnthem } from "@/features/anthem/AnthemProvider";
+import type { AnthemLyricLine } from "@/types";
 
 const SIZE = 84;            // css px of the whole canvas
 const DPR_CAP = 2;          // retina is enough; 3x buys nothing here
+
+// ---------------------------------------------------------------------------
+// Lyric window — the line being sung, next to the disk
+//
+// The dock used to show the track title, which never changed and so said
+// nothing after the first second. The line currently being sung is the one
+// piece of information here that is worth a glance, and showing it alongside
+// the player means you can follow the anthem without giving up the page you
+// are reading. The full view is one click away, on the window or the disk.
+//
+// Deliberately fixed-height: a window that grew and shrank with the length of
+// each line would nudge the disk around the corner of the screen all song.
+// ---------------------------------------------------------------------------
+
+function LyricWindow({
+  lines, activeLine, title, playing, onExpand,
+}: {
+  lines:      AnthemLyricLine[];
+  activeLine: number;
+  title:      string;
+  playing:    boolean;
+  onExpand:   () => void;
+}) {
+  const current = activeLine >= 0 ? lines[activeLine]?.text : undefined;
+  const next    = activeLine >= 0 ? lines[activeLine + 1]?.text : lines[0]?.text;
+
+  return (
+    <button
+      type="button"
+      onClick={onExpand}
+      aria-label={`Open the full lyrics for ${title}`}
+      className={cn(
+        "hidden sm:flex flex-col items-end text-right group",
+        "w-[230px] pl-4 pr-4 py-2.5 rounded-2xl",
+        "bg-hd-ink-900/90 border border-hd-ink-700/80 backdrop-blur-md",
+        "hover:border-hd-ember-700/60 transition-colors shadow-cinematic",
+      )}
+    >
+      {/* Header: state, title, and the hint that this opens */}
+      <span className="flex items-center gap-1.5 w-full justify-end">
+        <span className="text-[9px] uppercase tracking-widest text-hd-ink-500 leading-none truncate">
+          {playing ? "Now playing" : "Paused"} · {title}
+        </span>
+        <Maximize2 className="size-2.5 shrink-0 text-hd-ink-600 group-hover:text-hd-ember-500 transition-colors" />
+      </span>
+
+      {/* The line being sung, with the one after it faint underneath */}
+      <span className="flex flex-col items-end w-full mt-1.5 h-[52px] justify-center overflow-hidden">
+        {current ? (
+          <>
+            {/* key on the index so the line re-mounts and fades in on change */}
+            <span
+              key={activeLine}
+              className="text-[13px] font-semibold text-hd-ink-50 leading-snug line-clamp-2 animate-fade-in"
+            >
+              {current}
+            </span>
+            {next && (
+              <span className="text-[10px] text-hd-ink-600 leading-tight truncate w-full mt-0.5">
+                {next}
+              </span>
+            )}
+          </>
+        ) : (
+          // Before the first timed line, or on an anthem nobody has synced yet.
+          <span className="text-[11px] text-hd-ink-500 leading-snug line-clamp-2">
+            {next ?? "Lyrics"}
+          </span>
+        )}
+      </span>
+    </button>
+  );
+}
 
 export function AnthemDock({ logoUrl }: { logoUrl?: string | null }) {
   const anthem = useAnthem();
@@ -89,19 +163,14 @@ export function AnthemDock({ logoUrl }: { logoUrl?: string | null }) {
         "flex items-center gap-3 animate-fade-in",
       )}
     >
-      {/* Title pill — desktop only; on a phone the disk speaks for itself. */}
-      <button
-        type="button"
-        onClick={() => openLyrics(true)}
-        className="hidden sm:flex flex-col items-end pr-3.5 pl-4 py-2 rounded-full bg-hd-ink-900/90 border border-hd-ink-700/80 backdrop-blur-md hover:border-hd-ember-700/60 transition-colors shadow-cinematic"
-      >
-        <span className="text-[9px] uppercase tracking-widest text-hd-ink-500 leading-none">
-          {isPlaying ? "Now playing" : "Paused"}
-        </span>
-        <span className="text-xs font-semibold text-hd-ink-100 leading-tight mt-0.5 max-w-[150px] truncate">
-          {anthem.anthem.title}
-        </span>
-      </button>
+      {/* Lyric window — desktop only; on a phone the disk speaks for itself. */}
+      <LyricWindow
+        lines={anthem.anthem.lyrics}
+        activeLine={anthem.activeLine}
+        title={anthem.anthem.title}
+        playing={isPlaying}
+        onExpand={() => openLyrics(true)}
+      />
 
       {/* Disk */}
       <div className="relative" style={{ width: SIZE, height: SIZE }}>
