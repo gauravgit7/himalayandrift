@@ -5,17 +5,23 @@
 
 "use client";
 
-import { useState, useCallback }    from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, XCircle,
          Clock, Eye, X, Save,
-         AlertCircle, Users,
+         AlertCircle, Users, Link2, Link2Off,
+         Search, UserPlus, Sparkles,
          ChevronDown, ChevronUp }   from "lucide-react";
 import { cn }                       from "@/utils/cn";
 import {
   approveMemberCard,
   rejectMemberCard,
+  suggestAccountsForCard,
+  mergeCardIntoAccount,
+  unlinkCardFromAccount,
 }                                   from "@/lib/supabase/actions";
 import { CardRenderer }             from "@/features/membership/CardRenderer";
+import { FIELD_LABELS }             from "@/lib/membership/identity";
+import type { AccountCandidate }    from "@/lib/membership/identity";
 import type { MemberCard, CardSettings, BrandLogos } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -110,15 +116,247 @@ function CardPreview({
 }
 
 // ---------------------------------------------------------------------------
+// Account panel — the merge tool
+//
+// Most cards never need this: a rider who was signed in when they asked is
+// linked from the moment the row exists, and a walk-in application is claimed
+// automatically when its applicant signs up. What is left are the cases the
+// matcher deliberately would not guess at — two riders who look alike on
+// paper, or an applicant whose account shares almost nothing with their form.
+// ---------------------------------------------------------------------------
+
+function ScoreBar({ score, confident }: { score: number; confident: boolean }) {
+  const pct = Math.round(score * 100);
+  return (
+    <div className="flex items-center gap-2 shrink-0" title={`${pct}% match`}>
+      <div className="w-14 h-1.5 rounded-full bg-hd-ink-800 overflow-hidden">
+        <div
+          className={cn("h-full rounded-full", confident ? "bg-emerald-500" : "bg-amber-500/70")}
+          style={{ width: `${Math.max(pct, 2)}%` }}
+        />
+      </div>
+      <span className={cn(
+        "text-[10px] font-bold tabular-nums w-8 text-right",
+        confident ? "text-emerald-400" : "text-hd-ink-500",
+      )}>
+        {pct}%
+      </span>
+    </div>
+  );
+}
+
+function CandidateRow({
+  c, busy, onLink,
+}: {
+  c: AccountCandidate; busy: boolean; onLink: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 p-2.5 rounded-lg bg-hd-ink-800/40 border border-hd-ink-700/40">
+      {c.avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={c.avatarUrl} alt="" className="size-8 rounded-full object-cover object-top shrink-0" />
+      ) : (
+        <span className="size-8 rounded-full bg-hd-ink-700 shrink-0" />
+      )}
+
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-hd-ink-100 truncate">{c.fullName}</p>
+        <p className="text-[10px] text-hd-ink-500 truncate">{c.email ?? "no email on file"}</p>
+        {c.matched.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {c.matched.map((f) => (
+              <span key={f} className="text-[9px] px-1.5 py-px rounded bg-emerald-950/50 text-emerald-400 border border-emerald-900/40">
+                {FIELD_LABELS[f]}
+              </span>
+            ))}
+          </div>
+        )}
+        {c.hasCard && (
+          <p className="text-[9px] text-amber-500 mt-1">Already holds a live card</p>
+        )}
+      </div>
+
+      <ScoreBar score={c.score} confident={c.confident} />
+
+      <button
+        type="button"
+        onClick={onLink}
+        disabled={busy}
+        className={cn(
+          "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold shrink-0 transition-colors",
+          busy
+            ? "bg-hd-ink-700 text-hd-ink-500 cursor-not-allowed"
+            : "bg-hd-ink-800 border border-hd-ink-600 text-hd-ink-200 hover:border-hd-ember-600 hover:text-white",
+        )}
+      >
+        <Link2 className="size-3" /> Link
+      </button>
+    </div>
+  );
+}
+
+const PROVENANCE: Record<NonNullable<MemberCard["linkedBy"]>, string> = {
+  self:  "Requested from their own profile",
+  auto:  "Matched automatically to their account",
+  admin: "Linked by a committee member",
+};
+
+function AccountPanel({
+  card, onLinkChange,
+}: {
+  card: MemberCard;
+  onLinkChange: (userId: string | null) => void;
+}) {
+  const [linked,     setLinked]     = useState<AccountCandidate | null>(null);
+  const [candidates, setCandidates] = useState<AccountCandidate[]>([]);
+  const [query,      setQuery]      = useState("");
+  const [loading,    setLoading]    = useState(true);
+  const [busy,       setBusy]       = useState(false);
+  const [error,      setError]      = useState<string | null>(null);
+
+  const load = useCallback(async (q?: string) => {
+    setLoading(true); setError(null);
+    const res = await suggestAccountsForCard(card.id, q);
+    setLoading(false);
+    if (res.error) { setError(res.error); return; }
+    setLinked(res.linked);
+    setCandidates(res.candidates);
+  }, [card.id]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const link = useCallback(async (userId: string) => {
+    setBusy(true); setError(null);
+    const res = await mergeCardIntoAccount(card.id, userId);
+    setBusy(false);
+    if (res.error) { setError(res.error); return; }
+    onLinkChange(userId);
+    void load(query || undefined);
+  }, [card.id, onLinkChange, load, query]);
+
+  const unlink = useCallback(async () => {
+    setBusy(true); setError(null);
+    const res = await unlinkCardFromAccount(card.id);
+    setBusy(false);
+    if (res.error) { setError(res.error); return; }
+    onLinkChange(null);
+    void load(query || undefined);
+  }, [card.id, onLinkChange, load, query]);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <UserPlus className="size-3.5 text-hd-ink-500" />
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-hd-ink-500">
+          Rider account
+        </h4>
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-hd-ember-950/50 border border-hd-ember-800/40 text-hd-ember-300 text-xs">
+          <AlertCircle className="size-3.5 shrink-0 mt-px" />{error}
+        </div>
+      )}
+
+      {loading && (
+        <p className="text-xs text-hd-ink-500">Looking for matching accounts…</p>
+      )}
+
+      {/* Already linked */}
+      {!loading && linked && (
+        <div className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-900/30 space-y-2">
+          <div className="flex items-center gap-3">
+            {linked.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={linked.avatarUrl} alt="" className="size-9 rounded-full object-cover object-top shrink-0" />
+            ) : (
+              <span className="size-9 rounded-full bg-hd-ink-700 shrink-0" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-hd-ink-50 truncate">{linked.fullName}</p>
+              <p className="text-[10px] text-hd-ink-500 truncate">{linked.email ?? "no email on file"}</p>
+            </div>
+            <button
+              type="button"
+              onClick={unlink}
+              disabled={busy}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-hd-ink-300 border border-hd-ink-600 hover:border-hd-ember-700 hover:text-hd-ember-300 transition-colors shrink-0 disabled:opacity-50"
+            >
+              <Link2Off className="size-3" /> Unlink
+            </button>
+          </div>
+
+          <p className="text-[10px] text-hd-ink-500 flex items-center gap-1.5">
+            <Sparkles className="size-3 shrink-0" />
+            {card.linkedBy ? PROVENANCE[card.linkedBy] : "Linked"}
+            {card.linkScore != null && card.linkedBy !== "self" && (
+              <span className="text-hd-ink-400"> · {Math.round(card.linkScore * 100)}% match</span>
+            )}
+          </p>
+        </div>
+      )}
+
+      {/* Not linked — the merge tool proper */}
+      {!loading && !linked && (
+        <>
+          <p className="text-xs text-hd-ink-500 leading-relaxed">
+            This application has no account behind it. It was submitted by someone
+            who was signed out, and nothing has matched it since. Pick the rider it
+            belongs to, or leave it — it will link itself if they sign up.
+          </p>
+
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-hd-ink-600" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && load(query || undefined)}
+                placeholder="Search by name or email"
+                className="w-full h-9 pl-8 pr-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-xs text-hd-ink-100 placeholder:text-hd-ink-600 focus:outline-none focus:border-hd-ember-600"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => load(query || undefined)}
+              className="px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 hover:border-hd-ink-500 text-xs font-semibold text-hd-ink-300 transition-colors"
+            >
+              Search
+            </button>
+          </div>
+
+          {candidates.length === 0 ? (
+            <p className="text-xs text-hd-ink-600">No accounts to show.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {candidates.map((c) => (
+                <CandidateRow
+                  key={c.userId}
+                  c={c}
+                  busy={busy}
+                  onLink={() => link(c.userId)}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Detail modal
 // ---------------------------------------------------------------------------
 
 function ApplicationModal({
-  card, onClose, onAction, settings, brandLogos,
+  card, onClose, onAction, onLinkChange, settings, brandLogos,
 }: {
   card:       MemberCard;
   onClose:    () => void;
   onAction:   (id: string, action: "approved" | "rejected", extras?: { cardNumber?: string }) => void;
+  onLinkChange: (id: string, userId: string | null) => void;
   settings:   CardSettings;
   brandLogos?: BrandLogos | null;
 }) {
@@ -208,6 +446,16 @@ function ApplicationModal({
 
           {/* Card preview */}
           <CardPreview card={card} settings={settings} brandLogos={brandLogos} />
+
+          {/* Which rider this belongs to */}
+          <div className="pt-1 border-t border-hd-ink-800">
+            <div className="pt-4">
+              <AccountPanel
+                card={card}
+                onLinkChange={(userId) => onLinkChange(card.id, userId)}
+              />
+            </div>
+          </div>
 
           {/* Rejection reason (existing) */}
           {card.status === "rejected" && card.rejectionReason && (
@@ -310,7 +558,7 @@ function ApplicationModal({
 // Main component
 // ---------------------------------------------------------------------------
 
-type Filter = "all" | "pending" | "approved" | "rejected";
+type Filter = "all" | "pending" | "approved" | "rejected" | "unlinked";
 
 export function MembersAdmin({
   initialCards, settings, brandLogos,
@@ -323,17 +571,39 @@ export function MembersAdmin({
   const [filter,   setFilter]   = useState<Filter>("pending");
   const [viewing,  setViewing]  = useState<MemberCard | null>(null);
 
+  // An unlinked card is not a status — it is an application with nobody behind
+  // it. Worth its own tab: these are the ones that need a human.
+  const isUnlinked = (c: MemberCard) => !c.userId && c.status !== "rejected";
+
   const counts = {
     all:      cards.length,
     pending:  cards.filter((c) => c.status === "pending").length,
     approved: cards.filter((c) => c.status === "approved").length,
     rejected: cards.filter((c) => c.status === "rejected").length,
+    unlinked: cards.filter(isUnlinked).length,
   };
 
-  const displayed = filter === "all" ? cards : cards.filter((c) => c.status === filter);
+  const displayed =
+    filter === "all"      ? cards
+    : filter === "unlinked" ? cards.filter(isUnlinked)
+    : cards.filter((c) => c.status === filter);
 
   const handleAction = useCallback((id: string, action: "approved" | "rejected", extras?: { cardNumber?: string }) => {
     setCards((prev) => prev.map((c) => c.id === id ? { ...c, status: action, ...(extras ?? {}) } : c));
+  }, []);
+
+  const handleLinkChange = useCallback((id: string, userId: string | null) => {
+    const patch = (c: MemberCard): MemberCard => ({
+      ...c,
+      userId,
+      linkedBy: userId ? "admin" : null,
+      linkedAt: userId ? new Date().toISOString() : null,
+      linkScore: userId ? c.linkScore : null,
+    });
+    setCards((prev) => prev.map((c) => (c.id === id ? patch(c) : c)));
+    // The modal holds its own copy, so the provenance line under the linked
+    // account would otherwise keep describing the previous state.
+    setViewing((v) => (v && v.id === id ? patch(v) : v));
   }, []);
 
   const fmtDate = (iso: string) =>
@@ -342,8 +612,8 @@ export function MembersAdmin({
   return (
     <>
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {(["all", "pending", "approved", "rejected"] as Filter[]).map((f) => (
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        {(["all", "pending", "approved", "rejected", "unlinked"] as Filter[]).map((f) => (
           <button
             key={f}
             type="button"
@@ -360,6 +630,7 @@ export function MembersAdmin({
               f === "pending"  && "text-amber-400",
               f === "approved" && "text-emerald-400",
               f === "rejected" && "text-hd-ember-400",
+              f === "unlinked" && "text-sky-400",
               f === "all"      && "text-hd-ink-50",
             )}>
               {counts[f]}
@@ -400,6 +671,11 @@ export function MembersAdmin({
 
               {/* Status + action */}
               <div className="flex items-center gap-3 shrink-0">
+                {isUnlinked(card) && (
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider bg-sky-950/30 text-sky-400 border-sky-800/30">
+                    <Link2Off className="size-2.5" /> No account
+                  </span>
+                )}
                 <StatusChip status={card.status} />
                 <button
                   type="button"
@@ -421,6 +697,7 @@ export function MembersAdmin({
           card={viewing}
           onClose={() => setViewing(null)}
           onAction={handleAction}
+          onLinkChange={handleLinkChange}
           settings={settings}
           brandLogos={brandLogos}
         />

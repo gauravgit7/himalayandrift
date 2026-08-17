@@ -222,6 +222,12 @@ export interface MemberCard {
   id:                 string;
   /** Set when a signed-in rider requested it, so it can show on their profile. */
   userId:             string | null;
+  /** How it came to belong to that account: asked for while signed in, matched
+   *  automatically to a walk-in application, or linked by an admin. */
+  linkedBy:           "self" | "auto" | "admin" | null;
+  linkedAt:           string | null;
+  /** 0-1 match confidence, for the automatic and admin links. */
+  linkScore:          number | null;
   accessCode:         string;
   cardNumber:         string | null;  // assigned on approval
 

@@ -222,12 +222,19 @@ export interface DbMemberCard {
   updated_at:          string;
   approved_at:         string | null;
   valid_until:         string | null;
+  linked_by:           string | null;
+  linked_at:           string | null;
+  link_score:          number | string | null;
 }
 
 export function mapMemberCard(row: DbMemberCard): MemberCard {
   return {
     id:                row.id,
     userId:            row.user_id ?? null,
+    linkedBy:          (row.linked_by as MemberCard["linkedBy"]) ?? null,
+    linkedAt:          row.linked_at ?? null,
+    // numeric arrives from PostgREST as a string.
+    linkScore:         row.link_score == null ? null : Number(row.link_score),
     accessCode:        row.access_code,
     cardNumber:        row.card_number        ?? null,
     fullName:          row.full_name,

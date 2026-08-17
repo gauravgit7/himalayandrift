@@ -165,6 +165,40 @@ express "every column except these", so a `BEFORE UPDATE` trigger
 (SQL editor, psql). The admin actions all use the service-role client, so approval works.
 If you add another column that only an admin may set, add it to that trigger.
 
+**Card submissions are protected the same way.** `public_insert_member_cards` has to be
+`with check (true)` — applicants are signed out, so there is no `auth.uid()` to check
+against. That policy constrains who may insert, not what they may insert, so a
+`BEFORE INSERT` trigger (`guard_member_card_submission`) overwrites `status`,
+`card_number`, `approved_at`, `valid_until`, `rejection_reason`, `admin_notes`,
+`resubmission_count` and all four link columns on any submission not carrying the
+service-role JWT, and pins `user_id` to `auth.uid()`. Without it, anyone holding the
+public anon key could POST themselves an approved card, number and all, and attach it to
+someone else's account.
+
+#### Linking a card to an account
+
+A card can be applied for before an account exists, so the two arrive in either order:
+
+| Route in | `linked_by` | How |
+| --- | --- | --- |
+| Signed-in rider taps *Request card* | `self` | `user_id` set at insert; nothing inferred |
+| Walk-in application, applicant signs up later | `auto` | identity match at sign-up / sign-in / profile save |
+| Neither matched | `admin` | merge tool in `/admin/members` |
+
+`lib/membership/identity.ts` holds the judgement and imports nothing — it compares name,
+date of birth, licence number, emergency phone and blood group, weights them (a licence
+number identifies a person; a blood group is one value in eight), and scores only the
+fields present on **both** sides so a sparse profile is not read as a stranger. To link
+without a human it demands three shared fields, 70%, and at least one of licence or date
+of birth — name and blood group agreeing is not evidence in a club where names repeat.
+
+Two applications clearing the bar for one account is **not** broken by picking the higher
+score: that is the case where guessing hands one rider's card to another. Both are left
+alone and surface under the *Unlinked* tab in the members admin, where a human can look at
+the photos. `lib/membership/link.ts` is the plumbing around that decision — claim,
+backfill (empty profile fields only, never overwriting the rider's own answer), rank
+candidates, link, unlink.
+
 ---
 
 ## 5. Auth and access control

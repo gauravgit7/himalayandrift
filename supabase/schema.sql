@@ -435,6 +435,24 @@ alter table member_cards add column if not exists user_id uuid references auth.u
 
 create index if not exists idx_member_cards_user on member_cards(user_id);
 
+-- How the card came to belong to that account. A card applied for while signed
+-- out has no user_id at all; when the same person signs up later, the identity
+-- matcher claims it for them. Recording the score and the source is what makes
+-- an automatic decision reviewable — an admin looking at a linked card can see
+-- whether a person or an algorithm decided it, and on what evidence.
+--   'self'  — the rider was signed in when they asked for it; nothing inferred
+--   'auto'  — matched to an existing application at sign-up or profile save
+--   'admin' — linked by hand from the members admin
+alter table member_cards add column if not exists linked_by text
+  check (linked_by is null or linked_by in ('self', 'auto', 'admin'));
+alter table member_cards add column if not exists linked_at timestamptz;
+-- 0-1 confidence from the match, null for 'self' and usually for 'admin'.
+alter table member_cards add column if not exists link_score numeric;
+
+-- Finding orphans is the common query in the merge tool.
+create index if not exists idx_member_cards_unlinked
+  on member_cards(created_at desc) where user_id is null;
+
 -- One live card per account. A rejected application does not count, so a rider
 -- can fix what was wrong and ask again; nulls are distinct, so signed-out
 -- applicants are unconstrained.
@@ -445,6 +463,54 @@ drop trigger if exists member_cards_updated_at on member_cards;
 create trigger member_cards_updated_at
   before update on member_cards
   for each row execute function set_updated_at();
+
+-- Applications have to be insertable by signed-out visitors, so the RLS policy
+-- below is `with check (true)` and cannot be anything else. That policy says
+-- nothing about the VALUES, though: without this trigger, anyone holding the
+-- public anon key could POST a row with status 'approved', a card number of
+-- their choosing, and a user_id pointing at somebody else's account - printing
+-- themselves a membership card and attaching it to a stranger.
+--
+-- So the workflow columns are not the applicant's to set. Same shape as the
+-- profiles guard above: direct database connections and the service-role key
+-- are left alone, because those are how the committee actually approves.
+create or replace function public.guard_member_card_submission()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  claims text := current_setting('request.jwt.claims', true);
+begin
+  if claims is null or claims = '' then
+    return new;  -- direct database connection, not a PostgREST request
+  end if;
+  if (claims::jsonb ->> 'role') = 'service_role' then
+    return new;  -- admin client: submit, approve, reject, link
+  end if;
+
+  -- A card belongs to the account that asked for it, and to no other. Anon
+  -- applicants get null, which is what makes them claimable later.
+  new.user_id            := auth.uid();
+  new.linked_by          := case when auth.uid() is null then null else 'self' end;
+  new.linked_at          := case when auth.uid() is null then null else now() end;
+  new.link_score         := null;
+
+  new.status             := 'pending';
+  new.card_number        := null;
+  new.approved_at        := null;
+  new.valid_until        := null;
+  new.rejection_reason   := null;
+  new.admin_notes        := null;
+  new.resubmission_count := 0;
+  return new;
+end;
+$$;
+
+drop trigger if exists member_cards_guard_submission on member_cards;
+create trigger member_cards_guard_submission
+  before insert on member_cards
+  for each row execute function public.guard_member_card_submission();
 
 create table if not exists card_settings (
   id                    integer primary key default 1 check (id = 1),
@@ -731,6 +797,10 @@ create policy "profiles_update_own" on profiles for update to authenticated
 -- Reads are open because status-check and QR validation are both public, and
 -- the card number is the only thing needed to look one up. Approval, rejection
 -- and card-number assignment run through the service role.
+--
+-- `with check (true)` is as narrow as an anonymous application can be. What
+-- keeps it honest is the BEFORE INSERT trigger above, which overwrites every
+-- workflow column on a submission that did not come from the service role.
 drop policy if exists "public_insert_member_cards" on member_cards;
 drop policy if exists "public_read_member_cards"   on member_cards;
 

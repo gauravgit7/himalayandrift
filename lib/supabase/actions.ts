@@ -11,7 +11,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect }       from "next/navigation";
 import { createClient }   from "@/lib/supabase/server";
+import { requireAdmin }   from "@/lib/supabase/guards";
 import { ROUTES }         from "@/lib/constants";
+import type { AccountCandidate } from "@/lib/membership/link";
 import type { HomepageContent, RouteData, MemberCard, CardSettings, CardRequirement } from "@/types";
 import type { PushOptInSettings }          from "@/components/shared/PushOptIn";
 import type { PwaSettings }               from "@/features/admin/PwaSettingsAdmin";
@@ -457,9 +459,31 @@ export async function submitMemberCard(
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
+  // The public form is open to signed-out visitors, but a signed-in rider may
+  // well be standing on it — from a shared phone, or because they found the
+  // page before they found the button on their profile. Their session says
+  // whose application this is, so there is nothing left to infer later.
+  //
+  // The service-role client bypasses guard_member_card_submission, so unlike a
+  // raw PostgREST insert this has to establish the owner itself.
+  let ownerId: string | null = null;
+  const session = await createClient();
+  const { data: { user } } = await session.auth.getUser();
+  if (user) {
+    const { data: live } = await supabase
+      .from("member_cards").select("id")
+      .eq("user_id", user.id).neq("status", "rejected").maybeSingle();
+    // Already holds one: leave this application unowned rather than trip the
+    // one-live-card index and lose the submission entirely.
+    if (!live) ownerId = user.id;
+  }
+
   for (let attempt = 0; attempt < 5; attempt++) {
     const accessCode = generateAccessCode();
     const { error } = await supabase.from("member_cards").insert({
+      user_id:          ownerId,
+      linked_by:        ownerId ? "self" : null,
+      linked_at:        ownerId ? new Date().toISOString() : null,
       access_code:      accessCode,
       full_name:        payload.fullName.trim(),
       photo_url:        payload.photoUrl,
@@ -691,6 +715,12 @@ export async function signUpPublic(
     console.error("[signUpPublic] profile row not created:", profileError.message);
   }
 
+  // The rider may already have walked up at a ride, filled in a paper-style
+  // application while signed out and been given an access code. If the details
+  // they just typed match one of those, it is theirs — claim it now rather
+  // than let them wonder why their profile says they have no card.
+  await claimCardsQuietly(data.user.id, "signUpPublic");
+
   // Email confirmation required — no session yet
   if (!data.session) {
     return { error: null, needsConfirmation: true };
@@ -753,6 +783,11 @@ export async function signInPublic(
 
   const isAdmin = listed || !!(existing as { is_admin?: boolean } | null)?.is_admin;
 
+  // Cheap safety net: accounts that predate this feature, and riders who filled
+  // in the details that make them recognisable somewhere other than the profile
+  // form, get their card picked up the next time they sign in.
+  await claimCardsQuietly(user.id, "signInPublic");
+
   if (isAdmin) {
     revalidatePath(ROUTES.admin, "layout");
     redirect(ROUTES.admin);
@@ -810,8 +845,35 @@ export async function updateProfile(data: {
     });
 
   if (error) return { error: error.message };
+
+  // This is the moment a half-filled account most often becomes recognisable:
+  // the rider has just added their licence number or date of birth, which is
+  // exactly the evidence the matcher needs.
+  await claimCardsQuietly(user.id, "updateProfile");
+
   revalidatePath(ROUTES.profile);
   return { error: null };
+}
+
+/**
+ * Claiming a card is never the reason the caller was invoked, so it must not
+ * be able to fail one. A rider who cannot sign in because a background match
+ * threw is worse off than one whose card stays unlinked for another day.
+ */
+async function claimCardsQuietly(userId: string, caller: string): Promise<void> {
+  try {
+    const { claimOrphanCardsForUser } = await import("@/lib/membership/link");
+    const res = await claimOrphanCardsForUser(userId);
+    if (res.error) console.error(`[${caller}] card claim failed:`, res.error);
+    else if (res.linked) {
+      console.info(
+        `[${caller}] claimed card ${res.linked.accessCode} for ${userId} ` +
+        `at ${Math.round(res.linked.score * 100)}% confidence`,
+      );
+    }
+  } catch (e) {
+    console.error(`[${caller}] card claim threw:`, e);
+  }
 }
 
 // =============================================================================
@@ -1374,6 +1436,9 @@ export async function requestMemberCard(): Promise<{
       // Requesting from your own profile page is the consent - the button says
       // what it does, and the details being submitted are on screen above it.
       consent_accepted: true,
+      // No inference involved — the rider was signed in when they asked.
+      linked_by:        "self",
+      linked_at:        new Date().toISOString(),
       status:           selfIssue ? "approved" : "pending",
       card_number:      cardNumber,
       valid_until:      validUntil,
@@ -1396,4 +1461,63 @@ export async function requestMemberCard(): Promise<{
   }
 
   return { accessCode: null, missing: [], error: "Could not generate a unique code. Please try again." };
+}
+
+// =============================================================================
+// Admin — merging walk-in applications into accounts
+//
+// The automatic matcher deliberately refuses the close calls: two applications
+// that both look like one account are left alone rather than guessed between.
+// These three actions are where a human resolves what it would not.
+// =============================================================================
+
+/** Admin: rank every account by how much it looks like this application. */
+export async function suggestAccountsForCard(
+  cardId: string,
+  query?: string,
+): Promise<{
+  linked:     AccountCandidate | null;
+  candidates: AccountCandidate[];
+  error:      string | null;
+}> {
+  const denied = await requireAdmin();
+  if (denied) return { linked: null, candidates: [], error: denied };
+
+  const { candidatesForCard } = await import("@/lib/membership/link");
+  return candidatesForCard(cardId, query);
+}
+
+/** Admin: attach an application to an account by hand. */
+export async function mergeCardIntoAccount(
+  cardId: string,
+  userId: string,
+): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { linkCardToAccount } = await import("@/lib/membership/link");
+  const res = await linkCardToAccount(cardId, userId);
+
+  if (!res.error) {
+    revalidatePath(ROUTES.adminMembers);
+    revalidatePath(ROUTES.profile);
+  }
+  return res;
+}
+
+/** Admin: detach an application linked to the wrong account. */
+export async function unlinkCardFromAccount(
+  cardId: string,
+): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { unlinkCard } = await import("@/lib/membership/link");
+  const res = await unlinkCard(cardId);
+
+  if (!res.error) {
+    revalidatePath(ROUTES.adminMembers);
+    revalidatePath(ROUTES.profile);
+  }
+  return res;
 }
