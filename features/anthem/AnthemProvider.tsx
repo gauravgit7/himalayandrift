@@ -16,10 +16,16 @@
 import {
   createContext, useContext, useRef, useState, useEffect, useCallback, useMemo,
 } from "react";
-import type { AnthemSettings } from "@/types";
+import type { AnthemTrack } from "@/types";
 
 interface AnthemContextValue {
-  anthem:     AnthemSettings;
+  /** The track playing right now. Named `anthem` because for most visitors it
+   *  is the anthem - it is simply no longer the ONLY thing it can be. */
+  anthem:     AnthemTrack;
+  /** The whole queue, anthem first, for anything that lists the library. */
+  tracks:     AnthemTrack[];
+  index:      number;
+  hasQueue:   boolean;
   ready:      boolean;      // has the user ever started it
   playing:    boolean;
   loading:    boolean;
@@ -33,6 +39,9 @@ interface AnthemContextValue {
   lyricsOpen: boolean;
   toggle:     () => void;
   seek:       (seconds: number) => void;
+  next:       () => void;
+  prev:       () => void;
+  playTrack:  (index: number) => void;
   openLyrics: (open: boolean) => void;
 }
 
@@ -46,10 +55,13 @@ export function useAnthem() {
 const EMPTY = new Uint8Array(0);
 
 export function AnthemProvider({
-  anthem,
+  tracks,
+  enabled,
   children,
 }: {
-  anthem: AnthemSettings | null;
+  tracks:   AnthemTrack[];
+  /** The master switch. Off means no player anywhere, whatever is in the library. */
+  enabled:  boolean;
   children: React.ReactNode;
 }) {
   const audioRef    = useRef<HTMLAudioElement>(null);
@@ -66,8 +78,20 @@ export function AnthemProvider({
   const [spectrum,   setSpectrum]   = useState<Uint8Array>(EMPTY);
   const [energy,     setEnergy]     = useState(0);
   const [lyricsOpen, setLyricsOpen] = useState(false);
+  const [index,      setIndex]      = useState(0);
 
-  const lyrics  = anthem?.lyrics ?? [];
+  // Changing the src on the element resets it, so a track change has to ask for
+  // playback again. This flag carries that intent across the render in between;
+  // state would be a render too late, and the browser wants the play() call as
+  // close to the user's click as it can get.
+  const wantPlayRef = useRef(false);
+
+  const playable = useMemo(
+    () => tracks.filter((t) => t.isActive && t.audioUrl),
+    [tracks],
+  );
+  const track  = playable[Math.min(index, playable.length - 1)] ?? null;
+  const lyrics = track?.lyrics ?? [];
   const isTimed = useMemo(() => lyrics.some((l) => l.time !== null), [lyrics]);
 
   const activeLine = useMemo(() => {
@@ -169,21 +193,70 @@ export function AnthemProvider({
     if (audio.paused) toggle();
   }, [toggle]);
 
+  /**
+   * Move to another track. `autoplay` is what separates a rider pressing skip —
+   * which should carry straight on playing — from the queue being rebuilt
+   * underneath a paused player, which should not start making noise.
+   *
+   * Wraps in both directions: skipping past the last track on purpose is a
+   * request for the first one, not for silence.
+   */
+  const playTrack = useCallback((i: number, autoplay = true) => {
+    const n = playable.length;
+    if (!n) return;
+    const target = ((i % n) + n) % n;
+    wantPlayRef.current = autoplay;
+    setPosition(0);
+    setDuration(0);
+    setIndex(target);
+  }, [playable.length]);
+
+  const next = useCallback(() => playTrack(index + 1), [playTrack, index]);
+  const prev = useCallback(() => {
+    // Standard player behaviour: within the first few seconds, "previous" means
+    // the previous track; after that it means the start of this one.
+    const audio = audioRef.current;
+    if (audio && audio.currentTime > 3) { audio.currentTime = 0; return; }
+    playTrack(index - 1);
+  }, [playTrack, index]);
+
+  // The src attribute changes with `index`, which resets the element. Restart
+  // playback here rather than in playTrack, because at that point React has not
+  // yet committed the new src and play() would replay the old track.
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !wantPlayRef.current) return;
+    wantPlayRef.current = false;
+    ensureGraph();
+    void ctxRef.current?.resume();
+    setReady(true);
+    void audio.play().catch(() => {/* blocked or unreachable */});
+  }, [index, ensureGraph]);
+
+  const handleEnded = useCallback(() => {
+    setPosition(0);
+    // Roll on through the set, then stop. Looping the whole library forever is
+    // not a thing anybody asked a website to do.
+    if (index < playable.length - 1) playTrack(index + 1);
+    else setPlaying(false);
+  }, [index, playable.length, playTrack]);
+
   const value = useMemo<AnthemContextValue | null>(() => {
-    if (!anthem?.isEnabled || !anthem.audioUrl) return null;
+    if (!enabled || !track) return null;
     return {
-      anthem, ready, playing, loading, position, duration,
+      anthem: track, tracks: playable, index, hasQueue: playable.length > 1,
+      ready, playing, loading, position, duration,
       spectrum, energy, activeLine, lyricsOpen,
-      toggle, seek, openLyrics: setLyricsOpen,
+      toggle, seek, next, prev, playTrack, openLyrics: setLyricsOpen,
     };
-  }, [anthem, ready, playing, loading, position, duration,
-      spectrum, energy, activeLine, lyricsOpen, toggle, seek]);
+  }, [enabled, track, playable, index, ready, playing, loading, position, duration,
+      spectrum, energy, activeLine, lyricsOpen, toggle, seek, next, prev, playTrack]);
 
   return (
     <AnthemContext.Provider value={value}>
       {children}
 
-      {anthem?.isEnabled && anthem.audioUrl && (
+      {enabled && track && (
         // crossOrigin is required for the analyser to see the samples: without
         // it a cross-origin file taints the graph and every bin reads zero.
         // Supabase Storage serves public objects with Access-Control-Allow-Origin: *.
@@ -195,12 +268,16 @@ export function AnthemProvider({
           // is a stopped one, which is the whole thing this file exists to avoid.
           key="hd-anthem-audio"
           ref={audioRef}
-          src={anthem.audioUrl}
+          // Only the src changes between tracks. The element itself must
+          // survive, because createMediaElementSource may be called once per
+          // element for the lifetime of the page - swap the node and the
+          // analyser is gone for good.
+          src={track.audioUrl}
           crossOrigin="anonymous"
           preload="none"
           onPlay={()  => setPlaying(true)}
           onPause={() => setPlaying(false)}
-          onEnded={() => { setPlaying(false); setPosition(0); }}
+          onEnded={handleEnded}
           onTimeUpdate={(e) => setPosition(e.currentTarget.currentTime)}
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || 0)}
           className="hidden"

@@ -10,7 +10,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Pause, Play, X, Music, Maximize2 } from "lucide-react";
+import { Pause, Play, X, Music, Maximize2, SkipBack, SkipForward } from "lucide-react";
 import { cn }        from "@/utils/cn";
 import { useAnthem } from "@/features/anthem/AnthemProvider";
 import type { AnthemLyricLine } from "@/types";
@@ -27,9 +27,31 @@ const DPR_CAP = 2;          // retina is enough; 3x buys nothing here
 // the player means you can follow the anthem without giving up the page you
 // are reading. The full view is one click away, on the window or the disk.
 //
-// Deliberately fixed-height: a window that grew and shrank with the length of
+// Same language as that full view, in miniature: the sung line in ember with
+// its glow, the lines either side falling away in opacity and blur. Three
+// lines is what makes it read as a song rather than a status message — you can
+// see where you have just been and where you are going.
+//
+// Deliberately fixed-height. A window that grew and shrank with the length of
 // each line would nudge the disk around the corner of the screen all song.
 // ---------------------------------------------------------------------------
+
+/** A line either side of the sung one — present enough to read, receded
+ *  enough that the eye never mistakes it for the current line. Same falloff
+ *  the full view uses, just at one step of distance instead of many. */
+function NeighbourLine({ text }: { text?: string }) {
+  // Reserve the row even when empty, so the sung line stays put at the top and
+  // bottom of the song rather than sliding as neighbours appear.
+  if (!text) return <span className="block h-[15px] w-full" aria-hidden="true" />;
+  return (
+    <span
+      className="block w-full text-[11px] text-hd-ink-300 leading-tight truncate"
+      style={{ opacity: 0.45, filter: "blur(0.7px)" }}
+    >
+      {text}
+    </span>
+  );
+}
 
 function LyricWindow({
   lines, activeLine, title, playing, onExpand,
@@ -40,8 +62,17 @@ function LyricWindow({
   playing:    boolean;
   onExpand:   () => void;
 }) {
-  const current = activeLine >= 0 ? lines[activeLine]?.text : undefined;
-  const next    = activeLine >= 0 ? lines[activeLine + 1]?.text : lines[0]?.text;
+  // Blank lines are spacers in the full view; here they would read as the
+  // window having gone empty, so skip over them when looking either side.
+  const at = (i: number): string | undefined => {
+    const t = lines[i]?.text?.trim();
+    return t ? t : undefined;
+  };
+
+  const synced  = activeLine >= 0;
+  const current = synced ? at(activeLine) : undefined;
+  const prev    = synced ? at(activeLine - 1) : undefined;
+  const next    = synced ? at(activeLine + 1) : at(0);
 
   return (
     <button
@@ -50,39 +81,39 @@ function LyricWindow({
       aria-label={`Open the full lyrics for ${title}`}
       className={cn(
         "hidden sm:flex flex-col items-end text-right group",
-        "w-[230px] pl-4 pr-4 py-2.5 rounded-2xl",
+        "w-[264px] px-4 py-3 rounded-2xl",
         "bg-hd-ink-900/90 border border-hd-ink-700/80 backdrop-blur-md",
         "hover:border-hd-ember-700/60 transition-colors shadow-cinematic",
       )}
     >
       {/* Header: state, title, and the hint that this opens */}
       <span className="flex items-center gap-1.5 w-full justify-end">
-        <span className="text-[9px] uppercase tracking-widest text-hd-ink-500 leading-none truncate">
+        <span className="text-[9px] uppercase tracking-widest text-hd-ink-400 leading-none truncate">
           {playing ? "Now playing" : "Paused"} · {title}
         </span>
-        <Maximize2 className="size-2.5 shrink-0 text-hd-ink-600 group-hover:text-hd-ember-500 transition-colors" />
+        <Maximize2 className="size-2.5 shrink-0 text-hd-ink-500 group-hover:text-hd-ember-400 transition-colors" />
       </span>
 
-      {/* The line being sung, with the one after it faint underneath */}
-      <span className="flex flex-col items-end w-full mt-1.5 h-[52px] justify-center overflow-hidden">
+      {/* prev · current · next */}
+      <span className="flex flex-col items-end justify-center w-full mt-2 h-[76px] overflow-hidden">
         {current ? (
           <>
-            {/* key on the index so the line re-mounts and fades in on change */}
+            <NeighbourLine text={prev} />
+            {/* keyed on the index so each line re-mounts and fades in */}
             <span
               key={activeLine}
-              className="text-[13px] font-semibold text-hd-ink-50 leading-snug line-clamp-2 animate-fade-in"
+              className={cn(
+                "w-full text-[13px] font-bold leading-snug line-clamp-2 animate-fade-in",
+                "text-hd-ember-300 [text-shadow:0_0_18px_rgba(240,144,32,0.4)]",
+              )}
             >
               {current}
             </span>
-            {next && (
-              <span className="text-[10px] text-hd-ink-600 leading-tight truncate w-full mt-0.5">
-                {next}
-              </span>
-            )}
+            <NeighbourLine text={next} />
           </>
         ) : (
           // Before the first timed line, or on an anthem nobody has synced yet.
-          <span className="text-[11px] text-hd-ink-500 leading-snug line-clamp-2">
+          <span className="w-full text-[12px] text-hd-ink-300 leading-snug line-clamp-3">
             {next ?? "Lyrics"}
           </span>
         )}
@@ -153,7 +184,10 @@ export function AnthemDock({ logoUrl }: { logoUrl?: string | null }) {
 
   if (!anthem || !anthem.ready || anthem.lyricsOpen) return null;
 
-  const { playing: isPlaying, toggle, openLyrics, position, duration } = anthem;
+  const {
+    playing: isPlaying, toggle, openLyrics, position, duration,
+    hasQueue, next, prev,
+  } = anthem;
   const progress = duration > 0 ? position / duration : 0;
 
   return (
@@ -243,6 +277,29 @@ export function AnthemDock({ logoUrl }: { logoUrl?: string | null }) {
         >
           {isPlaying ? <Pause className="size-3" /> : <Play className="size-3 ml-0.5" />}
         </button>
+
+        {/* Skip, tucked around the rim so they never crowd the play button.
+            Only present once there is more than one track to move between. */}
+        {hasQueue && (
+          <>
+            <button
+              type="button"
+              onClick={prev}
+              aria-label="Previous track"
+              className="absolute -top-0.5 -left-0.5 flex items-center justify-center size-6 rounded-full bg-hd-ink-800 hover:bg-hd-ink-700 text-hd-ink-300 hover:text-white border border-hd-ink-700 transition-colors"
+            >
+              <SkipBack className="size-2.5" />
+            </button>
+            <button
+              type="button"
+              onClick={next}
+              aria-label="Next track"
+              className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center size-6 rounded-full bg-hd-ink-800 hover:bg-hd-ink-700 text-hd-ink-300 hover:text-white border border-hd-ink-700 transition-colors"
+            >
+              <SkipForward className="size-2.5" />
+            </button>
+          </>
+        )}
 
         {/* Dismiss: pauses and puts the dock away */}
         <button

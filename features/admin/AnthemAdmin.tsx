@@ -18,9 +18,9 @@ import {
 
 import { cn }                  from "@/utils/cn";
 import { AudioUpload }         from "@/components/ui/AudioUpload";
-import { saveAnthemSettings }  from "@/lib/supabase/actions";
+import { saveAnthemTrack }     from "@/lib/supabase/actions";
 import { STORAGE_BUCKETS }     from "@/lib/constants";
-import type { AnthemSettings, AnthemLyricLine } from "@/types";
+import type { AnthemTrack, AnthemLyricLine } from "@/types";
 
 const inputCls = cn(
   "w-full h-10 px-3 rounded-lg bg-hd-ink-800 border border-hd-ink-700 text-sm",
@@ -51,17 +51,22 @@ function mergeLyrics(prev: AnthemLyricLine[], raw: string): AnthemLyricLine[] {
 }
 
 interface Props {
-  initialSettings: AnthemSettings;
+  /** null when adding a song rather than editing one. */
+  track:   AnthemTrack | null;
+  onSaved: () => void;
 }
 
-export function AnthemAdmin({ initialSettings }: Props) {
-  const [title,     setTitle]     = useState(initialSettings.title);
-  const [credits,   setCredits]   = useState(initialSettings.credits ?? "");
-  const [audioUrl,  setAudioUrl]  = useState(initialSettings.audioUrl);
-  const [enabled,   setEnabled]   = useState(initialSettings.isEnabled);
-  const [lines,     setLines]     = useState<AnthemLyricLine[]>(initialSettings.lyrics);
+export function AnthemAdmin({ track, onSaved }: Props) {
+  const [title,     setTitle]     = useState(track?.title ?? "");
+  const [credits,   setCredits]   = useState(track?.credits ?? "");
+  const [audioUrl,  setAudioUrl]  = useState<string | null>(track?.audioUrl ?? null);
+  // "The anthem" is a property of a song now, not a site-wide switch: it is the
+  // one that plays first. The master on/off lives in the library above this.
+  const [isAnthem,  setIsAnthem]  = useState(track?.isAnthem ?? false);
+  const [isActive,  setIsActive]  = useState(track?.isActive ?? true);
+  const [lines,     setLines]     = useState<AnthemLyricLine[]>(track?.lyrics ?? []);
   const [rawText,   setRawText]   = useState(
-    initialSettings.lyrics.map((l) => l.text).join("\n"),
+    (track?.lyrics ?? []).map((l) => l.text).join("\n"),
   );
 
   const [syncing,  setSyncing]  = useState(false);
@@ -152,12 +157,16 @@ export function AnthemAdmin({ initialSettings }: Props) {
 
   // ── Save ─────────────────────────────────────────────────────────────────
   const handleSave = async () => {
+    if (!audioUrl) { setError("Upload the audio file first."); return; }
     setSaving(true); setError(null); setSaved(false);
-    const res = await saveAnthemSettings({
-      title, audioUrl, credits: credits || null, lyrics: lines, isEnabled: enabled,
+    const res = await saveAnthemTrack({
+      id: track?.id,
+      title, audioUrl, credits: credits || null,
+      lyrics: lines, isAnthem, isActive,
     });
     setSaving(false);
     if (res.error) { setError(res.error); return; }
+    onSaved();
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -167,8 +176,8 @@ export function AnthemAdmin({ initialSettings }: Props) {
       <div className="flex items-start gap-2.5">
         <Music className="size-4 text-hd-ember-400 shrink-0 mt-0.5" />
         <p className="text-xs text-hd-ink-500 leading-relaxed">
-          A play control appears in the homepage hero once this is switched on.
-          Lyrics work untimed — they show as a plain sheet until you sync them.
+          Lyrics work untimed — they show as a plain sheet until you sync them,
+          so the words are useful the moment they are pasted in.
         </p>
       </div>
 
@@ -181,7 +190,7 @@ export function AnthemAdmin({ initialSettings }: Props) {
       {saved && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/40">
           <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-          <p className="text-sm text-emerald-300">Anthem saved.</p>
+          <p className="text-sm text-emerald-300">Song saved.</p>
         </div>
       )}
 
@@ -383,42 +392,61 @@ export function AnthemAdmin({ initialSettings }: Props) {
         />
       )}
 
-      {/* ── Enable + save ── */}
-      <label className={cn(
-        "flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors",
-        audioUrl ? "bg-hd-ink-900/60 border-hd-ink-700" : "bg-hd-ink-900/30 border-hd-ink-800 cursor-not-allowed",
-      )}>
-        <input
-          type="checkbox"
-          checked={enabled}
-          disabled={!audioUrl}
-          onChange={(e) => setEnabled(e.target.checked)}
-          className="mt-0.5 size-4 accent-hd-ember-600"
-        />
-        <span>
-          <span className="block text-sm font-semibold text-hd-ink-100">
-            Show the anthem on the homepage
+      {/* ── Role in the library + save ── */}
+      <div className="grid sm:grid-cols-2 gap-3">
+        <label className={cn(
+          "flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors",
+          audioUrl ? "bg-hd-ink-900/60 border-hd-ink-700" : "bg-hd-ink-900/30 border-hd-ink-800 cursor-not-allowed",
+        )}>
+          <input
+            type="checkbox"
+            checked={isAnthem}
+            disabled={!audioUrl}
+            onChange={(e) => setIsAnthem(e.target.checked)}
+            className="mt-0.5 size-4 accent-hd-ember-600"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-hd-ink-100">
+              This is the anthem
+            </span>
+            <span className="block text-xs text-hd-ink-500 mt-0.5">
+              Plays first and heads the queue. Setting it here takes the badge
+              off whichever song has it now — there is only ever one.
+            </span>
           </span>
-          <span className="block text-xs text-hd-ink-500 mt-0.5">
-            {audioUrl
-              ? "A small play control appears in the hero."
-              : "Upload the audio first — there is nothing to play yet."}
+        </label>
+
+        <label className="flex items-start gap-3 p-4 rounded-xl border bg-hd-ink-900/60 border-hd-ink-700 cursor-pointer transition-colors">
+          <input
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="mt-0.5 size-4 accent-hd-ember-600"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-hd-ink-100">
+              In the queue
+            </span>
+            <span className="block text-xs text-hd-ink-500 mt-0.5">
+              Turn off to keep a song here while you work on it, without it
+              reaching the player.
+            </span>
           </span>
-        </span>
-      </label>
+        </label>
+      </div>
 
       <button
-        type="button" onClick={handleSave} disabled={saving}
+        type="button" onClick={handleSave} disabled={saving || !audioUrl}
         className={cn(
           "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all",
-          saving
+          saving || !audioUrl
             ? "bg-hd-ink-700 cursor-not-allowed opacity-60"
             : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember active:scale-[0.98]",
         )}
       >
         {saving
           ? <><span className="size-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />Saving…</>
-          : <><Save className="size-4" />Save anthem</>}
+          : <><Save className="size-4" />{track ? "Save song" : "Add to the library"}</>}
       </button>
     </div>
   );

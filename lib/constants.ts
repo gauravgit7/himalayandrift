@@ -250,7 +250,8 @@ export const STORAGE_BUCKETS = {
   pwaIcons:      "pwa-icons",      // PwaSettingsAdmin
   paymentQr:     "payment-qr",     // PaymentSettingsAdmin + RideForm override
   paymentScreenshots: "payment-screenshots", // ride RegistrationForm (anon upload)
-  anthem:        "anthem",         // AnthemAdmin - the community anthem audio
+  anthem:        "anthem",         // MusicAdmin - the song library audio
+  productImages: "product-images", // ProductForm - merch photos
   documents:     "ride-documents", // reserved: GPX / route PDFs, no uploader yet
 } as const;
 
@@ -279,6 +280,11 @@ export const ROUTES = {
   adminMarshals:  "/admin/marshals",
   adminSettings:  "/admin/settings",
   adminMembers:   "/admin/members",
+  adminShop:      "/admin/shop",
+  shop:           "/shop",
+  product:        (slug: string) => `/shop/${slug}`,
+  shopCheckout:   "/shop/checkout",
+  shopOrder:      (code: string) => `/shop/order/${code}`,
   membership:     "/membership",
   signin:         "/signin",
   signup:         "/signup",

@@ -559,6 +559,62 @@ create trigger anthem_settings_updated_at
   for each row execute function set_updated_at();
 
 -- ---------------------------------------------------------------------------
+-- Anthem tracks — the song library
+--
+-- The anthem started as one song in a singleton row, which is the right shape
+-- for exactly one song and the wrong shape for two. Tracks live here now;
+-- anthem_settings keeps only is_enabled, the master switch for whether the
+-- player appears on the site at all.
+--
+-- Exactly one track is the anthem. It sorts first and is what plays when the
+-- player starts; the rest follow it in sort_order, so prev/next walks the
+-- club's own record collection rather than a single track on repeat.
+-- ---------------------------------------------------------------------------
+
+create table if not exists anthem_tracks (
+  id          uuid primary key default gen_random_uuid(),
+  title       text not null,
+  audio_url   text not null,
+  credits     text,                        -- writer, vocalist, year
+  -- Same shape as the old anthem_settings.lyrics: [{ "t": 12.4, "text": "…" }]
+  -- Untimed lines (t null) are valid and render as a static sheet.
+  lyrics      jsonb not null default '[]',
+  cover_url   text,
+  -- The one that plays first. Enforced as at-most-one by the partial index.
+  is_anthem   boolean not null default false,
+  is_active   boolean not null default true,
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+create index if not exists idx_anthem_tracks_order
+  on anthem_tracks(is_active, sort_order, created_at);
+
+-- One anthem, not several. A club with two anthems has none.
+create unique index if not exists idx_anthem_tracks_single_anthem
+  on anthem_tracks(is_anthem) where is_anthem;
+
+drop trigger if exists anthem_tracks_updated_at on anthem_tracks;
+create trigger anthem_tracks_updated_at
+  before update on anthem_tracks
+  for each row execute function set_updated_at();
+
+-- Carry the existing single anthem across on first run. Guarded on the table
+-- being empty so re-running this file never duplicates it, and on there being
+-- an audio file so an untouched install does not gain a silent track.
+do $$
+begin
+  if not exists (select 1 from anthem_tracks) then
+    insert into anthem_tracks (title, audio_url, credits, lyrics, is_anthem, sort_order)
+    select coalesce(nullif(s.title, ''), 'Our Anthem'), s.audio_url, s.credits,
+           s.lyrics, true, 0
+    from anthem_settings s
+    where s.id = 1 and s.audio_url is not null and s.audio_url <> '';
+  end if;
+end $$;
+
+-- ---------------------------------------------------------------------------
 -- Payment settings (singleton)
 --
 -- The club-wide payment details shown on every paid ride's registration form.
@@ -649,6 +705,188 @@ create trigger ride_registrations_updated_at
   for each row execute function set_updated_at();
 
 -- ---------------------------------------------------------------------------
+-- Shop — merch
+--
+-- Three tables, because a T-shirt is not one thing:
+--
+--   products          the item, its price, its photos, its story
+--   product_variants  the sizes, each with its OWN stock count
+--   shop_orders       who wants what, and whether they have paid
+--
+-- Stock lives on the variant, not the product, and that is the whole reason
+-- variants exist. "12 in stock" across S/M/L/XL is not a fact anyone can act
+-- on: it oversells the popular sizes and leaves the rest on the shelf. A
+-- product with no variants is a one-size item and carries its own stock.
+--
+-- The order flow deliberately mirrors ride registration, because riders have
+-- already learnt it: submit, pay by QR, upload the screenshot, get a code to
+-- check the status with. Nothing here talks to a payment gateway.
+-- ---------------------------------------------------------------------------
+
+create table if not exists products (
+  id                uuid primary key default gen_random_uuid(),
+  name              text not null,
+  slug              text not null unique,
+  short_description text,
+  description       text,
+  category          text not null default 'Merch',
+  -- The list price. What a rider pays is this minus discount_percent.
+  price             numeric(10,2) not null default 0,
+  -- 0-90. Kept as a percentage rather than a second price so the "was/now"
+  -- pair on the card can never contradict itself.
+  discount_percent  integer not null default 0
+                    check (discount_percent >= 0 and discount_percent <= 90),
+  -- First image is the card thumbnail; the rest are the gallery.
+  image_urls        text[] not null default '{}',
+  -- Stock for products with no variants. Null means "not tracked" - a made to
+  -- order patch never runs out. Ignored entirely when variants exist.
+  stock             integer,
+  is_active         boolean not null default true,
+  is_featured       boolean not null default false,
+  sort_order        integer not null default 0,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+create index if not exists idx_products_active on products(is_active, sort_order);
+
+drop trigger if exists products_updated_at on products;
+create trigger products_updated_at
+  before update on products
+  for each row execute function set_updated_at();
+
+create table if not exists product_variants (
+  id          uuid primary key default gen_random_uuid(),
+  product_id  uuid not null references products(id) on delete cascade,
+  -- "S", "M", "XL", "42", "Black" - free text, because a club selling shirts
+  -- one year and mugs the next should not need a migration to do it.
+  label       text not null,
+  -- Added to the product price. A 3XL costing a little more is normal; a
+  -- separate absolute price per size is a way to get them out of step.
+  price_delta numeric(10,2) not null default 0,
+  stock       integer not null default 0 check (stock >= 0),
+  sort_order  integer not null default 0,
+  is_active   boolean not null default true,
+  created_at  timestamptz not null default now(),
+  unique (product_id, label)
+);
+
+create index if not exists idx_product_variants_product
+  on product_variants(product_id, sort_order);
+
+create table if not exists shop_settings (
+  id             integer primary key default 1 check (id = 1),
+  is_enabled     boolean not null default false,
+  -- Shown at the top of /shop: a delivery note, a pickup address, a warning
+  -- that nothing ships during monsoon. Free text on purpose.
+  announcement   text not null default '',
+  delivery_note  text not null default '',
+  updated_at     timestamptz not null default now()
+);
+
+insert into shop_settings (id) values (1) on conflict do nothing;
+
+drop trigger if exists shop_settings_updated_at on shop_settings;
+create trigger shop_settings_updated_at
+  before update on shop_settings
+  for each row execute function set_updated_at();
+
+create table if not exists shop_orders (
+  id                     uuid primary key default gen_random_uuid(),
+  -- Deleting the account keeps the order: it may already be packed.
+  user_id                uuid references auth.users(id) on delete set null,
+  -- The only way a signed-out buyer can look their order up again.
+  access_code            text unique not null,
+
+  full_name              text not null,
+  phone                  text not null,
+  email                  text,
+  delivery_address       text,
+  notes                  text,
+
+  -- Totals are frozen at submission. Re-deriving them later from products that
+  -- have since changed price would quietly rewrite what somebody agreed to pay.
+  subtotal               numeric(10,2) not null default 0,
+  discount_total         numeric(10,2) not null default 0,
+  total                  numeric(10,2) not null default 0,
+
+  payment_reference      text,
+  payment_screenshot_url text,
+
+  status                 text not null default 'pending'
+                         check (status in ('pending', 'approved', 'fulfilled', 'rejected')),
+  rejection_reason       text,
+  admin_notes            text,
+
+  created_at             timestamptz not null default now(),
+  updated_at             timestamptz not null default now(),
+  approved_at            timestamptz,
+  fulfilled_at           timestamptz
+);
+
+create index if not exists idx_shop_orders_status on shop_orders(status, created_at desc);
+create index if not exists idx_shop_orders_user   on shop_orders(user_id);
+
+drop trigger if exists shop_orders_updated_at on shop_orders;
+create trigger shop_orders_updated_at
+  before update on shop_orders
+  for each row execute function set_updated_at();
+
+create table if not exists shop_order_items (
+  id              uuid primary key default gen_random_uuid(),
+  order_id        uuid not null references shop_orders(id) on delete cascade,
+  -- Nulled rather than cascaded: an order for a product that has since been
+  -- deleted is still an order somebody placed, and the name below preserves
+  -- what it was for.
+  product_id      uuid references products(id) on delete set null,
+  variant_id      uuid references product_variants(id) on delete set null,
+  -- Copied at submission, for the same reason the totals are.
+  product_name    text not null,
+  variant_label   text,
+  unit_price      numeric(10,2) not null,
+  quantity        integer not null check (quantity > 0),
+  line_total      numeric(10,2) not null,
+  created_at      timestamptz not null default now()
+);
+
+create index if not exists idx_shop_order_items_order on shop_order_items(order_id);
+
+-- An order arrives from a signed-out visitor, so its RLS insert policy has to
+-- be `with check (true)`. Same problem as membership cards, same answer: the
+-- columns that decide money and status are not the buyer's to set.
+create or replace function public.guard_shop_order_submission()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+declare
+  claims text := current_setting('request.jwt.claims', true);
+begin
+  if claims is null or claims = '' then return new; end if;
+  if (claims::jsonb ->> 'role') = 'service_role' then return new; end if;
+
+  new.user_id          := auth.uid();
+  new.status           := 'pending';
+  new.rejection_reason := null;
+  new.admin_notes      := null;
+  new.approved_at      := null;
+  new.fulfilled_at     := null;
+  -- Totals are computed server-side from live prices by the submit action,
+  -- which runs as service_role and so never reaches this branch. A direct
+  -- PostgREST insert gets zeroes rather than a total of its own choosing.
+  new.subtotal         := 0;
+  new.discount_total   := 0;
+  new.total            := 0;
+  return new;
+end;
+$$;
+
+drop trigger if exists shop_orders_guard_submission on shop_orders;
+create trigger shop_orders_guard_submission
+  before insert on shop_orders
+  for each row execute function public.guard_shop_order_submission();
+
+-- ---------------------------------------------------------------------------
 -- Web push
 -- ---------------------------------------------------------------------------
 
@@ -714,6 +952,12 @@ alter table push_settings      enable row level security;
 alter table pwa_settings       enable row level security;
 alter table payment_settings   enable row level security;
 alter table anthem_settings    enable row level security;
+alter table anthem_tracks      enable row level security;
+alter table products           enable row level security;
+alter table product_variants   enable row level security;
+alter table shop_settings      enable row level security;
+alter table shop_orders        enable row level security;
+alter table shop_order_items   enable row level security;
 alter table ride_registrations enable row level security;
 
 -- ── Public read ────────────────────────────────────────────────────────────
@@ -728,6 +972,7 @@ drop policy if exists "public_read_push_settings"    on push_settings;
 drop policy if exists "public_read_pwa_settings"     on pwa_settings;
 drop policy if exists "public_read_payment_settings" on payment_settings;
 drop policy if exists "public_read_anthem_settings"  on anthem_settings;
+drop policy if exists "public_read_anthem_tracks"    on anthem_tracks;
 
 create policy "public_read_marshals"         on marshals         for select using (true);
 create policy "public_read_series"           on series           for select using (true);
@@ -742,6 +987,14 @@ create policy "public_read_pwa_settings"     on pwa_settings     for select usin
 -- visitors, so this one is public read too. Keep it free of anything private.
 create policy "public_read_payment_settings" on payment_settings for select using (true);
 create policy "public_read_anthem_settings"  on anthem_settings  for select using (true);
+create policy "public_read_anthem_tracks"    on anthem_tracks    for select using (true);
+-- The shop window is public; the orders behind it are not (see below).
+drop policy if exists "public_read_products"         on products;
+drop policy if exists "public_read_product_variants" on product_variants;
+drop policy if exists "public_read_shop_settings"    on shop_settings;
+create policy "public_read_products"         on products         for select using (true);
+create policy "public_read_product_variants" on product_variants for select using (true);
+create policy "public_read_shop_settings"    on shop_settings    for select using (true);
 
 -- ── Authenticated write ────────────────────────────────────────────────────
 drop policy if exists "auth_write_marshals"         on marshals;
@@ -751,6 +1004,7 @@ drop policy if exists "auth_write_rides"            on rides;
 drop policy if exists "auth_write_ride_sponsors"    on ride_sponsors;
 drop policy if exists "auth_write_homepage_content" on homepage_content;
 drop policy if exists "auth_write_anthem_settings"   on anthem_settings;
+drop policy if exists "auth_write_anthem_tracks"     on anthem_tracks;
 
 -- `to authenticated` is NOT enough. Any rider who signs up on the public site
 -- is authenticated, holds the anon key that ships in every page, and could
@@ -764,6 +1018,13 @@ create policy "auth_write_rides"            on rides            for all to authe
 create policy "auth_write_ride_sponsors"    on ride_sponsors    for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "auth_write_homepage_content" on homepage_content for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "auth_write_anthem_settings"  on anthem_settings  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_anthem_tracks"    on anthem_tracks    for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "auth_write_products"         on products;
+drop policy if exists "auth_write_product_variants" on product_variants;
+drop policy if exists "auth_write_shop_settings"    on shop_settings;
+create policy "auth_write_products"         on products         for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_product_variants" on product_variants for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_shop_settings"    on shop_settings    for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- These four had public read and NO write policy at all, while their admin
 -- forms write through the anon client - so every save was silently refused by
@@ -825,6 +1086,21 @@ create policy "public_insert_ride_registrations" on ride_registrations for inser
   to anon, authenticated with check (true);
 create policy "read_own_ride_registrations"      on ride_registrations for select
   to authenticated using (auth.uid() = user_id);
+
+-- ── Shop orders ─────────────────────────────────────────────
+-- Read is deliberately NOT public: an order carries a name, a phone number
+-- and a delivery address. A buyer looks theirs up by access code through the
+-- service role, exactly as a ride registration is looked up.
+drop policy if exists "public_insert_shop_orders"      on shop_orders;
+drop policy if exists "read_own_shop_orders"           on shop_orders;
+drop policy if exists "public_insert_shop_order_items" on shop_order_items;
+
+create policy "public_insert_shop_orders"      on shop_orders      for insert
+  to anon, authenticated with check (true);
+create policy "read_own_shop_orders"           on shop_orders      for select
+  to authenticated using (auth.uid() = user_id);
+create policy "public_insert_shop_order_items" on shop_order_items for insert
+  to anon, authenticated with check (true);
 
 -- ── Push subscriptions: write-only for the public ──────────────────────────
 -- Anyone may subscribe or unsubscribe; nobody may read the endpoint list back,

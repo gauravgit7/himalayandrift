@@ -11,7 +11,8 @@ import type {
   RideType, RideStatus, RidePriority,
   MemberRegistrationStatus,
   RideRegistration, RideRegistrationStatus, PaymentSettings,
-  AnthemSettings, AnthemLyricLine,
+  AnthemSettings, AnthemLyricLine, AnthemTrack,
+  Product, ProductVariant, ShopSettings, ShopOrder, ShopOrderItem, ShopOrderStatus,
 } from "@/types";
 
 /** Postgres `numeric` arrives over PostgREST as a string, to avoid the
@@ -473,5 +474,183 @@ export function mapAnthemSettings(row: DbAnthemSettings): AnthemSettings {
     credits:   row.credits   ?? null,
     lyrics:    parseLyrics(row.lyrics),
     isEnabled: row.is_enabled ?? false,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Shop
+// ---------------------------------------------------------------------------
+
+export interface DbProductVariant {
+  id:          string;
+  product_id:  string;
+  label:       string;
+  price_delta: number | string;
+  stock:       number;
+  sort_order:  number;
+  is_active:   boolean;
+}
+
+export function mapProductVariant(row: DbProductVariant): ProductVariant {
+  return {
+    id:         row.id,
+    productId:  row.product_id,
+    label:      row.label,
+    priceDelta: toNumber(row.price_delta) ?? 0,
+    stock:      row.stock ?? 0,
+    sortOrder:  row.sort_order ?? 0,
+    isActive:   row.is_active ?? true,
+  };
+}
+
+export interface DbProduct {
+  id:                string;
+  name:              string;
+  slug:              string;
+  short_description: string | null;
+  description:       string | null;
+  category:          string;
+  price:             number | string;
+  discount_percent:  number;
+  image_urls:        string[] | null;
+  stock:             number | null;
+  is_active:         boolean;
+  is_featured:       boolean;
+  sort_order:        number;
+  product_variants?: DbProductVariant[] | null;
+}
+
+export function mapProduct(row: DbProduct): Product {
+  return {
+    id:               row.id,
+    name:             row.name,
+    slug:             row.slug,
+    shortDescription: row.short_description ?? null,
+    description:      row.description       ?? null,
+    category:         row.category || "Merch",
+    price:            toNumber(row.price) ?? 0,
+    discountPercent:  row.discount_percent ?? 0,
+    imageUrls:        row.image_urls ?? [],
+    stock:            row.stock ?? null,
+    isActive:         row.is_active   ?? true,
+    isFeatured:       row.is_featured ?? false,
+    sortOrder:        row.sort_order  ?? 0,
+    variants: (row.product_variants ?? [])
+      .map(mapProductVariant)
+      .sort((a, b) => a.sortOrder - b.sortOrder),
+  };
+}
+
+export interface DbShopSettings {
+  is_enabled:    boolean;
+  announcement:  string;
+  delivery_note: string;
+}
+
+export function mapShopSettings(row: DbShopSettings): ShopSettings {
+  return {
+    isEnabled:    row.is_enabled ?? false,
+    announcement: row.announcement  ?? "",
+    deliveryNote: row.delivery_note ?? "",
+  };
+}
+
+export interface DbShopOrderItem {
+  id:            string;
+  product_id:    string | null;
+  variant_id:    string | null;
+  product_name:  string;
+  variant_label: string | null;
+  unit_price:    number | string;
+  quantity:      number;
+  line_total:    number | string;
+}
+
+export function mapShopOrderItem(row: DbShopOrderItem): ShopOrderItem {
+  return {
+    id:           row.id,
+    productId:    row.product_id   ?? null,
+    variantId:    row.variant_id   ?? null,
+    productName:  row.product_name,
+    variantLabel: row.variant_label ?? null,
+    unitPrice:    toNumber(row.unit_price) ?? 0,
+    quantity:     row.quantity ?? 1,
+    lineTotal:    toNumber(row.line_total) ?? 0,
+  };
+}
+
+export interface DbShopOrder {
+  id:                     string;
+  user_id:                string | null;
+  access_code:            string;
+  full_name:              string;
+  phone:                  string;
+  email:                  string | null;
+  delivery_address:       string | null;
+  notes:                  string | null;
+  subtotal:               number | string;
+  discount_total:         number | string;
+  total:                  number | string;
+  payment_reference:      string | null;
+  payment_screenshot_url: string | null;
+  status:                 string;
+  rejection_reason:       string | null;
+  admin_notes:            string | null;
+  created_at:             string;
+  approved_at:            string | null;
+  fulfilled_at:           string | null;
+  shop_order_items?:      DbShopOrderItem[] | null;
+}
+
+export function mapShopOrder(row: DbShopOrder): ShopOrder {
+  return {
+    id:              row.id,
+    userId:          row.user_id ?? null,
+    accessCode:      row.access_code,
+    fullName:        row.full_name,
+    phone:           row.phone,
+    email:           row.email ?? null,
+    deliveryAddress: row.delivery_address ?? null,
+    notes:           row.notes ?? null,
+    subtotal:        toNumber(row.subtotal)       ?? 0,
+    discountTotal:   toNumber(row.discount_total) ?? 0,
+    total:           toNumber(row.total)          ?? 0,
+    paymentReference:     row.payment_reference      ?? null,
+    paymentScreenshotUrl: row.payment_screenshot_url ?? null,
+    status:          (row.status as ShopOrderStatus) ?? "pending",
+    rejectionReason: row.rejection_reason ?? null,
+    adminNotes:      row.admin_notes ?? null,
+    createdAt:       row.created_at,
+    approvedAt:      row.approved_at  ?? null,
+    fulfilledAt:     row.fulfilled_at ?? null,
+    items: (row.shop_order_items ?? []).map(mapShopOrderItem),
+  };
+}
+
+export interface DbAnthemTrack {
+  id:         string;
+  title:      string;
+  audio_url:  string;
+  credits:    string | null;
+  lyrics:     unknown;
+  cover_url:  string | null;
+  is_anthem:  boolean;
+  is_active:  boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export function mapAnthemTrack(row: DbAnthemTrack): AnthemTrack {
+  return {
+    id:        row.id,
+    title:     row.title || "Untitled",
+    audioUrl:  row.audio_url,
+    credits:   row.credits   ?? null,
+    lyrics:    parseLyrics(row.lyrics),
+    coverUrl:  row.cover_url ?? null,
+    isAnthem:  row.is_anthem ?? false,
+    isActive:  row.is_active ?? true,
+    sortOrder: row.sort_order ?? 0,
   };
 }

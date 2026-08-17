@@ -199,6 +199,45 @@ the photos. `lib/membership/link.ts` is the plumbing around that decision — cl
 backfill (empty profile fields only, never overwriting the rider's own answer), rank
 candidates, link, unlink.
 
+### Music
+
+`anthem_settings` is now just `is_enabled` — the master switch for whether the player
+appears at all. The songs live in **`anthem_tracks`**, ordered, with exactly one flagged
+`is_anthem` (a partial unique index enforces the "exactly one"). The anthem heads the
+queue whatever its `sort_order`; prev/next walks the rest. Re-running `schema.sql` carries
+an existing single anthem across, guarded on the table being empty so it never duplicates.
+
+`AnthemProvider` holds the queue and an index. The `<audio>` element must **survive** a
+track change — only its `src` changes — because `createMediaElementSource` may be called
+once per element for the life of the page, and swapping the node loses the analyser for
+good. Changing `src` resets the element, so playback is restarted in an effect keyed on
+the index rather than in the handler, where React has not yet committed the new `src`.
+
+### Shop
+
+Three tables, because a T-shirt is not one thing: `products`, `product_variants` (the
+sizes), `shop_orders` + `shop_order_items`. **Stock lives on the variant**, which is the
+entire reason variants exist — "12 in stock" across S–XL oversells the popular sizes and
+strands the rest. A product with no variants carries its own `stock`; null there means
+untracked, not zero.
+
+Order flow deliberately mirrors ride registration, because riders have already learnt it:
+submit → pay by QR → upload the screenshot → get a code to check status with. No payment
+gateway is involved.
+
+Two rules worth not undoing:
+
+- **Prices are re-read server-side on every basket render and again at submission.** The
+  browser's basket holds ids and quantities only. A tampered payload cannot buy a jacket
+  for one rupee, and a basket left open for a week cannot check out at last week's price.
+- **Stock comes off at approval, not submission.** An unpaid order is a claim, not a sale.
+  Decrementing at submission lets abandoned baskets empty the shop on paper.
+
+`guard_shop_order_submission` does for `shop_orders` what the membership-card guard does
+for `member_cards`: `with check (true)` is unavoidable for signed-out buyers, so a trigger
+pins `user_id` to `auth.uid()` and zeroes the money and status columns on any insert not
+carrying the service-role key.
+
 ---
 
 ## 5. Auth and access control

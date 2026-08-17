@@ -9,22 +9,28 @@
 import { Navbar }                from "@/components/shared/Navbar";
 import { Footer }                from "@/components/shared/Footer";
 import { PageTransitionWrapper } from "@/components/shared/PageTransitionWrapper";
-import { getHomepageContent, getNavbarUser } from "@/lib/supabase/queries";
+import { getHomepageContent, getNavbarUser, getShopSettings } from "@/lib/supabase/queries";
 
 export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [homepage, navbarUser] = await Promise.all([
+  const [homepage, navbarUser, shop] = await Promise.all([
     getHomepageContent(),
     getNavbarUser(),
+    getShopSettings(),
   ]);
   const brandLogos = homepage.brandLogos;
 
   return (
     <div className="flex flex-col min-h-dvh">
-      <Navbar transparent brandLogos={brandLogos} user={navbarUser} />
+      <Navbar
+        transparent
+        brandLogos={brandLogos}
+        user={navbarUser}
+        shopEnabled={shop.isEnabled}
+      />
       <PageTransitionWrapper className="flex-1">
         {children}
       </PageTransitionWrapper>

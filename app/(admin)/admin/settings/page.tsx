@@ -8,8 +8,9 @@ import { PwaSettingsAdmin }           from "@/features/admin/PwaSettingsAdmin";
 import { PushNotificationsAdmin }     from "@/features/admin/PushNotificationsAdmin";
 import { CardSettingsAdmin }          from "@/features/admin/CardSettingsAdmin";
 import { PaymentSettingsAdmin }       from "@/features/admin/PaymentSettingsAdmin";
-import { AnthemAdmin }               from "@/features/admin/AnthemAdmin";
-import { getCardSettings, getPaymentSettings, getAnthemSettings } from "@/lib/supabase/queries";
+import { MusicAdmin }                from "@/features/admin/MusicAdmin";
+import { getCardSettings, getPaymentSettings, getAnthemSettings,
+         getAllAnthemTracks } from "@/lib/supabase/queries";
 import { APP_META }                   from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Settings | Admin" };
@@ -63,9 +64,9 @@ async function getPushData() {
 // ---------------------------------------------------------------------------
 
 export default async function AdminSettingsPage() {
-  const [pwa, push, cardSettings, paymentSettings, anthem] = await Promise.all([
+  const [pwa, push, cardSettings, paymentSettings, anthem, tracks] = await Promise.all([
     getPwaSettings(), getPushData(), getCardSettings(), getPaymentSettings(),
-    getAnthemSettings(),
+    getAnthemSettings(), getAllAnthemTracks(),
   ]);
 
   return (
@@ -134,7 +135,7 @@ export default async function AdminSettingsPage() {
             Anthem
           </h2>
         </div>
-        <AnthemAdmin initialSettings={anthem} />
+        <MusicAdmin initialTracks={tracks} initialEnabled={anthem.isEnabled} />
       </section>
 
     </div>

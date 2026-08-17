@@ -30,7 +30,9 @@ values
   ('payment-qr',    'payment-qr',    true,  2097152, array['image/jpeg','image/png','image/webp']),
   ('payment-screenshots', 'payment-screenshots', true, 5242880, array['image/jpeg','image/png','image/webp']),
   -- 20 MB: an anthem is a few minutes of audio, not an album.
-  ('anthem', 'anthem', true, 20971520, array['audio/mpeg','audio/mp3','audio/wav','audio/ogg','audio/aac','audio/mp4','audio/x-m4a'])
+  ('anthem', 'anthem', true, 20971520, array['audio/mpeg','audio/mp3','audio/wav','audio/ogg','audio/aac','audio/mp4','audio/x-m4a']),
+  -- Merch photography, so a little more headroom than a logo gets.
+  ('product-images', 'product-images', true, 10485760, array['image/jpeg','image/png','image/webp'])
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
@@ -55,7 +57,8 @@ declare
 begin
   foreach admin_bucket in array array[
     'ride-banners', 'hero-banners', 'brand-logos',
-    'sponsor-logos', 'rider-avatars', 'pwa-icons', 'payment-qr', 'anthem'
+    'sponsor-logos', 'rider-avatars', 'pwa-icons', 'payment-qr', 'anthem',
+    'product-images'
   ] loop
     execute format('drop policy if exists %I on storage.objects', 'public_read_'   || admin_bucket);
     execute format('drop policy if exists %I on storage.objects', 'auth_upload_'   || admin_bucket);

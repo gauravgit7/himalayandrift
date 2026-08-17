@@ -1327,6 +1327,641 @@ export async function saveAnthemSettings(
   return { error: null };
 }
 
+// =============================================================================
+// Anthem tracks — the song library
+// =============================================================================
+
+/** Lyrics are stored as { t, text } so a timestamp can never drift away from
+ *  its own line when lines are added or reordered. Blank lines are KEPT: they
+ *  are the stanza breaks, and dropping them reflows the song into one block. */
+function packLyrics(lyrics: { time: number | null; text: string }[]) {
+  const trimmed = [...lyrics];
+  while (trimmed.length && !trimmed[0].text.trim())                  trimmed.shift();
+  while (trimmed.length && !trimmed[trimmed.length - 1].text.trim()) trimmed.pop();
+  return trimmed.map((l) => ({
+    t: typeof l.time === "number" && Number.isFinite(l.time) && l.time >= 0
+      ? Math.round(l.time * 100) / 100     // centiseconds is plenty for singing
+      : null,
+    text: l.text.trim(),
+  }));
+}
+
+function revalidateMusic() {
+  revalidatePath(ROUTES.adminSettings);
+  revalidatePath("/home");
+  revalidatePath("/", "layout");   // the player lives in the root layout
+}
+
+export interface AnthemTrackPayload {
+  id?:       string;
+  title:     string;
+  audioUrl:  string;
+  credits?:  string | null;
+  coverUrl?: string | null;
+  lyrics:    { time: number | null; text: string }[];
+  isAnthem:  boolean;
+  isActive:  boolean;
+}
+
+/** Admin: create or update one song. */
+export async function saveAnthemTrack(
+  payload: AnthemTrackPayload,
+): Promise<{ id: string | null; error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { id: null, error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  if (!payload.audioUrl) {
+    return { id: null, error: "Upload the audio file first — a track needs something to play." };
+  }
+
+  // At most one anthem, enforced by a partial unique index. Clearing the old
+  // one first turns what would be a constraint violation into a handover.
+  if (payload.isAnthem) {
+    await admin.from("anthem_tracks").update({ is_anthem: false })
+      .eq("is_anthem", true)
+      .neq("id", payload.id ?? "00000000-0000-0000-0000-000000000000");
+  }
+
+  const row = {
+    title:     payload.title.trim() || "Untitled",
+    audio_url: payload.audioUrl,
+    credits:   payload.credits?.trim() || null,
+    cover_url: payload.coverUrl || null,
+    lyrics:    packLyrics(payload.lyrics),
+    is_anthem: payload.isAnthem,
+    is_active: payload.isActive,
+  };
+
+  if (payload.id) {
+    const { error } = await admin.from("anthem_tracks").update(row).eq("id", payload.id);
+    if (error) return { id: null, error: error.message };
+    revalidateMusic();
+    return { id: payload.id, error: null };
+  }
+
+  // New tracks go to the end of the list rather than the top: the running order
+  // is the club's, and a new upload should not jump the queue.
+  const { data: last } = await admin
+    .from("anthem_tracks").select("sort_order")
+    .order("sort_order", { ascending: false }).limit(1).maybeSingle();
+
+  const { data, error } = await admin
+    .from("anthem_tracks")
+    .insert({ ...row, sort_order: ((last as { sort_order?: number } | null)?.sort_order ?? 0) + 1 })
+    .select("id")
+    .single();
+
+  if (error) return { id: null, error: error.message };
+  revalidateMusic();
+  return { id: (data as { id: string }).id, error: null };
+}
+
+/** Admin: remove a song from the library. */
+export async function deleteAnthemTrack(id: string): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient().from("anthem_tracks").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidateMusic();
+  return { error: null };
+}
+
+/** Admin: set the running order from the list as it now reads on screen. */
+export async function reorderAnthemTracks(ids: string[]): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  for (let i = 0; i < ids.length; i++) {
+    const { error } = await admin
+      .from("anthem_tracks").update({ sort_order: i }).eq("id", ids[i]);
+    if (error) return { error: error.message };
+  }
+  revalidateMusic();
+  return { error: null };
+}
+
+/** Admin: the master switch for whether the player appears on the site. */
+export async function setAnthemEnabled(enabled: boolean): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient()
+    .from("anthem_settings")
+    .upsert({ id: 1, is_enabled: enabled, updated_at: new Date().toISOString() });
+
+  if (error) return { error: error.message };
+  revalidateMusic();
+  return { error: null };
+}
+
+// =============================================================================
+// Shop
+// =============================================================================
+
+/** The price a rider actually pays for one unit, after the product's discount
+ *  and any size surcharge. One function so the card, the basket, the checkout
+ *  and the stored order line can never disagree about it. */
+function unitPriceOf(
+  price: number, discountPercent: number, priceDelta: number,
+): number {
+  const discounted = price * (1 - Math.min(Math.max(discountPercent, 0), 90) / 100);
+  return Math.round((discounted + priceDelta) * 100) / 100;
+}
+
+export interface ProductPayload {
+  id?:               string;
+  name:              string;
+  slug:              string;
+  shortDescription?: string | null;
+  description?:      string | null;
+  category:          string;
+  price:             number;
+  discountPercent:   number;
+  imageUrls:         string[];
+  stock:             number | null;
+  isActive:          boolean;
+  isFeatured:        boolean;
+  variants: { id?: string; label: string; priceDelta: number; stock: number; isActive: boolean }[];
+}
+
+/** Admin: create or update a product together with its sizes. */
+export async function saveProduct(
+  payload: ProductPayload,
+): Promise<{ id: string | null; error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { id: null, error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const slug = payload.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  if (!slug) return { id: null, error: "A product needs a web address (slug)." };
+
+  const row = {
+    name:              payload.name.trim(),
+    slug,
+    short_description: payload.shortDescription?.trim() || null,
+    description:       payload.description?.trim() || null,
+    category:          payload.category.trim() || "Merch",
+    price:             payload.price,
+    discount_percent:  Math.min(Math.max(Math.round(payload.discountPercent), 0), 90),
+    image_urls:        payload.imageUrls,
+    // Product-level stock is meaningless once sizes exist, and leaving a stale
+    // number behind invites someone to read it later and believe it.
+    stock:             payload.variants.length ? null : payload.stock,
+    is_active:         payload.isActive,
+    is_featured:       payload.isFeatured,
+  };
+
+  let productId = payload.id ?? null;
+
+  if (productId) {
+    const { error } = await admin.from("products").update(row).eq("id", productId);
+    if (error) return { id: null, error: error.message };
+  } else {
+    const { data, error } = await admin.from("products").insert(row).select("id").single();
+    if (error) {
+      if ((error as { code?: string }).code === "23505") {
+        return { id: null, error: "Another product already uses that web address." };
+      }
+      return { id: null, error: error.message };
+    }
+    productId = (data as { id: string }).id;
+  }
+
+  // Variants are replaced wholesale rather than diffed. Deleting one that has
+  // been ordered is safe: shop_order_items nulls the reference and keeps the
+  // label it recorded at the time.
+  const { data: existing } = await admin
+    .from("product_variants").select("id").eq("product_id", productId);
+  const keep = new Set(payload.variants.map((v) => v.id).filter(Boolean));
+  const drop = ((existing ?? []) as { id: string }[])
+    .filter((v) => !keep.has(v.id)).map((v) => v.id);
+  if (drop.length) await admin.from("product_variants").delete().in("id", drop);
+
+  for (let i = 0; i < payload.variants.length; i++) {
+    const v = payload.variants[i];
+    const vRow = {
+      product_id:  productId,
+      label:       v.label.trim(),
+      price_delta: v.priceDelta,
+      stock:       Math.max(0, Math.round(v.stock)),
+      sort_order:  i,
+      is_active:   v.isActive,
+    };
+    const { error } = v.id
+      ? await admin.from("product_variants").update(vRow).eq("id", v.id)
+      : await admin.from("product_variants").insert(vRow);
+    if (error) return { id: productId, error: `Size "${v.label}": ${error.message}` };
+  }
+
+  revalidatePath("/shop");
+  revalidatePath(`/shop/${slug}`);
+  revalidatePath("/admin/shop");
+  return { id: productId, error: null };
+}
+
+/** Admin: remove a product. Its order lines survive, holding the name. */
+export async function deleteProduct(id: string): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient().from("products").delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/shop");
+  revalidatePath("/admin/shop");
+  return { error: null };
+}
+
+/** Admin: adjust one size's stock without opening the whole product form —
+ *  which is what you want standing over a box counting shirts. */
+export async function setVariantStock(
+  variantId: string, stock: number,
+): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient()
+    .from("product_variants")
+    .update({ stock: Math.max(0, Math.round(stock)) })
+    .eq("id", variantId);
+
+  if (error) return { error: error.message };
+  revalidatePath("/shop");
+  revalidatePath("/admin/shop");
+  return { error: null };
+}
+
+export async function saveShopSettings(
+  settings: { isEnabled: boolean; announcement: string; deliveryNote: string },
+): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient().from("shop_settings").upsert({
+    id:            1,
+    is_enabled:    settings.isEnabled,
+    announcement:  settings.announcement.trim(),
+    delivery_note: settings.deliveryNote.trim(),
+    updated_at:    new Date().toISOString(),
+  });
+
+  if (error) return { error: error.message };
+  revalidatePath("/shop");
+  revalidatePath("/", "layout");
+  return { error: null };
+}
+
+// ── Orders ─────────────────────────────────────────────────────────────────
+
+function generateOrderCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I/L
+  let suffix = "";
+  for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+  return `HDS-${suffix}`;
+}
+
+export interface ShopOrderPayload {
+  lines: { productId: string; variantId: string | null; quantity: number }[];
+  fullName:        string;
+  phone:           string;
+  email?:          string | null;
+  deliveryAddress?: string | null;
+  notes?:          string | null;
+  paymentReference?:     string | null;
+  paymentScreenshotUrl?: string | null;
+}
+
+/**
+ * Public — place an order.
+ *
+ * Every price and every stock check is re-read from the database here. The
+ * basket in the browser carries ids and quantities and nothing else, so a
+ * tampered payload cannot buy a jacket for one rupee, and a basket left open
+ * for a week cannot check out at last week's price.
+ */
+export async function submitShopOrder(
+  payload: ShopOrderPayload,
+): Promise<{ accessCode: string | null; error: string | null }> {
+  if (!payload.lines.length) return { accessCode: null, error: "Your basket is empty." };
+  if (!payload.fullName.trim() || !payload.phone.trim()) {
+    return { accessCode: null, error: "Name and phone number are both needed." };
+  }
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { data: shopRow } = await admin
+    .from("shop_settings").select("is_enabled").eq("id", 1).maybeSingle();
+  if (!(shopRow as { is_enabled?: boolean } | null)?.is_enabled) {
+    return { accessCode: null, error: "The shop is closed at the moment." };
+  }
+
+  const productIds = [...new Set(payload.lines.map((l) => l.productId))];
+  const { data: productData, error: productError } = await admin
+    .from("products").select("*, product_variants(*)").in("id", productIds);
+  if (productError) return { accessCode: null, error: productError.message };
+
+  const products = new Map(
+    ((productData ?? []) as {
+      id: string; name: string; price: number | string; discount_percent: number;
+      is_active: boolean; stock: number | null;
+      product_variants: { id: string; label: string; price_delta: number | string; stock: number; is_active: boolean }[] | null;
+    }[]).map((p) => [p.id, p]),
+  );
+
+  const items: {
+    product_id: string; variant_id: string | null; product_name: string;
+    variant_label: string | null; unit_price: number; quantity: number; line_total: number;
+  }[] = [];
+  let subtotal = 0;
+  let discountTotal = 0;
+
+  for (const line of payload.lines) {
+    const p = products.get(line.productId);
+    if (!p || !p.is_active) {
+      return { accessCode: null, error: "One of the items is no longer available." };
+    }
+    const qty = Math.max(1, Math.round(line.quantity));
+    const listPrice = Number(p.price) || 0;
+    const variant = line.variantId
+      ? (p.product_variants ?? []).find((v) => v.id === line.variantId)
+      : undefined;
+
+    if (line.variantId && (!variant || !variant.is_active)) {
+      return { accessCode: null, error: `That size of ${p.name} is no longer available.` };
+    }
+
+    // Stock is checked but NOT decremented. A pending order is a claim, not a
+    // sale — the committee still has to see the payment — and silently holding
+    // stock for orders that are never paid for empties the shop on paper.
+    const available = variant ? variant.stock : p.stock;
+    if (available !== null && available !== undefined && qty > available) {
+      return {
+        accessCode: null,
+        error: available === 0
+          ? `${p.name}${variant ? ` (${variant.label})` : ""} has sold out.`
+          : `Only ${available} left of ${p.name}${variant ? ` (${variant.label})` : ""}.`,
+      };
+    }
+
+    const delta = variant ? Number(variant.price_delta) || 0 : 0;
+    const unit  = unitPriceOf(listPrice, p.discount_percent ?? 0, delta);
+    const full  = Math.round((listPrice + delta) * 100) / 100;
+
+    subtotal      += full * qty;
+    discountTotal += (full - unit) * qty;
+
+    items.push({
+      product_id:    p.id,
+      variant_id:    variant?.id ?? null,
+      product_name:  p.name,
+      variant_label: variant?.label ?? null,
+      unit_price:    unit,
+      quantity:      qty,
+      line_total:    Math.round(unit * qty * 100) / 100,
+    });
+  }
+
+  const total = Math.round((subtotal - discountTotal) * 100) / 100;
+
+  // A signed-in buyer's order is attached to their account so it shows on
+  // their profile without them needing to keep the code.
+  const session = await createClient();
+  const { data: { user } } = await session.auth.getUser();
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const accessCode = generateOrderCode();
+    const { data: order, error } = await admin.from("shop_orders").insert({
+      user_id:                user?.id ?? null,
+      access_code:            accessCode,
+      full_name:              payload.fullName.trim(),
+      phone:                  payload.phone.trim(),
+      email:                  payload.email?.trim() || user?.email || null,
+      delivery_address:       payload.deliveryAddress?.trim() || null,
+      notes:                  payload.notes?.trim() || null,
+      subtotal:               Math.round(subtotal * 100) / 100,
+      discount_total:         Math.round(discountTotal * 100) / 100,
+      total,
+      payment_reference:      payload.paymentReference?.trim() || null,
+      payment_screenshot_url: payload.paymentScreenshotUrl || null,
+      status:                 "pending",
+    }).select("id").single();
+
+    if (error) {
+      if ((error as { code?: string }).code === "23505") continue;  // code clash
+      return { accessCode: null, error: error.message };
+    }
+
+    const orderId = (order as { id: string }).id;
+    const { error: itemError } = await admin
+      .from("shop_order_items")
+      .insert(items.map((i) => ({ ...i, order_id: orderId })));
+
+    if (itemError) {
+      // An order with no lines is worse than no order: the committee would see
+      // a payment for nothing and have no way to tell what it was for.
+      await admin.from("shop_orders").delete().eq("id", orderId);
+      return { accessCode: null, error: itemError.message };
+    }
+
+    revalidatePath("/admin/shop");
+    return { accessCode, error: null };
+  }
+
+  return { accessCode: null, error: "Could not generate a unique code. Please try again." };
+}
+
+/**
+ * Admin: approve an order, which is also the moment stock comes off the shelf.
+ * Doing it here rather than at submission means unpaid orders never quietly
+ * empty the shop, and the count only moves when a human has seen the payment.
+ */
+export async function approveShopOrder(id: string): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { data: order, error: fetchError } = await admin
+    .from("shop_orders").select("id, status, shop_order_items(*)").eq("id", id).maybeSingle();
+  if (fetchError) return { error: fetchError.message };
+  if (!order)     return { error: "Order not found." };
+
+  const row = order as {
+    status: string;
+    shop_order_items: { product_id: string | null; variant_id: string | null; quantity: number }[] | null;
+  };
+  if (row.status === "approved" || row.status === "fulfilled") {
+    return { error: "That order is already approved." };
+  }
+
+  for (const item of row.shop_order_items ?? []) {
+    if (item.variant_id) {
+      const { data: v } = await admin
+        .from("product_variants").select("stock").eq("id", item.variant_id).maybeSingle();
+      const stock = (v as { stock?: number } | null)?.stock;
+      if (typeof stock === "number") {
+        await admin.from("product_variants")
+          .update({ stock: Math.max(0, stock - item.quantity) })
+          .eq("id", item.variant_id);
+      }
+    } else if (item.product_id) {
+      const { data: p } = await admin
+        .from("products").select("stock").eq("id", item.product_id).maybeSingle();
+      const stock = (p as { stock?: number | null } | null)?.stock;
+      // null means this product does not track stock, so leave it alone.
+      if (typeof stock === "number") {
+        await admin.from("products")
+          .update({ stock: Math.max(0, stock - item.quantity) })
+          .eq("id", item.product_id);
+      }
+    }
+  }
+
+  const { error } = await admin.from("shop_orders")
+    .update({ status: "approved", approved_at: new Date().toISOString(), rejection_reason: null })
+    .eq("id", id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/shop");
+  revalidatePath("/shop");
+  return { error: null };
+}
+
+export async function fulfilShopOrder(id: string): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient().from("shop_orders")
+    .update({ status: "fulfilled", fulfilled_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/shop");
+  return { error: null };
+}
+
+export async function rejectShopOrder(
+  id: string, reason: string,
+): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+  if (!reason.trim()) return { error: "Give a reason — the buyer sees it." };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient().from("shop_orders")
+    .update({ status: "rejected", rejection_reason: reason.trim() })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/shop");
+  return { error: null };
+}
+
+/**
+ * Public — re-price a basket against live data.
+ *
+ * The basket holds ids and quantities; this is what turns it into money and
+ * availability. Called on every basket render so a sold-out size is caught on
+ * the page rather than at the end of the checkout.
+ */
+export async function priceBasket(
+  lines: { productId: string; variantId: string | null; quantity: number }[],
+): Promise<{
+  lines: {
+    productId: string; variantId: string | null; name: string; variantLabel: string | null;
+    imageUrl: string | null; unitPrice: number; fullPrice: number; quantity: number;
+    lineTotal: number; available: number | null; problem: string | null;
+  }[];
+  subtotal: number; discountTotal: number; total: number;
+}> {
+  const empty = { lines: [], subtotal: 0, discountTotal: 0, total: 0 };
+  if (!lines.length) return empty;
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { data } = await admin
+    .from("products").select("*, product_variants(*)")
+    .in("id", [...new Set(lines.map((l) => l.productId))]);
+
+  const products = new Map(
+    ((data ?? []) as {
+      id: string; name: string; price: number | string; discount_percent: number;
+      image_urls: string[] | null; is_active: boolean; stock: number | null;
+      product_variants: { id: string; label: string; price_delta: number | string; stock: number; is_active: boolean }[] | null;
+    }[]).map((p) => [p.id, p]),
+  );
+
+  const out: Awaited<ReturnType<typeof priceBasket>>["lines"] = [];
+  let subtotal = 0, discountTotal = 0;
+
+  for (const line of lines) {
+    const p = products.get(line.productId);
+    if (!p) continue;   // deleted since it went in the basket
+    const variant = line.variantId
+      ? (p.product_variants ?? []).find((v) => v.id === line.variantId)
+      : undefined;
+
+    const qty       = Math.max(1, Math.round(line.quantity));
+    const delta     = variant ? Number(variant.price_delta) || 0 : 0;
+    const listPrice = Number(p.price) || 0;
+    const fullPrice = Math.round((listPrice + delta) * 100) / 100;
+    const unitPrice = unitPriceOf(listPrice, p.discount_percent ?? 0, delta);
+    const available = variant ? variant.stock : p.stock;
+
+    let problem: string | null = null;
+    if (!p.is_active)                       problem = "No longer available";
+    else if (line.variantId && !variant)    problem = "That size has gone";
+    else if (variant && !variant.is_active) problem = "That size has gone";
+    else if (available === 0)               problem = "Sold out";
+    else if (available !== null && available !== undefined && qty > available) {
+      problem = `Only ${available} left`;
+    }
+
+    if (!problem) {
+      subtotal      += fullPrice * qty;
+      discountTotal += (fullPrice - unitPrice) * qty;
+    }
+
+    out.push({
+      productId:    p.id,
+      variantId:    variant?.id ?? null,
+      name:         p.name,
+      variantLabel: variant?.label ?? null,
+      imageUrl:     p.image_urls?.[0] ?? null,
+      unitPrice, fullPrice, quantity: qty,
+      lineTotal:    Math.round(unitPrice * qty * 100) / 100,
+      available:    available ?? null,
+      problem,
+    });
+  }
+
+  return {
+    lines: out,
+    subtotal:      Math.round(subtotal * 100) / 100,
+    discountTotal: Math.round(discountTotal * 100) / 100,
+    total:         Math.round((subtotal - discountTotal) * 100) / 100,
+  };
+}
+
 /**
  * Public — request a membership card using the details already on the profile.
  *

@@ -10,14 +10,15 @@ import { useState, useEffect }  from "react";
 import Link                     from "next/link";
 import { usePathname }          from "next/navigation";
 import { Menu, X, Calendar, Map, BookOpen, Layers,
-         Shield, CreditCard, LogOut, User } from "lucide-react";
+         Shield, CreditCard, LogOut, User, ShoppingBag } from "lucide-react";
 import { cn }                   from "@/utils/cn";
+import { useCart }              from "@/features/shop/CartProvider";
 import { ROUTES, APP_META }     from "@/lib/constants";
 import { ThemeToggle }          from "@/components/theme/ThemeToggle";
 import { signOutPublic }        from "@/lib/supabase/actions";
 import type { BrandLogos }      from "@/types";
 
-const NAV_LINKS = [
+const BASE_NAV_LINKS = [
   { href: ROUTES.home,       label: "Home",       icon: null       },
   { href: ROUTES.calendar,   label: "Calendar",   icon: Calendar   },
   { href: ROUTES.marshals,   label: "Marshals",   icon: Shield     },
@@ -25,6 +26,8 @@ const NAV_LINKS = [
   { href: ROUTES.series,     label: "Series",     icon: Layers     },
   { href: ROUTES.membership, label: "Membership", icon: CreditCard },
 ] as const;
+
+const SHOP_LINK = { href: ROUTES.shop, label: "Shop", icon: ShoppingBag } as const;
 
 interface NavUser {
   fullName:  string;
@@ -36,9 +39,16 @@ interface NavbarProps {
   transparent?: boolean;
   brandLogos?:  BrandLogos;
   user?:        NavUser | null;
+  /** The shop only appears in the nav once it is switched on. A menu item
+   *  leading to a 404 is worse than no menu item. */
+  shopEnabled?: boolean;
 }
 
-export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
+export function Navbar({ transparent = false, brandLogos, user, shopEnabled }: NavbarProps) {
+  const { count, hydrated } = useCart();
+  const NAV_LINKS = shopEnabled
+    ? [...BASE_NAV_LINKS, SHOP_LINK]
+    : BASE_NAV_LINKS;
   const pathname     = usePathname();
   const [isScrolled,   setIsScrolled]   = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -119,6 +129,22 @@ export function Navbar({ transparent = false, brandLogos, user }: NavbarProps) {
 
           {/* ── Right actions ── */}
           <div className="hidden md:flex items-center gap-2">
+            {/* Basket. Only once something is in it — an always-visible empty
+                basket is chrome, and `hydrated` keeps it from flashing in and
+                out on every page load. */}
+            {shopEnabled && hydrated && count > 0 && (
+              <Link
+                href={ROUTES.shopCheckout}
+                aria-label={`Basket, ${count} item${count === 1 ? "" : "s"}`}
+                className="relative flex items-center justify-center size-9 rounded-lg text-hd-ink-300 hover:text-hd-ink-50 hover:bg-hd-ink-800 transition-colors"
+              >
+                <ShoppingBag className="size-4" />
+                <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-hd-ember-600 text-white text-[9px] font-bold flex items-center justify-center tabular-nums">
+                  {count}
+                </span>
+              </Link>
+            )}
+
             <ThemeToggle />
 
             {user ? (

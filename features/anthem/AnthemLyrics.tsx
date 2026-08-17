@@ -14,7 +14,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Play, Pause, X } from "lucide-react";
+import { Play, Pause, X, SkipBack, SkipForward, ListMusic } from "lucide-react";
 import { cn }        from "@/utils/cn";
 import { useAnthem } from "@/features/anthem/AnthemProvider";
 
@@ -59,7 +59,7 @@ export function AnthemLyrics() {
 
   const {
     anthem: data, playing, position, duration, energy, activeLine,
-    toggle, seek, openLyrics,
+    toggle, seek, openLyrics, hasQueue, next, prev, tracks, index, playTrack,
   } = anthem;
 
   const isTimed  = data.lyrics.some((l) => l.time !== null);
@@ -101,6 +101,29 @@ export function AnthemLyrics() {
           </h2>
           {data.credits && (
             <p className="text-xs text-hd-ink-500 mt-1">{data.credits}</p>
+          )}
+
+          {/* The rest of the library, one tap away. Only worth the space once
+              there is more than one song in it. */}
+          {hasQueue && (
+            <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+              <ListMusic className="size-3 text-hd-ink-600 shrink-0" />
+              {tracks.map((t, i) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => playTrack(i)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-colors max-w-[140px] truncate",
+                    i === index
+                      ? "bg-hd-ember-600/20 border-hd-ember-700/60 text-hd-ember-300"
+                      : "border-hd-ink-700 text-hd-ink-400 hover:text-hd-ink-100 hover:border-hd-ink-500",
+                  )}
+                >
+                  {t.title}
+                </button>
+              ))}
+            </div>
           )}
         </div>
         <button
@@ -161,7 +184,18 @@ export function AnthemLyrics() {
 
       {/* Transport */}
       <div className="relative shrink-0 border-t border-hd-ink-800/80 bg-hd-ink-950/80 backdrop-blur-md">
-        <div className="max-w-3xl mx-auto px-5 sm:px-8 py-4 flex items-center gap-4">
+        <div className="max-w-3xl mx-auto px-5 sm:px-8 py-4 flex items-center gap-3 sm:gap-4">
+          {hasQueue && (
+            <button
+              type="button"
+              onClick={prev}
+              className="shrink-0 flex items-center justify-center size-9 rounded-full text-hd-ink-400 hover:text-white transition-colors"
+              aria-label="Previous track"
+            >
+              <SkipBack className="size-4" />
+            </button>
+          )}
+
           <button
             type="button"
             onClick={toggle}
@@ -170,6 +204,17 @@ export function AnthemLyrics() {
           >
             {playing ? <Pause className="size-5" /> : <Play className="size-5 ml-0.5" />}
           </button>
+
+          {hasQueue && (
+            <button
+              type="button"
+              onClick={next}
+              className="shrink-0 flex items-center justify-center size-9 rounded-full text-hd-ink-400 hover:text-white transition-colors"
+              aria-label="Next track"
+            >
+              <SkipForward className="size-4" />
+            </button>
+          )}
 
           <span className="text-[11px] font-mono tabular-nums text-hd-ink-500 shrink-0 w-9">
             {fmt(position)}

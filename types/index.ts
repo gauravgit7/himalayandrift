@@ -320,6 +320,111 @@ export interface AnthemSettings {
   isEnabled: boolean;
 }
 
+/** One song in the club's library. The anthem is the track flagged `isAnthem`;
+ *  it sorts first and is what the player starts on. Everything else follows it
+ *  in `sortOrder`, which is what prev/next walks. */
+export interface AnthemTrack {
+  id:        string;
+  title:     string;
+  audioUrl:  string;
+  credits:   string | null;
+  lyrics:    AnthemLyricLine[];
+  coverUrl:  string | null;
+  isAnthem:  boolean;
+  isActive:  boolean;
+  sortOrder: number;
+}
+
+// ---------------------------------------------------------------------------
+// Shop
+// ---------------------------------------------------------------------------
+
+/** One size (or colour, or whatever the club is selling this year). Stock lives
+ *  here rather than on the product, because "12 in stock" across S to XL is not
+ *  a fact anyone can act on. */
+export interface ProductVariant {
+  id:         string;
+  productId:  string;
+  label:      string;
+  /** Added to the product price — a 3XL costing a little more is normal. */
+  priceDelta: number;
+  stock:      number;
+  sortOrder:  number;
+  isActive:   boolean;
+}
+
+export interface Product {
+  id:               string;
+  name:             string;
+  slug:             string;
+  shortDescription: string | null;
+  description:      string | null;
+  category:         string;
+  /** List price, before discount. */
+  price:            number;
+  discountPercent:  number;
+  imageUrls:        string[];
+  /** Stock for a product with no variants. Null means it is not tracked. */
+  stock:            number | null;
+  isActive:         boolean;
+  isFeatured:       boolean;
+  sortOrder:        number;
+  variants:         ProductVariant[];
+}
+
+export interface ShopSettings {
+  isEnabled:    boolean;
+  announcement: string;
+  deliveryNote: string;
+}
+
+export type ShopOrderStatus = "pending" | "approved" | "fulfilled" | "rejected";
+
+/** A line of an order. The product name and price are copied at submission, so
+ *  the order still reads correctly after the product is repriced or deleted. */
+export interface ShopOrderItem {
+  id:           string;
+  productId:    string | null;
+  variantId:    string | null;
+  productName:  string;
+  variantLabel: string | null;
+  unitPrice:    number;
+  quantity:     number;
+  lineTotal:    number;
+}
+
+export interface ShopOrder {
+  id:              string;
+  userId:          string | null;
+  accessCode:      string;
+  fullName:        string;
+  phone:           string;
+  email:           string | null;
+  deliveryAddress: string | null;
+  notes:           string | null;
+  subtotal:        number;
+  discountTotal:   number;
+  total:           number;
+  paymentReference:     string | null;
+  paymentScreenshotUrl: string | null;
+  status:          ShopOrderStatus;
+  rejectionReason: string | null;
+  adminNotes:      string | null;
+  createdAt:       string;
+  approvedAt:      string | null;
+  fulfilledAt:     string | null;
+  items:           ShopOrderItem[];
+}
+
+/** One line of the basket as the browser holds it. Deliberately just ids and a
+ *  quantity: prices are re-read from the database at checkout, so a basket that
+ *  has sat in localStorage for a week cannot lock in last week's price. */
+export interface CartLine {
+  productId: string;
+  variantId: string | null;
+  quantity:  number;
+}
+
 /** Club-wide payment details, overridable per ride. */
 export interface PaymentSettings {
   qrUrl:               string | null;

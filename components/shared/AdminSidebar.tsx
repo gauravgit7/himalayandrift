@@ -25,6 +25,7 @@ import {
   LogOut,
   CreditCard,
   ClipboardList,
+  ShoppingBag,
 } from "lucide-react";
 import { cn }       from "@/utils/cn";
 import { ROUTES, APP_META } from "@/lib/constants";
@@ -43,6 +44,7 @@ const NAV_ITEMS = [
   { href: ROUTES.adminHomepage,  label: "Homepage",  icon: Globe,           exact: false },
   { href: ROUTES.adminMarshals,  label: "Marshals",  icon: Shield,          exact: false },
   { href: ROUTES.adminMembers,   label: "Members",   icon: CreditCard,      exact: false },
+  { href: ROUTES.adminShop,      label: "Shop",      icon: ShoppingBag,     exact: false },
   { href: ROUTES.adminSponsors,  label: "Sponsors",  icon: Star,            exact: false },
   { href: ROUTES.adminExports,   label: "Exports",   icon: FileDown,        exact: false },
   { href: ROUTES.adminSettings,  label: "Settings",  icon: Settings,        exact: false },

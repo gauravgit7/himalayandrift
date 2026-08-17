@@ -9,7 +9,7 @@
 
 "use client";
 
-import { Play, Pause, Music, Loader2 } from "lucide-react";
+import { Play, Pause, Music, Loader2, SkipBack, SkipForward } from "lucide-react";
 import { cn }        from "@/utils/cn";
 import { useAnthem } from "@/features/anthem/AnthemProvider";
 
@@ -19,11 +19,27 @@ export function AnthemPlayer() {
   // Null when no anthem is configured or it is switched off.
   if (!anthem) return null;
 
-  const { anthem: data, playing, loading, toggle, openLyrics, spectrum } = anthem;
+  const {
+    anthem: data, playing, loading, toggle, openLyrics, spectrum,
+    hasQueue, next, prev, index, tracks,
+  } = anthem;
   const hasLyrics = data.lyrics.length > 0;
 
   return (
     <div className="flex items-center gap-2">
+      {/* Skip back — only once there is more than one song to skip between */}
+      {hasQueue && (
+        <button
+          type="button"
+          onClick={prev}
+          aria-label="Previous track"
+          title="Previous track"
+          className="inline-flex items-center justify-center size-9 rounded-full text-white/70 hover:text-white border border-white/15 hover:border-white/30 bg-white/5 hover:bg-white/10 backdrop-blur-sm transition-all"
+        >
+          <SkipBack className="size-3.5" />
+        </button>
+      )}
+
       <button
         type="button"
         onClick={toggle}
@@ -47,7 +63,12 @@ export function AnthemPlayer() {
 
         <span className="text-left">
           <span className="block text-[10px] uppercase tracking-widest text-white/50 leading-none">
-            {playing ? "Now playing" : "Our anthem"}
+            {playing ? "Now playing" : data.isAnthem ? "Our anthem" : "Our music"}
+            {hasQueue && (
+              <span className="ml-1.5 text-white/35 normal-case tracking-normal">
+                {index + 1}/{tracks.length}
+              </span>
+            )}
           </span>
           <span className="block text-xs font-semibold text-white/90 leading-tight mt-0.5 max-w-[150px] truncate">
             {data.title}
@@ -72,6 +93,18 @@ export function AnthemPlayer() {
           </span>
         )}
       </button>
+
+      {hasQueue && (
+        <button
+          type="button"
+          onClick={next}
+          aria-label="Next track"
+          title="Next track"
+          className="inline-flex items-center justify-center size-9 rounded-full text-white/70 hover:text-white border border-white/15 hover:border-white/30 bg-white/5 hover:bg-white/10 backdrop-blur-sm transition-all"
+        >
+          <SkipForward className="size-3.5" />
+        </button>
+      )}
 
       {hasLyrics && (
         <button

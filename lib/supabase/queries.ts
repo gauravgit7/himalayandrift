@@ -10,15 +10,18 @@ import { createClient }        from "@/lib/supabase/server";
 import {
   mapRide, mapSeries, mapSponsor, mapMarshal, mapHomepageContent,
   mapMemberCard, mapCardSettings, mapProfile,
-  mapRideRegistration, mapPaymentSettings, mapAnthemSettings,
+  mapRideRegistration, mapPaymentSettings, mapAnthemSettings, mapAnthemTrack,
+  mapProduct, mapShopSettings, mapShopOrder,
   type DbRide, type DbSeries, type DbSponsor, type DbMarshal,
   type DbHomepageContent, type DbMemberCard, type DbCardSettings,
   type DbProfile, type DbRideRegistration, type DbPaymentSettings, type DbAnthemSettings,
+  type DbAnthemTrack, type DbProduct, type DbShopSettings, type DbShopOrder,
 } from "@/lib/supabase/mappers";
 import type {
   Ride, Series, Sponsor, Marshal, HomepageContent, BrandLogos,
   MemberCard, CardSettings,
-  RideRegistration, RideRegistrationWithRide, PaymentSettings, AnthemSettings,
+  RideRegistration, RideRegistrationWithRide, PaymentSettings, AnthemSettings, AnthemTrack,
+  Product, ShopSettings, ShopOrder,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -660,6 +663,143 @@ export const getAnthemSettings = cache(async (): Promise<AnthemSettings> => {
   }
   return mapAnthemSettings(data as DbAnthemSettings);
 });
+
+/** The club's song library, anthem first. Public — the player walks this list.
+ *  Inactive tracks are for songs being prepared and never reach the player. */
+export const getAnthemTracks = cache(async (): Promise<AnthemTrack[]> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("anthem_tracks")
+    .select("*")
+    .eq("is_active", true)
+    // is_anthem descending puts the anthem at the head of the queue whatever
+    // its sort_order, so it is always what the player starts on.
+    .order("is_anthem", { ascending: false })
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) { console.error("[getAnthemTracks]", error.message); return []; }
+  return (data ?? []).map((r) => mapAnthemTrack(r as DbAnthemTrack));
+});
+
+// ---------------------------------------------------------------------------
+// Shop
+// ---------------------------------------------------------------------------
+
+const PRODUCT_SELECT = "*, product_variants(*)" as const;
+
+export const getShopSettings = cache(async (): Promise<ShopSettings> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("shop_settings").select("*").eq("id", 1).maybeSingle();
+
+  if (error) console.error("[getShopSettings]", error.message);
+  if (!data) return { isEnabled: false, announcement: "", deliveryNote: "" };
+  return mapShopSettings(data as DbShopSettings);
+});
+
+/** The shop window. Active products only — an inactive one is a draft. */
+export async function getProducts(): Promise<Product[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) { console.error("[getProducts]", error.message); return []; }
+  return (data ?? []).map((r) => mapProduct(r as DbProduct));
+}
+
+export async function getProduct(slug: string): Promise<Product | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products").select(PRODUCT_SELECT).eq("slug", slug).maybeSingle();
+
+  if (error) { console.error("[getProduct]", error.message); return null; }
+  return data ? mapProduct(data as DbProduct) : null;
+}
+
+/** Admin: every product, drafts included. Service role. */
+export async function getAllProducts(): Promise<Product[]> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { data, error } = await createAdminClient()
+    .from("products")
+    .select(PRODUCT_SELECT)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) { console.error("[getAllProducts]", error.message); return []; }
+  return (data ?? []).map((r) => mapProduct(r as DbProduct));
+}
+
+/** Look up several products at once — what the basket needs to price itself. */
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  if (!ids.length) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products").select(PRODUCT_SELECT).in("id", ids);
+
+  if (error) { console.error("[getProductsByIds]", error.message); return []; }
+  return (data ?? []).map((r) => mapProduct(r as DbProduct));
+}
+
+const ORDER_SELECT = "*, shop_order_items(*)" as const;
+
+/** Admin: the order queue. Service role — orders are not publicly readable. */
+export async function getShopOrders(): Promise<ShopOrder[]> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { data, error } = await createAdminClient()
+    .from("shop_orders")
+    .select(ORDER_SELECT)
+    .order("created_at", { ascending: false });
+
+  if (error) { console.error("[getShopOrders]", error.message); return []; }
+  return (data ?? []).map((r) => mapShopOrder(r as DbShopOrder));
+}
+
+/** A buyer looking their own order up by the code they were given. */
+export async function getShopOrderByCode(code: string): Promise<ShopOrder | null> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { data, error } = await createAdminClient()
+    .from("shop_orders").select(ORDER_SELECT).eq("access_code", code).maybeSingle();
+
+  if (error) { console.error("[getShopOrderByCode]", error.message); return null; }
+  return data ? mapShopOrder(data as DbShopOrder) : null;
+}
+
+/** The signed-in rider's own orders, for their profile. */
+export async function getMyShopOrders(): Promise<ShopOrder[]> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { data, error } = await createAdminClient()
+    .from("shop_orders")
+    .select(ORDER_SELECT)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) { console.error("[getMyShopOrders]", error.message); return []; }
+  return (data ?? []).map((r) => mapShopOrder(r as DbShopOrder));
+}
+
+/** Admin: every track including the inactive ones. Service role. */
+export async function getAllAnthemTracks(): Promise<AnthemTrack[]> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("anthem_tracks")
+    .select("*")
+    .order("is_anthem", { ascending: false })
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) { console.error("[getAllAnthemTracks]", error.message); return []; }
+  return (data ?? []).map((r) => mapAnthemTrack(r as DbAnthemTrack));
+}
 
 /** The signed-in rider's membership card, if they have requested one.
  *  Uses the service role: member_cards is publicly readable for QR validation,

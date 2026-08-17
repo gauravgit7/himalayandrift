@@ -9,7 +9,8 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { AnthemProvider } from "@/features/anthem/AnthemProvider";
 import { AnthemDock }     from "@/features/anthem/AnthemDock";
 import { AnthemLyrics }   from "@/features/anthem/AnthemLyrics";
-import { getAnthemSettings, getBrandLogos } from "@/lib/supabase/queries";
+import { CartProvider }    from "@/features/shop/CartProvider";
+import { getAnthemSettings, getAnthemTracks, getBrandLogos } from "@/lib/supabase/queries";
 
 // ---------------------------------------------------------------------------
 // Metadata
@@ -90,8 +91,9 @@ export default async function RootLayout({
   // Fetched here rather than in a page because the player has to outlive every
   // route change. Both queries are React-cache()d, so the public layout's own
   // call to getBrandLogos costs nothing extra.
-  const [anthem, brandLogos] = await Promise.all([
+  const [anthem, tracks, brandLogos] = await Promise.all([
     getAnthemSettings(),
+    getAnthemTracks(),
     getBrandLogos(),
   ]);
 
@@ -113,13 +115,17 @@ export default async function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider>
-          <AnthemProvider anthem={anthem}>
+          {/* The basket lives above the router for the same reason the audio
+              element does: it must survive moving between shop pages. */}
+          <CartProvider>
+          <AnthemProvider tracks={tracks} enabled={anthem.isEnabled}>
             {children}
             {/* Both render nothing until the anthem is switched on and started,
                 so every other page is untouched. */}
             <AnthemDock logoUrl={brandLogos.logoUrl} />
             <AnthemLyrics />
           </AnthemProvider>
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>
