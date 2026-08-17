@@ -17,10 +17,20 @@ const FOOTER_LINKS = [
 
 interface FooterProps {
   brandLogos?: BrandLogos;
+  /** Same object the Navbar gets, so the two agree about who is looking. */
+  user?: { isAdmin: boolean } | null;
 }
 
-export function Footer({ brandLogos }: FooterProps = {}) {
+export function Footer({ brandLogos, user }: FooterProps = {}) {
   const year = new Date().getFullYear();
+
+  // The Operations column used to show Admin Panel, Manage Calendar and a
+  // Sign In link to everybody, all the time — so a signed-in rider was invited
+  // to sign in again, and offered two admin links that would only bounce them.
+  // Each audience gets what is actually theirs, and nobody gets an empty column.
+  const showAdminLinks = !!user?.isAdmin;
+  const showSignIn     = !user;
+  const showOperations = showAdminLinks || showSignIn;
 
   return (
     <footer className="bg-hd-ink-950 border-t border-hd-ink-800/60 mt-auto">
@@ -75,38 +85,46 @@ export function Footer({ brandLogos }: FooterProps = {}) {
             </ul>
           </div>
 
-          {/* Admin */}
-          <div>
-            <h3 className="text-xs font-semibold text-hd-ink-400 uppercase tracking-widest mb-3">
-              Operations
-            </h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href={ROUTES.admin}
-                  className="text-sm text-hd-ink-300 hover:text-hd-ink-50 transition-colors"
-                >
-                  Admin Panel
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={ROUTES.adminCalendar}
-                  className="text-sm text-hd-ink-300 hover:text-hd-ink-50 transition-colors"
-                >
-                  Manage Calendar
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={ROUTES.login}
-                  className="text-sm text-hd-ember-500 hover:text-hd-ember-400 transition-colors font-medium"
-                >
-                  Sign In →
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* Operations — committee links for admins, a way in for visitors */}
+          {showOperations && (
+            <div>
+              <h3 className="text-xs font-semibold text-hd-ink-400 uppercase tracking-widest mb-3">
+                {showAdminLinks ? "Operations" : "Members"}
+              </h3>
+              <ul className="space-y-2">
+                {showAdminLinks && (
+                  <>
+                    <li>
+                      <Link
+                        href={ROUTES.admin}
+                        className="text-sm text-hd-ink-300 hover:text-hd-ink-50 transition-colors"
+                      >
+                        Admin Panel
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href={ROUTES.adminCalendar}
+                        className="text-sm text-hd-ink-300 hover:text-hd-ink-50 transition-colors"
+                      >
+                        Manage Calendar
+                      </Link>
+                    </li>
+                  </>
+                )}
+                {showSignIn && (
+                  <li>
+                    <Link
+                      href={ROUTES.signin}
+                      className="text-sm text-hd-ember-500 hover:text-hd-ember-400 transition-colors font-medium"
+                    >
+                      Sign In →
+                    </Link>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Bottom bar */}

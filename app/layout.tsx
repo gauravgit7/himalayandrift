@@ -50,6 +50,14 @@ export const metadata: Metadata = {
     ],
   },
   icons: {
+    // Without an `icon` entry — and with no app/favicon.ico or app/icon.png to
+    // fall back on — the browser tab shows a blank sheet. The apple entries
+    // below only ever reach iOS home screens.
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: [{ url: "/icons/icon-192.png" }],
     apple: [
       { url: "/icons/icon-192.png", sizes: "192x192" },
       { url: "/icons/icon-512.png", sizes: "512x512" },

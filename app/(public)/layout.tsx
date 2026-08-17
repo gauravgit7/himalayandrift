@@ -28,7 +28,7 @@ export default async function PublicLayout({
       <PageTransitionWrapper className="flex-1">
         {children}
       </PageTransitionWrapper>
-      <Footer brandLogos={brandLogos} />
+      <Footer brandLogos={brandLogos} user={navbarUser} />
     </div>
   );
 }

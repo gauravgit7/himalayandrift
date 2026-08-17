@@ -26,6 +26,12 @@ interface RideQrCodeProps {
   className?:  string;
   /** Size of the rendered QR (px). Default: 144 */
   size?:       number;
+  /**
+   * One line saying what the code is for. A QR with a truncated URL under it
+   * tells a reader nothing about why it is on the page or what scanning it
+   * will do, so there is a default rather than an option to leave it out.
+   */
+  hint?:       string;
 }
 
 // ---------------------------------------------------------------------------
@@ -38,6 +44,7 @@ export function RideQrCode({
   rideTitle,
   className,
   size = 144,
+  hint = "Point a phone camera at this to open the sign-up page for this ride. Share it in a group chat, or print it for a poster.",
 }: RideQrCodeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -91,7 +98,12 @@ export function RideQrCode({
         </div>
       </div>
 
-      {/* URL hint */}
+      {/* What it does, then where it goes */}
+      {hint && (
+        <p className="text-[11px] text-hd-ink-400 text-center leading-relaxed px-1">
+          {hint}
+        </p>
+      )}
       <p
         className="text-[10px] text-hd-ink-600 text-center leading-tight break-all"
         title={resolvedUrl}

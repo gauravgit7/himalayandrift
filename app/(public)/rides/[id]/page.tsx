@@ -15,14 +15,10 @@ import {
   ExternalLink, Navigation, Star, ChevronRight,
 } from "lucide-react";
 
+import { Suspense }         from "react";
 import { getRide, getBrandLogos, getRideRegistrationCount } from "@/lib/supabase/queries";
 import { registrationClosedReason, seatsRemaining } from "@/utils/ride";
-import {
-  fetchRideWeather,
-  getRideCoords,
-  CONDITION_META,
-  owIconUrl,
-} from "@/lib/weather/openweather";
+import { RideWeatherCard, RideWeatherSkeleton } from "@/features/rides/RideWeatherCard";
 import { ROUTES }             from "@/lib/constants";
 import { cn }                 from "@/utils/cn";
 import {
@@ -37,7 +33,6 @@ import { SeriesBadge }        from "@/components/shared/SeriesBadge";
 import { RideSharePanel }       from "@/components/shared/RideSharePanel";
 import { RideQrCode, RideQrCodePrint } from "@/components/shared/RideQrCode";
 import { RideInterestButton }  from "@/components/shared/RideInterestButton";
-import Image                  from "next/image";
 
 // Map is client-only - imported via a 'use client' wrapper that holds ssr:false
 import RideRouteMap from "@/components/maps/RideRouteMapClient";
@@ -114,17 +109,9 @@ export default async function RideDetailPage({ params }: PageProps) {
     ? "Scan to Register"
     : "Scan to View Details";
 
-  // Live weather for upcoming rides
-  let weather = null;
-  if (isUpcoming) {
-    const { coordinates, label } = getRideCoords(ride);
-    weather = await fetchRideWeather(
-      ride.id,
-      coordinates[1], // lat
-      coordinates[0], // lng
-      `${label}, Nepal`,
-    );
-  }
+  // Is there enough on the left to hold up a column? A day-by-day itinerary
+  // always is; a two-line summary on its own is not.
+  const sparseWriteUp = !hasItinerary && (ride.description?.length ?? 0) < 400;
 
   const heroKey       = ride.rideType === "marquee" ? "marquee" : "standard";
   const heroGradient  = HERO_GRADIENT[heroKey];
@@ -390,7 +377,15 @@ export default async function RideDetailPage({ params }: PageProps) {
 
       {/* ── Main content ──────────────────────────────────────────────────── */}
       <div className="max-w-5xl mx-auto px-4 pt-8">
-        <div className="ride-main-grid grid lg:grid-cols-[1fr_340px] gap-8">
+        <div className={cn(
+          "ride-main-grid grid gap-8",
+          // A narrow left column beside a tall sidebar leaves a column of dead
+          // space whenever the ride has no itinerary and a short write-up —
+          // which is most rides when they are first published. In that case
+          // there is no long read to sit beside, so the cards stop being a
+          // sidebar and become a grid across the full width.
+          sparseWriteUp ? "grid-cols-1" : "lg:grid-cols-[1fr_340px]",
+        )}>
 
           {/* Left column */}
           <div className="space-y-8">
@@ -474,8 +469,13 @@ export default async function RideDetailPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Right column (sidebar) */}
-          <div className="ride-sidebar space-y-5">
+          {/* Right column — a sidebar beside a long read, a grid without one */}
+          <div className={cn(
+            "ride-sidebar",
+            sparseWriteUp
+              ? "grid sm:grid-cols-2 lg:grid-cols-3 gap-5 items-start"
+              : "space-y-5",
+          )}>
 
             {/* QR code card — always shown (registration link or ride page URL) */}
             <RideQrCode
@@ -574,94 +574,12 @@ export default async function RideDetailPage({ params }: PageProps) {
               </div>
             )}
 
-            {/* Weather card — hidden on print */}
+            {/* Weather card - streamed, so the third-party fetch never holds
+                the rest of the page hostage. Hidden on print. */}
             {isUpcoming && (
-              <div className="print:hidden p-4 rounded-xl gradient-card border border-hd-ink-700/60">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base">🌤️</span>
-                  <h3 className="text-sm font-bold text-hd-ink-50">
-                    Destination Weather
-                  </h3>
-                </div>
-
-                {weather ? (
-                  <>
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <p className="text-xs text-hd-ink-500">{ride.location}, Nepal</p>
-                        <div className="flex items-baseline gap-1 mt-0.5">
-                          <span className="text-3xl font-black text-hd-ink-50">
-                            {weather.temperatureCelsius}°
-                          </span>
-                          <span className="text-sm text-hd-ink-400">C</span>
-                        </div>
-                        <p className="text-xs text-hd-ink-400 capitalize mt-0.5">
-                          {weather.conditions[0]?.description}
-                        </p>
-                      </div>
-                      {weather.conditions[0]?.icon && (
-                        <Image
-                          src={owIconUrl(weather.conditions[0].icon)}
-                          alt={weather.conditions[0].description}
-                          width={56}
-                          height={56}
-                          unoptimized
-                        />
-                      )}
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      {[
-                        { label: "Feels like", value: `${weather.feelsLikeCelsius}°C` },
-                        { label: "Humidity",   value: `${weather.humidity}%` },
-                        { label: "Wind",       value: `${weather.windSpeedKmh} km/h` },
-                        { label: "Riding",     value: CONDITION_META[weather.ridingCondition].label },
-                      ].map(({ label, value }) => (
-                        <div key={label} className="p-2 rounded-lg bg-hd-ink-800/60 border border-hd-ink-700/40">
-                          <p className="text-[9px] text-hd-ink-600 uppercase tracking-wide">{label}</p>
-                          <p className={cn(
-                            "text-xs font-semibold mt-0.5",
-                            label === "Riding"
-                              ? CONDITION_META[weather.ridingCondition].color
-                              : "text-hd-ink-200"
-                          )}>
-                            {value}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* 3-day forecast */}
-                    {weather.forecast.length > 0 && (
-                      <div className="flex gap-1 pt-2 border-t border-hd-ink-800/60">
-                        {weather.forecast.map((day) => (
-                          <div key={day.date} className="flex-1 text-center py-1">
-                            <p className="text-[9px] text-hd-ink-500">
-                              {new Date(day.date + "T12:00:00").toLocaleDateString("en", { weekday: "short" })}
-                            </p>
-                            <Image
-                              src={owIconUrl(day.conditions[0]?.icon ?? "01d")}
-                              alt=""
-                              width={28}
-                              height={28}
-                              className="mx-auto"
-                              unoptimized
-                            />
-                            <p className="text-[10px] text-hd-ink-50 font-medium">
-                              {day.maxTempCelsius}°
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-xs text-hd-ink-500 py-2">
-                    Set OPENWEATHER_API_KEY for live conditions
-                  </p>
-                )}
-              </div>
+              <Suspense fallback={<RideWeatherSkeleton />}>
+                <RideWeatherCard ride={ride} />
+              </Suspense>
             )}
 
             {/* Marshal */}
