@@ -13,6 +13,10 @@ const FOOTER_LINKS = [
   { href: ROUTES.series,   label: "Series"   },
   { href: "/marshals",     label: "Marshals" },
   { href: "/rides",        label: "All Rides" },
+  // The permanent address for a reference code. Belongs in the footer because
+  // somebody looking for it has usually lost the link they were sent, and the
+  // footer is on every page they might be standing on when they realise.
+  { href: ROUTES.checkCode, label: "Check a Code" },
 ];
 
 interface FooterProps {

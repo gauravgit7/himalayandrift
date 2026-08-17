@@ -20,7 +20,12 @@ export const metadata: Metadata = {
 // card, so a cached copy would be somebody else's.
 export const dynamic = "force-dynamic";
 
-export default async function MembershipPage() {
+export default async function MembershipPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string }>;
+}) {
+  const { code } = await searchParams;
   const [settings, brandLogos, user] = await Promise.all([
     getCardSettings(),
     getBrandLogos(),
@@ -87,7 +92,11 @@ export default async function MembershipPage() {
             isAdmin={user.isAdmin}
           />
         ) : (
-          <MembershipTabs settings={settings} brandLogos={brandLogos} />
+          <MembershipTabs
+            settings={settings}
+            brandLogos={brandLogos}
+            initialCode={code?.toUpperCase()}
+          />
         )}
       </AnimateIn>
     </main>

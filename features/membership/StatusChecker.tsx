@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useCallback }   from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link                        from "next/link";
 import { Search, CheckCircle2,
          Clock, XCircle, Printer }  from "lucide-react";
@@ -17,10 +17,12 @@ import type { MemberCard, CardSettings, BrandLogos } from "@/types";
 interface StatusCheckerProps {
   settings:    CardSettings;
   brandLogos?: BrandLogos | null;
+  /** Handed in by /check, which has already established the code exists. */
+  initialCode?: string;
 }
 
-export function StatusChecker({ settings, brandLogos }: StatusCheckerProps) {
-  const [code,    setCode]    = useState("");
+export function StatusChecker({ settings, brandLogos, initialCode }: StatusCheckerProps) {
+  const [code,    setCode]    = useState(initialCode ?? "");
   const [card,    setCard]    = useState<MemberCard | null>(null);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
@@ -44,6 +46,16 @@ export function StatusChecker({ settings, brandLogos }: StatusCheckerProps) {
       setLoading(false);
     }
   }, [code]);
+
+  // Arriving with a code means the lookup has already happened once, on /check.
+  // Making the rider press Check again to see the answer they were promised is
+  // the site asking twice for the same thing.
+  const auto = useRef(false);
+  useEffect(() => {
+    if (!initialCode || auto.current) return;
+    auto.current = true;
+    void handleCheck();
+  }, [initialCode, handleCheck]);
 
   return (
     <div className="space-y-6">

@@ -15,10 +15,13 @@ import type { CardSettings, BrandLogos } from "@/types";
 interface MembershipTabsProps {
   settings:    CardSettings;
   brandLogos?: BrandLogos | null;
+  /** Arriving from /check with a card code. Opens on the status tab with the
+   *  code already in the box, so nobody is asked for it twice. */
+  initialCode?: string;
 }
 
-export function MembershipTabs({ settings, brandLogos }: MembershipTabsProps) {
-  const [tab, setTab] = useState<"apply" | "status">("apply");
+export function MembershipTabs({ settings, brandLogos, initialCode }: MembershipTabsProps) {
+  const [tab, setTab] = useState<"apply" | "status">(initialCode ? "status" : "apply");
 
   return (
     <div className="rounded-2xl gradient-card border border-hd-ink-700/60 overflow-hidden">
@@ -52,7 +55,11 @@ export function MembershipTabs({ settings, brandLogos }: MembershipTabsProps) {
             <p className="text-sm text-hd-ink-400">
               Enter the reference code you received after submitting your application.
             </p>
-            <StatusChecker settings={settings} brandLogos={brandLogos} />
+            <StatusChecker
+              settings={settings}
+              brandLogos={brandLogos}
+              initialCode={initialCode}
+            />
           </div>
         )}
       </div>

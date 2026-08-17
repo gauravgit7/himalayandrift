@@ -33,6 +33,7 @@ import { SeriesBadge }        from "@/components/shared/SeriesBadge";
 import { RideSharePanel }       from "@/components/shared/RideSharePanel";
 import { RideQrCode, RideQrCodePrint } from "@/components/shared/RideQrCode";
 import { RideInterestButton }  from "@/components/shared/RideInterestButton";
+import { CodeCheckDialog }     from "@/features/codes/CodeCheckDialog";
 
 // Map is client-only - imported via a 'use client' wrapper that holds ssr:false
 import RideRouteMap from "@/components/maps/RideRouteMapClient";
@@ -517,6 +518,18 @@ export default async function RideDetailPage({ params }: PageProps) {
                   <Flag className="size-4" />
                   Register
                 </Link>
+
+                {/* For somebody who already signed up and has lost the link.
+                    The lookup behind it is the site-wide one, so a code for
+                    another ride resolves rather than dead-ending here.
+
+                    No signed-in check: this page is ISR, and reading the
+                    session would make every ride page dynamic to decide the
+                    wording of one button. The dialog points at the profile
+                    from inside instead, which is true either way. */}
+                <div className="mt-2.5">
+                  <CodeCheckDialog />
+                </div>
               </div>
             )}
 

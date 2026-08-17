@@ -13,6 +13,7 @@ import { redirect }       from "next/navigation";
 import { createClient }   from "@/lib/supabase/server";
 import { requireAdmin }   from "@/lib/supabase/guards";
 import { parseTiers, priceForTier } from "@/lib/rides/pricing";
+import { parseCode, hrefForCode, CODE_KIND_LABEL, type CodeKind } from "@/lib/codes";
 import { ROUTES }         from "@/lib/constants";
 import type { AccountCandidate } from "@/lib/membership/link";
 import type {
@@ -1532,6 +1533,57 @@ export async function setAnthemEnabled(enabled: boolean): Promise<{ error: strin
   if (error) return { error: error.message };
   revalidateMusic();
   return { error: null };
+}
+
+// =============================================================================
+// Reference code lookup
+// =============================================================================
+
+/**
+ * Public — find out what a reference code belongs to, and where to send its
+ * holder.
+ *
+ * Resolved here rather than by pushing straight to the destination, so a
+ * mistyped code produces "we cannot find that" on the form the rider is already
+ * looking at, instead of a 404 page that cannot tell them whether they got the
+ * code wrong or the thing has been deleted.
+ *
+ * Uses the service role: ride registrations and shop orders are deliberately
+ * not publicly readable, and this needs to answer "does it exist" without
+ * opening either of them up.
+ */
+export async function resolveCode(raw: string): Promise<{
+  href:  string | null;
+  kind:  CodeKind | null;
+  error: string | null;
+}> {
+  const parsed = parseCode(raw);
+  if (!parsed) {
+    return {
+      href: null, kind: null,
+      error: "That does not look like one of our codes. They look like HD-AB12CD, HD-R-AB12CD or HDS-AB12CD.",
+    };
+  }
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const table = parsed.kind === "ride"  ? "ride_registrations"
+              : parsed.kind === "order" ? "shop_orders"
+              : "member_cards";
+
+  const { data, error } = await admin
+    .from(table).select("id").eq("access_code", parsed.code).maybeSingle();
+
+  if (error) return { href: null, kind: null, error: "Could not check that just now. Try again in a moment." };
+  if (!data) {
+    return {
+      href: null, kind: parsed.kind,
+      error: `No ${CODE_KIND_LABEL[parsed.kind].toLowerCase()} found for ${parsed.code}. Check the code and try again.`,
+    };
+  }
+
+  return { href: hrefForCode(parsed), kind: parsed.kind, error: null };
 }
 
 // =============================================================================

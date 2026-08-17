@@ -281,6 +281,8 @@ export const ROUTES = {
   adminSettings:  "/admin/settings",
   adminMembers:   "/admin/members",
   adminShop:      "/admin/shop",
+  /** One lookup for every reference code the site hands out. */
+  checkCode:      "/check",
   shop:           "/shop",
   product:        (slug: string) => `/shop/${slug}`,
   shopCheckout:   "/shop/checkout",
