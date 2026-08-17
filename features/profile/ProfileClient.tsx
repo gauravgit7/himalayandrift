@@ -14,7 +14,7 @@ import Link from "next/link";
 import {
   User, Phone, Save, AlertCircle, CheckCircle2, Clock, XCircle,
   Bike, Calendar, FileText, Home, Droplet, ShieldAlert, CreditCard,
-  Flag, ChevronRight, Loader2, Mail, Route, Trophy, Printer,
+  Flag, ChevronRight, Loader2, Mail, Route, Trophy, Printer, Camera,
 } from "lucide-react";
 
 import { cn }              from "@/utils/cn";
@@ -155,10 +155,11 @@ function CardPanel({
     onRequested();
   }, [onRequested]);
 
-  // Approved — show the real thing.
+  // Approved — show the real thing. Same card chrome as every other panel, so
+  // the sidebar does not look like it lost its border once a card is issued.
   if (card?.status === "approved") {
     return (
-      <div className="space-y-4">
+      <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <SectionTitle>Membership card</SectionTitle>
           <span className="text-xs font-mono text-hd-ember-400">{card.cardNumber}</span>
@@ -168,9 +169,9 @@ function CardPanel({
         <CardRenderer card={card} settings={settings} brandLogos={brandLogos} />
         <Link
           href={ROUTES.memberCard(card.accessCode)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-hd-ink-800 hover:bg-hd-ink-700 border border-hd-ink-700 hover:border-hd-ink-500 text-sm font-semibold text-hd-ink-100 transition-colors"
+          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-hd-ink-800 hover:bg-hd-ink-700 border border-hd-ink-700 hover:border-hd-ink-500 text-sm font-semibold text-hd-ink-100 transition-colors"
         >
-          <Printer className="size-4" /> Download or print card
+          <Printer className="size-4" /> Download or print
         </Link>
       </div>
     );
@@ -355,67 +356,58 @@ export function ProfileClient({
     new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
+    // pt-24 clears the fixed navbar. py-10 was leaving the header card tucked
+    // under it — every other public page already uses this clearance.
+    <div className="max-w-5xl mx-auto px-4 pt-24 pb-16 space-y-5">
 
-      {/* ── Header ── */}
-      <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-        <div className="flex flex-col items-center gap-3 shrink-0">
+      {/* ── Header ──
+           The avatar uploader used to live in this card's left column, which is
+           what made it tall and mostly empty: a 96px avatar above a dropzone,
+           beside three lines of text. The uploader has moved to My details,
+           where the rest of the editing is, and the stats have moved up here to
+           fill the row they left behind. */}
+      <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
           {form.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={form.avatarUrl}
               alt={form.fullName}
-              className="size-24 rounded-full object-cover border-2 border-hd-ink-700"
+              className="size-20 rounded-full object-cover border-2 border-hd-ink-700 shrink-0"
             />
           ) : (
-            <div className="size-24 rounded-full bg-hd-ember-600 flex items-center justify-center border-2 border-hd-ink-700">
-              <span className="text-2xl font-black text-white">{initials}</span>
+            <div className="size-20 rounded-full bg-hd-ember-600 flex items-center justify-center border-2 border-hd-ink-700 shrink-0">
+              <span className="text-xl font-black text-white">{initials}</span>
             </div>
           )}
-          <ImageUpload
-            bucket={STORAGE_BUCKETS.riderAvatars}
-            currentUrl={form.avatarUrl}
-            onUpload={(url) => set("avatarUrl", url)}
-            cropAspect={1}
-            compressMaxPx={600}
-          />
-        </div>
 
-        <div className="flex-1 w-full space-y-3 text-center sm:text-left">
-          <div>
-            <h1 className="text-2xl font-black text-hd-ink-50">
-              {form.fullName || "Your profile"}
-            </h1>
-            <p className="text-sm text-hd-ink-500 mt-0.5 inline-flex items-center gap-1.5">
-              <Mail className="size-3.5" /> {profile.email}
-            </p>
-            <p className="text-xs text-hd-ink-600 mt-1">
-              Member since {fmtJoined(profile.createdAt)}
-            </p>
+          <div className="flex-1 min-w-0 w-full space-y-3 text-center sm:text-left">
+            <div>
+              <h1 className="text-2xl font-black text-hd-ink-50 truncate">
+                {form.fullName || "Your profile"}
+              </h1>
+              <p className="text-sm text-hd-ink-500 mt-0.5 inline-flex items-center gap-1.5">
+                <Mail className="size-3.5 shrink-0" />
+                <span className="truncate">{profile.email}</span>
+              </p>
+              <p className="text-xs text-hd-ink-600 mt-1">
+                Member since {fmtJoined(profile.createdAt)}
+              </p>
+            </div>
+            <StatusBanner status={profile.memberStatus} adminNotes={profile.adminNotes} />
           </div>
-          <StatusBanner status={profile.memberStatus} adminNotes={profile.adminNotes} />
         </div>
-      </div>
 
-      {/* ── Membership card ── */}
-      <CardPanel
-        card={card}
-        settings={cardSettings}
-        brandLogos={brandLogos}
-        isAdmin={profile.isAdmin}
-        onRequested={() => window.location.reload()}
-      />
-
-      {/* ── Stats ── */}
-      {stats.rides > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        {/* Always shown, zeros and all. A row that appears only once you have
+            ridden something leaves a hole in the layout until you have. */}
+        <div className="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-hd-ink-800">
           {[
             { icon: Trophy, label: "Rides ridden", value: String(stats.rides) },
             { icon: Route,  label: "Distance",
               value: stats.km > 0 ? `${Math.round(stats.km).toLocaleString()} km` : "—" },
             { icon: Calendar, label: "This year", value: String(stats.thisYear) },
           ].map(({ icon: Icon, label, value }) => (
-            <div key={label} className="gradient-card rounded-xl border border-hd-ink-700 p-4 text-center">
+            <div key={label} className="text-center">
               <Icon className="size-4 text-hd-ember-500 mx-auto mb-2" />
               <p className="text-xl font-black text-hd-ink-50 leading-none">{value}</p>
               <p className="text-[10px] uppercase tracking-widest text-hd-ink-500 mt-1.5">
@@ -424,153 +416,189 @@ export function ProfileClient({
             </div>
           ))}
         </div>
-      )}
-
-      {/* ── Rides ── */}
-      <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-5">
-        <SectionTitle>My rides</SectionTitle>
-
-        {registrations.length === 0 ? (
-          <div className="text-center py-8">
-            <Flag className="size-8 mx-auto text-hd-ink-700 mb-3" />
-            <p className="text-sm text-hd-ink-400">
-              You have not registered for a ride yet.
-            </p>
-            <Link
-              href={ROUTES.calendar}
-              className="inline-block mt-3 text-sm font-semibold text-hd-ember-400 hover:text-hd-ember-300 transition-colors"
-            >
-              See what is coming up →
-            </Link>
-          </div>
-        ) : (
-          <>
-            {upcoming.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[10px] uppercase tracking-widest text-hd-ink-500">
-                  Coming up
-                </p>
-                {upcoming.map((r) => <RideRow key={r.id} reg={r} />)}
-              </div>
-            )}
-            {past.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[10px] uppercase tracking-widest text-hd-ink-500">
-                  Ridden
-                </p>
-                {past.map((r) => <RideRow key={r.id} reg={r} />)}
-              </div>
-            )}
-          </>
-        )}
       </div>
 
-      {/* ── Details ── */}
-      <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-5">
-        <div className="flex items-center justify-between gap-3">
-          <SectionTitle>My details</SectionTitle>
-          {isDirty && (
-            <span className="text-[11px] text-amber-400 font-semibold">Unsaved changes</span>
+      {/* ── Body ──
+           Two columns rather than one long stack. The card is a fixed 300px
+           object and never wants the full width; the rides and the form do.
+           It sticks, so it stays in view while the form is scrolled. */}
+      <div className="grid lg:grid-cols-[1fr_360px] gap-5 items-start">
+
+        <div className="space-y-5 min-w-0">
+
+        {/* ── Rides ── */}
+        <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-5">
+          <SectionTitle>My rides</SectionTitle>
+
+          {registrations.length === 0 ? (
+            <div className="text-center py-8">
+              <Flag className="size-8 mx-auto text-hd-ink-700 mb-3" />
+              <p className="text-sm text-hd-ink-400">
+                You have not registered for a ride yet.
+              </p>
+              <Link
+                href={ROUTES.calendar}
+                className="inline-block mt-3 text-sm font-semibold text-hd-ember-400 hover:text-hd-ember-300 transition-colors"
+              >
+                See what is coming up →
+              </Link>
+            </div>
+          ) : (
+            <>
+              {upcoming.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase tracking-widest text-hd-ink-500">
+                    Coming up
+                  </p>
+                  {upcoming.map((r) => <RideRow key={r.id} reg={r} />)}
+                </div>
+              )}
+              {past.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase tracking-widest text-hd-ink-500">
+                    Ridden
+                  </p>
+                  {past.map((r) => <RideRow key={r.id} reg={r} />)}
+                </div>
+              )}
+            </>
           )}
         </div>
 
-        {error && (
-          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40">
-            <AlertCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
-            <p className="text-sm text-hd-ember-300">{error}</p>
+        {/* ── Details ── */}
+        <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-5">
+          <div className="flex items-center justify-between gap-3">
+            <SectionTitle>My details</SectionTitle>
+            {isDirty && (
+              <span className="text-[11px] text-amber-400 font-semibold">Unsaved changes</span>
+            )}
           </div>
-        )}
-        {saved && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/40">
-            <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-            <p className="text-sm text-emerald-300">Saved.</p>
-          </div>
-        )}
 
-        <div className="space-y-1.5">
-          <label className={labelCls}><User className="size-3" /> Full name</label>
-          <input type="text" value={form.fullName} disabled={saving}
-            onChange={(e) => set("fullName", e.target.value)} className={inputCls} />
-        </div>
+          {error && (
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40">
+              <AlertCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
+              <p className="text-sm text-hd-ember-300">{error}</p>
+            </div>
+          )}
+          {saved && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/40">
+              <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+              <p className="text-sm text-emerald-300">Saved.</p>
+            </div>
+          )}
 
-        <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className={labelCls}><Calendar className="size-3" /> Date of birth</label>
-            <input type="date" value={form.dateOfBirth} disabled={saving}
-              onChange={(e) => set("dateOfBirth", e.target.value)} className={inputCls} />
+            <label className={labelCls}><User className="size-3" /> Full name</label>
+            <input type="text" value={form.fullName} disabled={saving}
+              onChange={(e) => set("fullName", e.target.value)} className={inputCls} />
           </div>
-          <div className="space-y-1.5">
-            <label className={labelCls}><Droplet className="size-3" /> Blood group</label>
-            <select value={form.bloodGroup} disabled={saving}
-              onChange={(e) => set("bloodGroup", e.target.value)}
-              className={cn(inputCls, "cursor-pointer")}>
-              <option value="" className="bg-hd-ink-900">Select…</option>
-              {BLOOD_GROUPS.map((g) => (
-                <option key={g} value={g} className="bg-hd-ink-900">{g}</option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <label className={labelCls}><FileText className="size-3" /> Licence number</label>
-            <input type="text" value={form.licenseNumber} disabled={saving}
-              onChange={(e) => set("licenseNumber", e.target.value)}
-              placeholder="BAG-12-12345" className={inputCls} />
-          </div>
-          <div className="space-y-1.5">
-            <label className={labelCls}><Bike className="size-3" /> Bike</label>
-            <input type="text" value={form.bikeModel} disabled={saving}
-              onChange={(e) => set("bikeModel", e.target.value)}
-              placeholder="Apache RTR 200 4V" className={inputCls} />
-          </div>
-          <div className="space-y-1.5">
-            <label className={labelCls}><Phone className="size-3" /> Phone</label>
-            <input type="tel" value={form.phone} disabled={saving}
-              onChange={(e) => set("phone", e.target.value)}
-              placeholder="+977 98XXXXXXXX" className={inputCls} />
-          </div>
-          <div className="space-y-1.5">
-            <label className={labelCls}><Home className="size-3" /> Address</label>
-            <input type="text" value={form.address} disabled={saving}
-              onChange={(e) => set("address", e.target.value)}
-              placeholder="City / District" className={inputCls} />
-          </div>
-        </div>
 
-        <div className="pt-4 border-t border-hd-ink-800 space-y-4">
-          <p className="text-xs font-semibold text-hd-ink-400 uppercase tracking-wide flex items-center gap-1.5">
-            <ShieldAlert className="size-3" /> Emergency contact
-          </p>
+          <div className="space-y-1.5">
+            <label className={labelCls}><Camera className="size-3" /> Profile photo</label>
+            <ImageUpload
+              bucket={STORAGE_BUCKETS.riderAvatars}
+              currentUrl={form.avatarUrl}
+              onUpload={(url) => set("avatarUrl", url)}
+              cropAspect={1}
+              compressMaxPx={600}
+            />
+            <p className="text-[11px] text-hd-ink-500">
+              Also the photo printed on your membership card.
+            </p>
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className={labelCls}>Name</label>
-              <input type="text" value={form.emergencyName} disabled={saving}
-                onChange={(e) => set("emergencyName", e.target.value)}
-                placeholder="Who should we call?" className={inputCls} />
+              <label className={labelCls}><Calendar className="size-3" /> Date of birth</label>
+              <input type="date" value={form.dateOfBirth} disabled={saving}
+                onChange={(e) => set("dateOfBirth", e.target.value)} className={inputCls} />
             </div>
             <div className="space-y-1.5">
-              <label className={labelCls}>Number</label>
-              <input type="tel" value={form.emergencyPhone} disabled={saving}
-                onChange={(e) => set("emergencyPhone", e.target.value)}
+              <label className={labelCls}><Droplet className="size-3" /> Blood group</label>
+              <select value={form.bloodGroup} disabled={saving}
+                onChange={(e) => set("bloodGroup", e.target.value)}
+                className={cn(inputCls, "cursor-pointer")}>
+                <option value="" className="bg-hd-ink-900">Select…</option>
+                {BLOOD_GROUPS.map((g) => (
+                  <option key={g} value={g} className="bg-hd-ink-900">{g}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}><FileText className="size-3" /> Licence number</label>
+              <input type="text" value={form.licenseNumber} disabled={saving}
+                onChange={(e) => set("licenseNumber", e.target.value)}
+                placeholder="BAG-12-12345" className={inputCls} />
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}><Bike className="size-3" /> Bike</label>
+              <input type="text" value={form.bikeModel} disabled={saving}
+                onChange={(e) => set("bikeModel", e.target.value)}
+                placeholder="Apache RTR 200 4V" className={inputCls} />
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}><Phone className="size-3" /> Phone</label>
+              <input type="tel" value={form.phone} disabled={saving}
+                onChange={(e) => set("phone", e.target.value)}
                 placeholder="+977 98XXXXXXXX" className={inputCls} />
             </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}><Home className="size-3" /> Address</label>
+              <input type="text" value={form.address} disabled={saving}
+                onChange={(e) => set("address", e.target.value)}
+                placeholder="City / District" className={inputCls} />
+            </div>
           </div>
+
+          <div className="pt-4 border-t border-hd-ink-800 space-y-4">
+            <p className="text-xs font-semibold text-hd-ink-400 uppercase tracking-wide flex items-center gap-1.5">
+              <ShieldAlert className="size-3" /> Emergency contact
+            </p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className={labelCls}>Name</label>
+                <input type="text" value={form.emergencyName} disabled={saving}
+                  onChange={(e) => set("emergencyName", e.target.value)}
+                  placeholder="Who should we call?" className={inputCls} />
+              </div>
+              <div className="space-y-1.5">
+                <label className={labelCls}>Number</label>
+                <input type="tel" value={form.emergencyPhone} disabled={saving}
+                  onChange={(e) => set("emergencyPhone", e.target.value)}
+                  placeholder="+977 98XXXXXXXX" className={inputCls} />
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !isDirty || !form.fullName.trim()}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all",
+              saving || !isDirty || !form.fullName.trim()
+                ? "bg-hd-ink-800 text-hd-ink-500 cursor-not-allowed"
+                : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember active:scale-[0.98]",
+            )}
+          >
+            {saving
+              ? <><Loader2 className="size-4 animate-spin" />Saving…</>
+              : <><Save className="size-4" />{isDirty ? "Save changes" : "No changes"}</>}
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving || !isDirty || !form.fullName.trim()}
-          className={cn(
-            "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all",
-            saving || !isDirty || !form.fullName.trim()
-              ? "bg-hd-ink-800 text-hd-ink-500 cursor-not-allowed"
-              : "bg-hd-ember-600 hover:bg-hd-ember-500 hover:shadow-glow-ember active:scale-[0.98]",
-          )}
-        >
-          {saving
-            ? <><Loader2 className="size-4 animate-spin" />Saving…</>
-            : <><Save className="size-4" />{isDirty ? "Save changes" : "No changes"}</>}
-        </button>
+        </div>
+
+        {/* ── Sidebar ── */}
+        <div className="lg:sticky lg:top-24 min-w-0">
+          <CardPanel
+            card={card}
+            settings={cardSettings}
+            brandLogos={brandLogos}
+            isAdmin={profile.isAdmin}
+            onRequested={() => window.location.reload()}
+          />
+        </div>
       </div>
     </div>
   );
