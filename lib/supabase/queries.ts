@@ -12,16 +12,19 @@ import {
   mapMemberCard, mapCardSettings, mapProfile,
   mapRideRegistration, mapPaymentSettings, mapAnthemSettings, mapAnthemTrack,
   mapProduct, mapShopSettings, mapShopOrder,
+  mapMembershipTier, mapMembershipSettings, mapLoyaltyEntry,
   type DbRide, type DbSeries, type DbSponsor, type DbMarshal,
   type DbHomepageContent, type DbMemberCard, type DbCardSettings,
   type DbProfile, type DbRideRegistration, type DbPaymentSettings, type DbAnthemSettings,
   type DbAnthemTrack, type DbProduct, type DbShopSettings, type DbShopOrder,
+  type DbMembershipTier, type DbMembershipSettings, type DbLoyaltyEntry,
 } from "@/lib/supabase/mappers";
 import type {
   Ride, Series, Sponsor, Marshal, HomepageContent, BrandLogos,
   MemberCard, CardSettings,
   RideRegistration, RideRegistrationWithRide, PaymentSettings, AnthemSettings, AnthemTrack,
   Product, ShopSettings, ShopOrder,
+  MembershipTier, MembershipSettings, LoyaltyEntry,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -393,6 +396,7 @@ export async function getProfile(): Promise<import("@/types").UserProfileWithEma
       id:            user.id,
       fullName:      (user.user_metadata?.full_name as string | undefined) ?? "",
       email:         user.email ?? "",
+      tierId:        null,
       phone:         null,
       avatarUrl:     null,
       address:       null,
@@ -492,7 +496,7 @@ export const getPaymentSettings = cache(async (): Promise<PaymentSettings> => {
 
   if (error) console.error("[getPaymentSettings]", error.message);
   if (!data) {
-    return { qrUrl: null, paymentInstructions: "", currencyLabel: "NPR", defaultTiers: [] };
+    return { qrUrl: null, paymentInstructions: "", currencyLabel: "NPR" };
   }
   return mapPaymentSettings(data as DbPaymentSettings);
 });
@@ -681,6 +685,86 @@ export const getAnthemTracks = cache(async (): Promise<AnthemTrack[]> => {
   if (error) { console.error("[getAnthemTracks]", error.message); return []; }
   return (data ?? []).map((r) => mapAnthemTrack(r as DbAnthemTrack));
 });
+
+// ---------------------------------------------------------------------------
+// Membership programme
+// ---------------------------------------------------------------------------
+
+export const getMembershipSettings = cache(async (): Promise<MembershipSettings> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("membership_settings").select("*").eq("id", 1).maybeSingle();
+
+  if (error) console.error("[getMembershipSettings]", error.message);
+  if (!data) return { tiersEnabled: false, loyaltyEnabled: false, pointsLabel: "points" };
+  return mapMembershipSettings(data as DbMembershipSettings);
+});
+
+/** Every tier, in the club's own order. Public — a rider sees what they are on
+ *  and what the ones above are worth. */
+export const getMembershipTiers = cache(async (): Promise<MembershipTier[]> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("membership_tiers")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) { console.error("[getMembershipTiers]", error.message); return []; }
+  return (data ?? []).map((r) => mapMembershipTier(r as DbMembershipTier));
+});
+
+/**
+ * The tier one rider is on.
+ *
+ * Falls back to the default tier when they have none, so a member is never in
+ * limbo — including after a tier they were on has been deleted.
+ */
+export function resolveTier(
+  tiers: MembershipTier[], tierId: string | null,
+): MembershipTier | null {
+  if (tierId) {
+    const exact = tiers.find((t) => t.id === tierId);
+    if (exact) return exact;
+  }
+  return tiers.find((t) => t.isDefault && t.isActive) ?? null;
+}
+
+/** The signed-in rider's tier, or the default. Null when tiers are off. */
+export async function getMyTier(): Promise<MembershipTier | null> {
+  const [settings, tiers, profile] = await Promise.all([
+    getMembershipSettings(), getMembershipTiers(), getProfile(),
+  ]);
+  if (!settings.tiersEnabled) return null;
+  return resolveTier(tiers, profile?.tierId ?? null);
+}
+
+/** Balance and history. The balance is a SUM of the ledger, never a stored
+ *  counter — a counter can only drift, and cannot explain itself. */
+export async function getMyLoyalty(): Promise<{
+  balance: number;
+  entries: LoyaltyEntry[];
+}> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { balance: 0, entries: [] };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { data, error } = await createAdminClient()
+    .from("loyalty_ledger")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) { console.error("[getMyLoyalty]", error.message); return { balance: 0, entries: [] }; }
+
+  const entries = (data ?? []).map((r) => mapLoyaltyEntry(r as DbLoyaltyEntry));
+  return {
+    balance: entries.reduce((n, e) => n + e.points, 0),
+    entries,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Shop

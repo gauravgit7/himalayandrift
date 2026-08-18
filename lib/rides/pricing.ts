@@ -1,125 +1,101 @@
 // =============================================================================
-// Ride pricing — the fee, the discount, and the rider classes
+// Ride pricing — the fee, the club discount, and the rider's tier
 //
-// One ride can charge several prices. There is a list fee, an optional flat
-// discount off it for everybody, and an optional set of rider classes with
-// their own absolute price — members, veterans, a marshal riding along rather
-// than leading.
+// A ride has one list fee and an optional flat discount off it for everybody.
+// On top of that, a member's TIER takes a percentage off — so a veteran sees a
+// lower number without ever being shown a menu of what everyone else pays.
 //
-// Every one of those numbers is resolved HERE, and the server resolves them
-// again from the database at submission. The registration form is allowed to
-// display a price; it is never allowed to decide one. A tier arrives from the
-// browser as an id and nothing more.
+// That last part is the whole point of the redesign. The previous version asked
+// the rider to pick their own rate from a list, which meant every rider read
+// the full price table and could see exactly what they were not getting. A
+// discount that has to be compared to be understood is not a benefit; it is a
+// ranking. The tier lives on the account now, the form resolves ONE number, and
+// nobody sees anybody else's.
 //
-// Pure, and importing nothing: the arithmetic is the part worth being able to
-// reason about on its own.
+// Every figure is resolved here and again on the server at submission. The form
+// may display a price; it may never decide one.
+//
+// Pure, and importing nothing but types.
 // =============================================================================
 
-import type { Ride, RidePriceTier } from "@/types";
+import type { MembershipTier } from "@/types";
 
-/** The shape both the Ride type and the raw DB row can satisfy. */
+/** The shape both the Ride type and a raw DB row can satisfy. */
 export interface PricingInput {
   registrationFee:      number | null;
   registrationDiscount: number | null;
-  registrationTiers:    RidePriceTier[];
 }
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/**
- * Tiers arrive out of jsonb, so they are whatever was last written there —
- * possibly by an older version of the form. A row with no label or no usable
- * price is dropped rather than allowed through, where it would offer a nameless
- * class at NaN rupees.
- *
- * Lives here rather than in the mappers because the server action needs it too,
- * working straight off a raw row.
- */
-export function parseTiers(raw: unknown): RidePriceTier[] {
-  if (!Array.isArray(raw)) return [];
-  const out: RidePriceTier[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object") continue;
-    const row = item as Record<string, unknown>;
-    const label = typeof row.label === "string" ? row.label.trim() : "";
-    if (!label) continue;
-    const rawPrice = row.price;
-    const price = typeof rawPrice === "number" ? rawPrice
-      : typeof rawPrice === "string" && rawPrice !== "" ? Number(rawPrice)
-      : NaN;
-    if (!Number.isFinite(price)) continue;
-    out.push({
-      id:    typeof row.id === "string" && row.id ? row.id : label.toLowerCase(),
-      label,
-      note:  typeof row.note === "string" && row.note.trim() ? row.note.trim() : null,
-      price: Math.max(0, price),
-      requiresMemberCard: row.requiresMemberCard === true,
-    });
-  }
-  return out;
+/** Clamped the same way the database check constraint clamps it. */
+function safePercent(p: number): number {
+  return Math.min(Math.max(p, 0), 90);
 }
 
 /**
- * What a rider claiming nothing pays.
+ * What a rider on no tier pays: the list fee less the club-wide discount.
  *
- * Clamped at zero: a discount larger than the fee is a typo, and a negative
+ * Clamped at zero — a discount larger than the fee is a typo, and a negative
  * price would have the club paying people to turn up.
  */
 export function standardPrice(ride: PricingInput): number | null {
   const fee = ride.registrationFee;
-  if (fee === null || fee <= 0) return fee === null ? null : 0;
-  const discount = ride.registrationDiscount ?? 0;
-  return round2(Math.max(0, fee - Math.max(0, discount)));
+  if (fee === null) return null;
+  if (fee <= 0) return 0;
+  return round2(Math.max(0, fee - Math.max(0, ride.registrationDiscount ?? 0)));
 }
 
-/** The struck-through "was" figure, or null when there is nothing to strike. */
+/** The struck-through "was", or null when there is nothing to strike. */
 export function listPrice(ride: PricingInput): number | null {
   const fee = ride.registrationFee;
   if (fee === null || fee <= 0) return null;
-  const discount = ride.registrationDiscount ?? 0;
-  return discount > 0 ? round2(fee) : null;
+  return (ride.registrationDiscount ?? 0) > 0 ? round2(fee) : null;
 }
 
-/** Tiers that are actually usable — a blank label is a half-filled form row. */
-export function usableTiers(ride: PricingInput): RidePriceTier[] {
-  return (ride.registrationTiers ?? []).filter((t) => t.label?.trim());
-}
-
-/**
- * The price for a claimed class, or the standard price when nothing valid was
- * claimed. An id the ride does not offer resolves to the standard price rather
- * than an error: it means a stale form, not an attack, and the honest answer to
- * "this class does not exist here" is "then you pay the normal price".
- */
-export function priceForTier(
-  ride: PricingInput, tierId: string | null | undefined,
-): { price: number | null; tier: RidePriceTier | null } {
-  const standard = standardPrice(ride);
-  if (!tierId) return { price: standard, tier: null };
-
-  const tier = usableTiers(ride).find((t) => t.id === tierId);
-  if (!tier) return { price: standard, tier: null };
-
-  return { price: round2(Math.max(0, tier.price)), tier };
+export interface RiderPrice {
+  /** What this rider owes. Null on a ride with no fee at all. */
+  price:      number | null;
+  /** The price before their tier was applied — shown struck through, but only
+   *  when the tier actually changed it. */
+  before:     number | null;
+  /** The tier that moved the number, or null if none did. */
+  tier:       MembershipTier | null;
+  /** True when there is money to collect and a screenshot to ask for. */
+  isPaid:     boolean;
 }
 
 /**
- * The lowest price anyone could pay, for a "from Rs X" on a card. Includes the
- * tiers, because a ride whose cheapest class is half the standard price is not
- * honestly described by the standard price alone.
+ * The price for one rider.
+ *
+ * Order of operations, and it matters: list fee → club discount → tier
+ * percentage. The tier takes its cut of the already-discounted price, so a ride
+ * on offer does not quietly hand veterans a second, compounding discount off
+ * the higher number.
  */
-export function lowestPrice(ride: PricingInput): number | null {
-  const standard = standardPrice(ride);
-  if (standard === null) return null;
-  const tiers = usableTiers(ride);
-  if (!tiers.length) return standard;
-  return round2(Math.min(standard, ...tiers.map((t) => Math.max(0, t.price))));
+export function priceForRider(
+  ride: PricingInput,
+  tier: MembershipTier | null,
+  tiersEnabled: boolean,
+): RiderPrice {
+  const base = standardPrice(ride);
+  if (base === null) return { price: null, before: null, tier: null, isPaid: false };
+
+  const live = tiersEnabled && tier?.isActive ? tier : null;
+  const pct  = live ? safePercent(live.discountPercent) : 0;
+
+  if (!live || pct === 0 || base === 0) {
+    return { price: base, before: null, tier: live, isPaid: base > 0 };
+  }
+
+  const price = round2(Math.max(0, base * (1 - pct / 100)));
+  return { price, before: base, tier: live, isPaid: price > 0 };
 }
 
-/** Is this ride paid at all? A ride whose every price is zero is a free ride. */
+/** Is there a fee at all, before any tier is considered? */
 export function isPaidRide(ride: PricingInput): boolean {
-  const standard = standardPrice(ride);
-  return standard !== null && standard > 0;
+  const p = standardPrice(ride);
+  return p !== null && p > 0;
 }
 
 /** Nepali rupees, grouped, no decimals. */
@@ -127,11 +103,27 @@ export function formatFee(amount: number, currency = "Rs"): string {
   return `${currency} ${Math.round(amount).toLocaleString("en-IN")}`;
 }
 
-/** Narrow a full Ride down to what the pricing functions need. */
-export function pricingOf(ride: Ride): PricingInput {
-  return {
-    registrationFee:      ride.registrationFee,
-    registrationDiscount: ride.registrationDiscount,
-    registrationTiers:    ride.registrationTiers,
-  };
+// ---------------------------------------------------------------------------
+// Loyalty
+// ---------------------------------------------------------------------------
+
+/**
+ * What one rider earns from something worth `base` points.
+ *
+ * Rounded, because a 1.5x multiplier on an odd number is otherwise a fraction
+ * of a point that no display would ever show honestly.
+ *
+ * The factor used is recorded on the ledger row beside the total, so promoting
+ * a rider later never rewrites what they earned before.
+ */
+export function pointsEarned(
+  base: number,
+  tier: MembershipTier | null,
+  tiersEnabled: boolean,
+): { points: number; factor: number } {
+  const safeBase = Math.max(0, Math.round(base || 0));
+  const factor = tiersEnabled && tier?.isActive
+    ? Math.max(0, Number(tier.rewardFactor) || 1)
+    : 1;
+  return { points: Math.round(safeBase * factor), factor };
 }

@@ -134,8 +134,9 @@ export interface Ride {
   registrationFee: number | null;
   /** A flat amount off the list fee, for everyone. Null for no discount. */
   registrationDiscount: number | null;
-  /** Rider classes with their own price. Empty means one price for everybody. */
-  registrationTiers: RidePriceTier[];
+  /** Base points a rider earns for an approved registration, before their
+   *  tier multiplier. 0 means this ride awards nothing. */
+  loyaltyPoints: number;
   /** Null means unlimited. Counts pending + approved. */
   registrationCapacity: number | null;
   /** Per-ride overrides for the club-wide payment details. */
@@ -294,12 +295,9 @@ export interface RideRegistration {
   updatedAt:       string;
   approvedAt:      string | null;
   rejectedAt:      string | null;
-  /** The rider class claimed at sign-up, if the ride offered any. */
-  tierId:          string | null;
+  /** The membership tier the rider was on when they registered, copied so the
+   *  roster still reads correctly after they are promoted. */
   tierLabel:       string | null;
-  /** True only where the system could check the claim — today, an approved
-   *  membership card on the rider's own account. */
-  tierVerified:    boolean;
 }
 
 /** A registration with the ride it belongs to, for the admin list. */
@@ -376,6 +374,8 @@ export interface Product {
   imageUrls:        string[];
   /** Stock for a product with no variants. Null means it is not tracked. */
   stock:            number | null;
+  /** Points a buyer earns per item, before their tier multiplier. */
+  loyaltyPoints:    number;
   isActive:         boolean;
   isFeatured:       boolean;
   sortOrder:        number;
@@ -436,40 +436,64 @@ export interface CartLine {
 }
 
 // ---------------------------------------------------------------------------
-// Ride pricing
+// Membership programme
 // ---------------------------------------------------------------------------
 
 /**
- * One rider class with its own price for one ride: members, veterans, marshals
- * riding along rather than leading.
- *
- * A tier is CLAIMED at registration, not granted. The rider picks the one they
- * say applies; the system verifies what it can and flags the rest. Anything
- * else would mean either trusting a form field with the club's money, or
- * building an entitlements system nobody asked for.
+ * A tier is ASSIGNED by the committee, never computed. There is deliberately no
+ * engine that promotes people — who counts as a veteran is a judgement about a
+ * person, and pretending a rule can make it turns a compliment into a formula.
  */
-export interface RidePriceTier {
-  /** Stable within a ride. Stored on the registration so the roster still
-   *  reads correctly after the price list is edited. */
-  id:    string;
-  label: string;
-  /** The line under the label — who this is actually for. */
-  note:  string | null;
-  /** What this class pays, absolute. Not a discount off the fee: an absolute
-   *  number is the one thing that cannot drift when the fee is edited. */
-  price: number;
-  /** Checkable: true only where the rider is signed in and holds an approved
-   *  membership card. Everything else stays a claim for a human to look at. */
-  requiresMemberCard: boolean;
+export interface MembershipTier {
+  id:              string;
+  name:            string;
+  slug:            string;
+  description:     string | null;
+  /** Off ride registration. A percentage, so a ride carries one price. */
+  discountPercent: number;
+  /** Multiplier on points earned. 1–2 is the useful range; 5 compounds. */
+  rewardFactor:    number;
+  /** Hex for the badge. Falls back to the ember accent. */
+  colour:          string | null;
+  isDefault:       boolean;
+  isActive:        boolean;
+  sortOrder:       number;
 }
+
+export interface MembershipSettings {
+  /** Off means one price for everybody and no badge anywhere. */
+  tiersEnabled:   boolean;
+  /** Off means nothing is awarded and no balance is shown. */
+  loyaltyEnabled: boolean;
+  pointsLabel:    string;
+}
+
+export type LoyaltySource = "ride" | "order" | "manual" | "voucher";
+
+/** One line of the ledger. Signed: positive earns, negative spends. A balance
+ *  is the sum of these and is never stored anywhere. */
+export interface LoyaltyEntry {
+  id:         string;
+  points:     number;
+  /** What the ride or product was worth before the tier multiplier. */
+  basePoints: number;
+  /** The multiplier as it stood when this was earned. Never recomputed. */
+  factor:     number;
+  reason:     string;
+  sourceType: LoyaltySource;
+  sourceId:   string | null;
+  createdAt:  string;
+}
+
+// ---------------------------------------------------------------------------
+// Ride pricing
+// ---------------------------------------------------------------------------
 
 /** Club-wide payment details, overridable per ride. */
 export interface PaymentSettings {
   qrUrl:               string | null;
   paymentInstructions: string;
   currencyLabel:       string;
-  /** A reusable set of rider classes the ride form can copy in. */
-  defaultTiers:        RidePriceTier[];
 }
 
 /** What the registration form actually shows for one ride, after the
@@ -480,11 +504,15 @@ export interface ResolvedPaymentDetails {
   currencyLabel:       string;
   /** What a rider with no claimed class pays: the list fee less any discount. */
   fee:                 number | null;
-  /** The list fee before the discount, when there is one. Null otherwise, so
-   *  the form knows whether there is a "was" figure worth striking through. */
+  /** The list fee before the club discount, when there is one. */
   listFee:             number | null;
   isPaid:              boolean;
-  tiers:               RidePriceTier[];
+  /** The tier this rider is on, if tiers are on and they have one. */
+  tier:                MembershipTier | null;
+  /** What they paid before their tier was applied, when it moved the number. */
+  beforeTier:          number | null;
+  loyaltyPoints:       number;
+  pointsLabel:         string;
 }
 
 /** A profile field the membership card needs. Reported back by
@@ -605,6 +633,9 @@ export interface UserProfile {
   emergencyPhone: string | null;
   /** Committee member. Drives every RLS write policy. */
   isAdmin:        boolean;
+  /** Assigned by the committee. Null falls back to the default tier at read
+   *  time, so a deleted tier never leaves a member in limbo. */
+  tierId:         string | null;
   // Admin approval workflow
   memberStatus:   MemberRegistrationStatus;
   adminNotes:     string | null;

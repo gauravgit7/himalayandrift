@@ -12,13 +12,13 @@ import { revalidatePath } from "next/cache";
 import { redirect }       from "next/navigation";
 import { createClient }   from "@/lib/supabase/server";
 import { requireAdmin }   from "@/lib/supabase/guards";
-import { parseTiers, priceForTier } from "@/lib/rides/pricing";
+import { priceForRider, pointsEarned } from "@/lib/rides/pricing";
 import { parseCode, hrefForCode, CODE_KIND_LABEL, type CodeKind } from "@/lib/codes";
 import { ROUTES }         from "@/lib/constants";
 import type { AccountCandidate } from "@/lib/membership/link";
 import type {
   HomepageContent, RouteData, MemberCard, CardSettings, CardRequirement,
-  RidePriceTier,
+  MembershipTier,
 } from "@/types";
 import type { PushOptInSettings }          from "@/components/shared/PushOptIn";
 import type { PwaSettings }               from "@/features/admin/PwaSettingsAdmin";
@@ -60,8 +60,8 @@ export interface RidePayload {
   registrationOpen:     boolean;
   registrationFee:      number | null;
   registrationDiscount: number | null;
-  /** Rider classes with their own price. Re-parsed server-side. */
-  registrationTiers?:   RidePriceTier[];
+  /** Base points for an approved registration, before the tier multiplier. */
+  loyaltyPoints:        number;
   registrationCapacity: number | null;
   paymentQrUrl:         string | null;
   paymentInstructions:  string | null;
@@ -105,10 +105,7 @@ export async function saveRide(
     registration_discount: payload.registrationDiscount && payload.registrationDiscount > 0
                              ? payload.registrationDiscount
                              : null,
-    // Re-parsed rather than stored as sent: it is jsonb, so the column will
-    // accept whatever shape arrives, and a malformed rate would only be found
-    // later by a rider staring at "Rs NaN" on the sign-up form.
-    registration_tiers:    parseTiers(payload.registrationTiers ?? []),
+    loyalty_points:        Math.max(0, Math.round(payload.loyaltyPoints || 0)),
     registration_capacity: payload.registrationCapacity && payload.registrationCapacity > 0
                              ? payload.registrationCapacity
                              : null,
@@ -1066,48 +1063,24 @@ export async function submitRideRegistration(
   }
 
   // -- What this rider actually owes ------------------------------------------
-  // The form was allowed to show a price. It is not allowed to decide one: only
-  // a tier id crosses the wire, and the number behind it is looked up here.
-  const pricing = {
-    registrationFee:      ride.registration_fee === null ? null : Number(ride.registration_fee),
-    registrationDiscount: ride.registration_discount === null ? null : Number(ride.registration_discount),
-    registrationTiers:    parseTiers(ride.registration_tiers),
-  };
-
-  const { price: rawPrice, tier } = priceForTier(pricing, payload.tierId ?? null);
-
-  // A membership-backed class is the one privilege the system can actually
-  // check, now that cards are linked to accounts. Everything else is a claim
-  // recorded for the committee to look at, not a discount silently granted.
-  let tierVerified = false;
+  // Resolved here from the ride and the rider's own tier. The form displayed a
+  // price; it never sent one, and there is no longer anything for it to pick.
   const sessionClient = await createClient();
   const { data: { user: claimant } } = await sessionClient.auth.getUser();
 
-  if (tier?.requiresMemberCard) {
-    if (!claimant) {
-      return {
-        accessCode: null,
-        error: `"${tier.label}" is for signed-in members. Sign in first, or pick another option.`,
-      };
-    }
-    const { data: card } = await admin
-      .from("member_cards")
-      .select("id")
-      .eq("user_id", claimant.id)
-      .eq("status", "approved")
-      .maybeSingle();
+  const { loadMembershipSettings, loadTierForUser } = await import("@/lib/membership/loyalty");
+  const membership = await loadMembershipSettings();
+  // A tier is an attribute of the account. A signed-out registrant has none
+  // and pays the standard price - which is exactly what a null tier means to
+  // the pricing helpers.
+  const tier = await loadTierForUser(claimant?.id, membership.tiersEnabled);
+  const mine = priceForRider({
+    registrationFee:      ride.registration_fee === null ? null : Number(ride.registration_fee),
+    registrationDiscount: ride.registration_discount === null ? null : Number(ride.registration_discount),
+  }, tier, membership.tiersEnabled);
 
-    if (!card) {
-      return {
-        accessCode: null,
-        error: `"${tier.label}" needs an approved membership card on your account. Request one from your profile, or pick another option.`,
-      };
-    }
-    tierVerified = true;
-  }
-
-  const fee    = rawPrice;
-  const isPaid = fee !== null && fee > 0;
+  const fee    = mine.price;
+  const isPaid = mine.isPaid;
 
   if (isPaid && !payload.paymentScreenshotUrl) {
     return { accessCode: null, error: "Please upload a screenshot of your payment." };
@@ -1159,9 +1132,8 @@ export async function submitRideRegistration(
     // Taken from the ride, not the form, so the roster records what was
     // actually owed even if the fee is edited afterwards.
     amount_paid:            isPaid ? fee : null,
-    tier_id:                tier?.id ?? null,
-    tier_label:             tier?.label ?? null,
-    tier_verified:          tierVerified,
+    // Copied, so the roster still reads correctly after a promotion.
+    tier_label:             tier?.name ?? null,
     payment_reference:      isPaid ? payload.paymentReference?.trim() || null : null,
     payment_screenshot_url: isPaid ? payload.paymentScreenshotUrl     || null : null,
     status:           "pending",
@@ -1234,9 +1206,60 @@ export async function approveRideRegistration(
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Points land on approval, not on submission. A registration nobody has
+  // checked the payment for is a claim, not a ride — paying for it would let
+  // an abandoned form mint points.
+  await awardForRideRegistration(id);
+
   await revalidateRideForRegistration(id);
   revalidatePath(ROUTES.adminRegistrations);
   return { error: null };
+}
+
+/**
+ * Pay a rider for an approved registration.
+ *
+ * Split out and deliberately silent: an approval that worked must not report
+ * failure because the points did. The ledger's own once-per-source index makes
+ * repeat calls harmless, so re-approving costs nothing.
+ */
+async function awardForRideRegistration(registrationId: string): Promise<void> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { data } = await admin
+    .from("ride_registrations")
+    .select("user_id, rides(title, loyalty_points)")
+    .eq("id", registrationId)
+    .maybeSingle();
+
+  const row = data as {
+    user_id: string | null;
+    rides: { title: string; loyalty_points: number | null } | null;
+  } | null;
+
+  // No account, nothing to credit. A guest registration earns nobody points,
+  // which is one more reason the join form is worth merging with sign-up.
+  if (!row?.user_id || !row.rides?.loyalty_points) return;
+
+  const {
+    loadMembershipSettings, loadTierForUser, awardPoints,
+  } = await import("@/lib/membership/loyalty");
+
+  const membership = await loadMembershipSettings();
+  const tier = await loadTierForUser(row.user_id, membership.tiersEnabled);
+
+  await awardPoints({
+    userId:         row.user_id,
+    basePoints:     row.rides.loyalty_points,
+    tier,
+    tiersEnabled:   membership.tiersEnabled,
+    loyaltyEnabled: membership.loyaltyEnabled,
+    reason:         row.rides.title,
+    sourceType:     "ride",
+    sourceId:       registrationId,
+  });
 }
 
 /** Admin: reject a ride registration, which frees its seat. */
@@ -1258,6 +1281,21 @@ export async function rejectRideRegistration(
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Approving and then rejecting has to take the points back, or an admin
+  // correcting themselves leaves a rider paid for a ride they are not on.
+  // A negative row, not a delete: the history has to stay reconcilable.
+  const { data: reg } = await supabase
+    .from("ride_registrations").select("user_id").eq("id", id).maybeSingle();
+  const riderId = (reg as { user_id?: string | null } | null)?.user_id;
+  if (riderId) {
+    const { reversePoints } = await import("@/lib/membership/loyalty");
+    await reversePoints({
+      userId: riderId, sourceType: "ride", sourceId: id,
+      reason: "Registration withdrawn",
+    });
+  }
+
   await revalidateRideForRegistration(id);
   revalidatePath(ROUTES.adminRegistrations);
   return { error: null };
@@ -1307,8 +1345,6 @@ export interface PaymentSettingsPayload {
   qrUrl:               string | null;
   paymentInstructions: string;
   currencyLabel:       string;
-  /** The reusable rider classes the ride form copies in. */
-  defaultTiers?:       RidePriceTier[];
 }
 
 /** Admin: save the club-wide payment details. */
@@ -1324,9 +1360,6 @@ export async function savePaymentSettings(
       qr_url:               payload.qrUrl || null,
       payment_instructions: payload.paymentInstructions.trim(),
       currency_label:       payload.currencyLabel.trim() || "NPR",
-      // Re-parsed rather than stored as sent: jsonb accepts any shape, and a
-      // malformed class would only surface later on a rider's sign-up form.
-      default_tiers:        parseTiers(payload.defaultTiers ?? []),
       updated_at:           new Date().toISOString(),
     });
 
@@ -1536,6 +1569,158 @@ export async function setAnthemEnabled(enabled: boolean): Promise<{ error: strin
 }
 
 // =============================================================================
+// Membership programme
+// =============================================================================
+
+export async function saveMembershipSettings(settings: {
+  tiersEnabled: boolean; loyaltyEnabled: boolean; pointsLabel: string;
+}): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient().from("membership_settings").upsert({
+    id:              1,
+    tiers_enabled:   settings.tiersEnabled,
+    loyalty_enabled: settings.loyaltyEnabled,
+    points_label:    settings.pointsLabel.trim() || "points",
+    updated_at:      new Date().toISOString(),
+  });
+
+  if (error) return { error: error.message };
+  revalidatePath("/", "layout");
+  revalidatePath(ROUTES.adminMembers);
+  return { error: null };
+}
+
+export interface MembershipTierPayload {
+  id?:             string;
+  name:            string;
+  description?:    string | null;
+  discountPercent: number;
+  rewardFactor:    number;
+  colour?:         string | null;
+  isDefault:       boolean;
+  isActive:        boolean;
+}
+
+export async function saveMembershipTier(
+  payload: MembershipTierPayload,
+): Promise<{ id: string | null; error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { id: null, error: denied };
+
+  const name = payload.name.trim();
+  if (!name) return { id: null, error: "A tier needs a name." };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  // At most one default, enforced by a partial unique index. Clearing the old
+  // one first turns what would be a constraint violation into a handover.
+  if (payload.isDefault) {
+    await admin.from("membership_tiers").update({ is_default: false })
+      .eq("is_default", true)
+      .neq("id", payload.id ?? "00000000-0000-0000-0000-000000000000");
+  }
+
+  const row = {
+    name,
+    slug,
+    description:      payload.description?.trim() || null,
+    discount_percent: Math.min(Math.max(Math.round(payload.discountPercent), 0), 90),
+    reward_factor:    Math.max(0, Number(payload.rewardFactor) || 1),
+    colour:           payload.colour?.trim() || null,
+    is_default:       payload.isDefault,
+    is_active:        payload.isActive,
+  };
+
+  if (payload.id) {
+    const { error } = await admin.from("membership_tiers").update(row).eq("id", payload.id);
+    if (error) return { id: null, error: error.message };
+    revalidatePath("/", "layout");
+    return { id: payload.id, error: null };
+  }
+
+  const { data: last } = await admin
+    .from("membership_tiers").select("sort_order")
+    .order("sort_order", { ascending: false }).limit(1).maybeSingle();
+
+  const { data, error } = await admin
+    .from("membership_tiers")
+    .insert({ ...row, sort_order: ((last as { sort_order?: number } | null)?.sort_order ?? 0) + 1 })
+    .select("id").single();
+
+  if (error) {
+    if ((error as { code?: string }).code === "23505") {
+      return { id: null, error: "A tier with that name already exists." };
+    }
+    return { id: null, error: error.message };
+  }
+  revalidatePath("/", "layout");
+  return { id: (data as { id: string }).id, error: null };
+}
+
+export async function deleteMembershipTier(id: string): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  // profiles.tier_id is ON DELETE SET NULL, so members on this tier fall back
+  // to the default rather than losing their account.
+  const { error } = await createAdminClient()
+    .from("membership_tiers").delete().eq("id", id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/", "layout");
+  return { error: null };
+}
+
+/** Admin: put one member on a tier. The only way a tier is ever assigned —
+ *  there is deliberately no engine that promotes people automatically. */
+export async function assignMemberTier(
+  userId: string, tierId: string | null,
+): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient()
+    .from("profiles").update({ tier_id: tierId }).eq("id", userId);
+
+  if (error) return { error: error.message };
+  revalidatePath(ROUTES.adminMembers);
+  revalidatePath(ROUTES.profile);
+  return { error: null };
+}
+
+/** Admin: hand out or take back points by hand. The reason is shown to the
+ *  rider in their history, so it is written for them. */
+export async function adjustPoints(
+  userId: string, points: number, reason: string,
+): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const n = Math.round(points);
+  if (!n) return { error: "Enter a number of points, positive or negative." };
+  if (!reason.trim()) return { error: "Give a reason — the rider sees it." };
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { error } = await createAdminClient().from("loyalty_ledger").insert({
+    user_id: userId, points: n, base_points: Math.abs(n), factor: 1,
+    reason: reason.trim(), source_type: "manual", source_id: null,
+  });
+
+  if (error) return { error: error.message };
+  revalidatePath(ROUTES.adminMembers);
+  revalidatePath(ROUTES.profile);
+  return { error: null };
+}
+
+// =============================================================================
 // Reference code lookup
 // =============================================================================
 
@@ -1611,6 +1796,7 @@ export interface ProductPayload {
   discountPercent:   number;
   imageUrls:         string[];
   stock:             number | null;
+  loyaltyPoints:     number;
   isActive:          boolean;
   isFeatured:        boolean;
   variants: { id?: string; label: string; priceDelta: number; stock: number; isActive: boolean }[];
@@ -1642,6 +1828,7 @@ export async function saveProduct(
     // Product-level stock is meaningless once sizes exist, and leaving a stale
     // number behind invites someone to read it later and believe it.
     stock:             payload.variants.length ? null : payload.stock,
+    loyalty_points:    Math.max(0, Math.round(payload.loyaltyPoints || 0)),
     is_active:         payload.isActive,
     is_featured:       payload.isFeatured,
   };
@@ -1962,9 +2149,61 @@ export async function approveShopOrder(id: string): Promise<{ error: string | nu
     .eq("id", id);
   if (error) return { error: error.message };
 
+  // Same moment as the stock coming off: a human has seen the payment.
+  await awardForShopOrder(id);
+
   revalidatePath("/admin/shop");
   revalidatePath("/shop");
   return { error: null };
+}
+
+/**
+ * Pay a buyer for an approved order. Points are summed across the lines, each
+ * item's own value multiplied by how many of it were bought, so a jacket worth
+ * 200 and two stickers worth 10 each pay 220 before the tier factor.
+ */
+async function awardForShopOrder(orderId: string): Promise<void> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { data } = await admin
+    .from("shop_orders")
+    .select("user_id, shop_order_items(quantity, products(name, loyalty_points))")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  const row = data as {
+    user_id: string | null;
+    shop_order_items: {
+      quantity: number;
+      products: { name: string; loyalty_points: number | null } | null;
+    }[] | null;
+  } | null;
+
+  if (!row?.user_id) return;   // a signed-out buyer has nowhere to put points
+
+  const base = (row.shop_order_items ?? []).reduce(
+    (n, i) => n + (i.products?.loyalty_points ?? 0) * (i.quantity ?? 1), 0,
+  );
+  if (base <= 0) return;
+
+  const {
+    loadMembershipSettings, loadTierForUser, awardPoints,
+  } = await import("@/lib/membership/loyalty");
+
+  const membership = await loadMembershipSettings();
+  const tier = await loadTierForUser(row.user_id, membership.tiersEnabled);
+
+  await awardPoints({
+    userId:         row.user_id,
+    basePoints:     base,
+    tier,
+    tiersEnabled:   membership.tiersEnabled,
+    loyaltyEnabled: membership.loyaltyEnabled,
+    reason:         "Shop order",
+    sourceType:     "order",
+    sourceId:       orderId,
+  });
 }
 
 export async function fulfilShopOrder(id: string): Promise<{ error: string | null }> {
@@ -1989,11 +2228,24 @@ export async function rejectShopOrder(
   if (!reason.trim()) return { error: "Give a reason — the buyer sees it." };
 
   const { createAdminClient } = await import("@/lib/supabase/admin");
-  const { error } = await createAdminClient().from("shop_orders")
+  const admin = createAdminClient();
+  const { error } = await admin.from("shop_orders")
     .update({ status: "rejected", rejection_reason: reason.trim() })
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  const { data: order } = await admin
+    .from("shop_orders").select("user_id").eq("id", id).maybeSingle();
+  const buyerId = (order as { user_id?: string | null } | null)?.user_id;
+  if (buyerId) {
+    const { reversePoints } = await import("@/lib/membership/loyalty");
+    await reversePoints({
+      userId: buyerId, sourceType: "order", sourceId: id,
+      reason: "Order cancelled",
+    });
+  }
+
   revalidatePath("/admin/shop");
   return { error: null };
 }

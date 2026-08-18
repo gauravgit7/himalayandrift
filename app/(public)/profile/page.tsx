@@ -6,6 +6,7 @@
 import {
   getProfile, getMyRideRegistrations, getMyMemberCard,
   getCardSettings, getBrandLogos,
+  getMembershipSettings, getMembershipTiers, getMyLoyalty, resolveTier,
 } from "@/lib/supabase/queries";
 import { ProfileClient } from "@/features/profile/ProfileClient";
 
@@ -18,12 +19,21 @@ export default async function ProfilePage() {
   // falls back to auth metadata when no row exists yet.
   if (!profile) return null;
 
-  const [registrations, card, cardSettings, brandLogos] = await Promise.all([
+  const [
+    registrations, card, cardSettings, brandLogos, membership, tiers, loyalty,
+  ] = await Promise.all([
     getMyRideRegistrations(),
     getMyMemberCard(),
     getCardSettings(),
     getBrandLogos(),
+    getMembershipSettings(),
+    getMembershipTiers(),
+    getMyLoyalty(),
   ]);
+
+  const myTier = membership.tiersEnabled
+    ? resolveTier(tiers, profile.tierId)
+    : null;
 
   return (
     <ProfileClient
@@ -32,6 +42,9 @@ export default async function ProfilePage() {
       card={card}
       cardSettings={cardSettings}
       brandLogos={brandLogos}
+      tier={myTier}
+      membership={membership}
+      loyalty={loyalty}
     />
   );
 }

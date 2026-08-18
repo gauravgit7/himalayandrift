@@ -13,8 +13,8 @@ import type {
   RideRegistration, RideRegistrationStatus, PaymentSettings,
   AnthemSettings, AnthemLyricLine, AnthemTrack,
   Product, ProductVariant, ShopSettings, ShopOrder, ShopOrderItem, ShopOrderStatus,
+  MembershipTier, MembershipSettings, LoyaltyEntry, LoyaltySource,
 } from "@/types";
-import { parseTiers } from "@/lib/rides/pricing";
 
 /** Postgres `numeric` arrives over PostgREST as a string, to avoid the
  *  precision loss of a JSON float. Anything unparseable becomes null rather
@@ -94,7 +94,7 @@ export interface DbRide {
   registration_open:      boolean | null;
   registration_fee:       number | string | null;  // numeric arrives as a string
   registration_discount:  number | string | null;
-  registration_tiers:     unknown;
+  loyalty_points:         number | null;
   registration_capacity:  number | null;
   payment_qr_url:         string | null;
   payment_instructions:   string | null;
@@ -185,7 +185,7 @@ export function mapRide(row: DbRide): Ride {
     registrationOpen:     row.registration_open ?? false,
     registrationFee:      toNumber(row.registration_fee),
     registrationDiscount: toNumber(row.registration_discount),
-    registrationTiers:    parseTiers(row.registration_tiers),
+    loyaltyPoints:        row.loyalty_points ?? 0,
     registrationCapacity: row.registration_capacity ?? null,
     paymentQrUrl:         row.payment_qr_url ?? null,
     paymentInstructions:  row.payment_instructions ?? null,
@@ -332,6 +332,7 @@ export interface DbProfile {
   emergency_name:  string | null;
   emergency_phone: string | null;
   is_admin:        boolean | null;
+  tier_id:         string | null;
   member_status:   string;
   admin_notes:     string | null;
   approved_at:     string | null;
@@ -355,6 +356,7 @@ export function mapProfile(row: DbProfile): UserProfile {
     emergencyName:  row.emergency_name  ?? null,
     emergencyPhone: row.emergency_phone ?? null,
     isAdmin:        row.is_admin ?? false,
+    tierId:         row.tier_id ?? null,
     memberStatus:  (row.member_status as MemberRegistrationStatus) ?? "pending",
     adminNotes:    row.admin_notes  ?? null,
     approvedAt:    row.approved_at  ?? null,
@@ -391,9 +393,7 @@ export interface DbRideRegistration {
   updated_at:              string;
   approved_at:             string | null;
   rejected_at:             string | null;
-  tier_id:                 string | null;
   tier_label:              string | null;
-  tier_verified:           boolean | null;
   // FK join
   rides?:                  DbRide | null;
 }
@@ -422,9 +422,7 @@ export function mapRideRegistration(row: DbRideRegistration): RideRegistration {
     updatedAt:            row.updated_at,
     approvedAt:           row.approved_at ?? null,
     rejectedAt:           row.rejected_at ?? null,
-    tierId:               row.tier_id ?? null,
     tierLabel:            row.tier_label ?? null,
-    tierVerified:         row.tier_verified ?? false,
   };
 }
 
@@ -437,7 +435,6 @@ export interface DbPaymentSettings {
   qr_url:               string | null;
   payment_instructions: string;
   currency_label:       string;
-  default_tiers:        unknown;
   updated_at:           string;
 }
 
@@ -446,7 +443,6 @@ export function mapPaymentSettings(row: DbPaymentSettings): PaymentSettings {
     qrUrl:               row.qr_url ?? null,
     paymentInstructions: row.payment_instructions ?? "",
     currencyLabel:       row.currency_label || "NPR",
-    defaultTiers:        parseTiers(row.default_tiers),
   };
 }
 
@@ -528,6 +524,7 @@ export interface DbProduct {
   discount_percent:  number;
   image_urls:        string[] | null;
   stock:             number | null;
+  loyalty_points:    number | null;
   is_active:         boolean;
   is_featured:       boolean;
   sort_order:        number;
@@ -546,6 +543,7 @@ export function mapProduct(row: DbProduct): Product {
     discountPercent:  row.discount_percent ?? 0,
     imageUrls:        row.image_urls ?? [],
     stock:            row.stock ?? null,
+    loyaltyPoints:    row.loyalty_points ?? 0,
     isActive:         row.is_active   ?? true,
     isFeatured:       row.is_featured ?? false,
     sortOrder:        row.sort_order  ?? 0,
@@ -666,5 +664,76 @@ export function mapAnthemTrack(row: DbAnthemTrack): AnthemTrack {
     isAnthem:  row.is_anthem ?? false,
     isActive:  row.is_active ?? true,
     sortOrder: row.sort_order ?? 0,
+  };
+}
+
+
+// ---------------------------------------------------------------------------
+// Membership programme
+// ---------------------------------------------------------------------------
+
+export interface DbMembershipTier {
+  id:               string;
+  name:             string;
+  slug:             string;
+  description:      string | null;
+  discount_percent: number;
+  reward_factor:    number | string;
+  colour:           string | null;
+  is_default:       boolean;
+  is_active:        boolean;
+  sort_order:       number;
+}
+
+export function mapMembershipTier(row: DbMembershipTier): MembershipTier {
+  return {
+    id:              row.id,
+    name:            row.name,
+    slug:            row.slug,
+    description:     row.description ?? null,
+    discountPercent: row.discount_percent ?? 0,
+    rewardFactor:    toNumber(row.reward_factor) ?? 1,
+    colour:          row.colour ?? null,
+    isDefault:       row.is_default ?? false,
+    isActive:        row.is_active  ?? true,
+    sortOrder:       row.sort_order ?? 0,
+  };
+}
+
+export interface DbMembershipSettings {
+  tiers_enabled:   boolean;
+  loyalty_enabled: boolean;
+  points_label:    string;
+}
+
+export function mapMembershipSettings(row: DbMembershipSettings): MembershipSettings {
+  return {
+    tiersEnabled:   row.tiers_enabled   ?? false,
+    loyaltyEnabled: row.loyalty_enabled ?? false,
+    pointsLabel:    row.points_label || "points",
+  };
+}
+
+export interface DbLoyaltyEntry {
+  id:          string;
+  points:      number;
+  base_points: number;
+  factor:      number | string;
+  reason:      string;
+  source_type: string;
+  source_id:   string | null;
+  created_at:  string;
+}
+
+export function mapLoyaltyEntry(row: DbLoyaltyEntry): LoyaltyEntry {
+  return {
+    id:         row.id,
+    points:     row.points,
+    basePoints: row.base_points ?? 0,
+    factor:     toNumber(row.factor) ?? 1,
+    reason:     row.reason,
+    sourceType: (row.source_type as LoyaltySource) ?? "manual",
+    sourceId:   row.source_id ?? null,
+    createdAt:  row.created_at,
   };
 }

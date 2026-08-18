@@ -199,37 +199,58 @@ the photos. `lib/membership/link.ts` is the plumbing around that decision — cl
 backfill (empty profile fields only, never overwriting the rider's own answer), rank
 candidates, link, unlink.
 
-### Ride pricing
+### Ride pricing and membership tiers
 
-One ride can charge several prices. `rides.registration_fee` is the list fee,
-`registration_discount` is a flat amount off it for everybody, and
-`registration_tiers` (jsonb) is a set of **rider classes** each with its own absolute
-price — members, veterans, a marshal riding along rather than leading.
+A ride has one list fee (`registration_fee`) and an optional flat discount off it for
+everybody (`registration_discount`). On top of that a member's **tier** takes a
+percentage off. All of it resolves through [`lib/rides/pricing.ts`](lib/rides/pricing.ts),
+which imports nothing but types.
 
-All of it resolves through [`lib/rides/pricing.ts`](lib/rides/pricing.ts), which imports
-nothing. Two rules:
+Order of operations, and it matters: **list fee → club discount → tier percentage.** The
+tier takes its cut of the already-discounted price, so a ride on offer does not quietly
+hand veterans a second compounding discount off the higher number.
 
-- **Prices are absolute per tier, not discounts off the fee.** An absolute number is the
-  one thing that cannot drift when the fee above it is edited.
-- **The discount is stored separately from the fee**, so the page can honestly show
-  "was 10,000, now 8,000". Baking it into the fee loses the fact that there is a discount.
+> **There was previously a per-ride rate picker** — a list of named rates the rider chose
+> from at sign-up. It is gone. The problem was not that different people paid different
+> amounts; it was that the form made *every* rider read the whole price table, so a rider
+> paying full price could see exactly what they were not getting. A discount that has to
+> be compared to be understood is a ranking, not a benefit. The tier lives on the account,
+> the form resolves one number, and nobody sees anybody else's.
 
-**A tier is claimed, not granted.** The rider picks the class they say applies; the
-browser sends an id and nothing else, and `submitRideRegistration` looks the price up
-from the ride. `requires_member_card` is the one privilege the system can actually
-check — it verifies an approved card on the claimant's own account and refuses the rate
-otherwise. Every other claim is recorded with `tier_verified = false` and shown amber on
-the roster for a human to look into before approving a reduced fee. Anything else would
-mean either trusting a radio button with the club's money or building an entitlements
-system nobody asked for.
+**Tiers are assigned, never computed.** There is deliberately no engine that promotes
+anyone: who counts as a veteran is a judgement about a person, and a rule that awarded it
+would turn a compliment into a formula. `profiles.tier_id` is set by hand in
+Admin → Members; a null falls back to the tier flagged `is_default`, so a member is never
+in limbo — including after their tier is deleted.
 
-`payment_settings.default_tiers` holds a reusable set the ride form copies in with one
-click. **Copied, not referenced** — editing the defaults must never silently reprice a
-ride whose sign-ups are already open. The registration stores `tier_label` for the same
-reason: the roster has to keep saying what was actually owed.
+Two switches in `membership_settings`, not one. `tiers_enabled` prices rides;
+`loyalty_enabled` awards points. Either is useful alone — points with tiers off means
+everybody earns at 1×, and tiers with points off is simply a discount scheme.
 
-A tier priced at zero makes that rider's registration skip the payment step entirely,
-even on a paid ride. That is the point of a marshal rate.
+### Loyalty points
+
+`rides.loyalty_points` and `products.loyalty_points` are base values; a rider earns
+`base × tier.reward_factor`, rounded. Awarded **on approval**, never on submission — the
+same rule the shop already uses for stock, and for the same reason: an unpaid form is a
+claim, not a sale, and paying for it lets abandoned baskets mint points.
+
+`loyalty_ledger` is append-only and every row is **signed** — positive earns, negative
+spends. Three things follow from that:
+
+- **The balance is `SUM(points)` and is never stored.** A counter can only drift, and
+  cannot answer "where did my 3,400 come from".
+- **`base_points` and `factor` are recorded beside the total.** Promoting a rider from 1×
+  to 2× must not rewrite what they earned last season, and storing both makes each row
+  explain itself on screen.
+- **Vouchers need no schema change.** They write negative rows.
+
+A partial unique index on `(source_type, source_id, user_id)` for positive rows makes
+awarding idempotent: approving, un-approving and approving again cannot pay three times.
+Rejection writes a negative reversal rather than deleting the award, because a history
+that loses entries cannot be reconciled.
+
+The ledger has **no insert policy at all** — a table anyone can write to is a table anyone
+can pay themselves from. Awarding runs through the service role.
 
 ### Music
 

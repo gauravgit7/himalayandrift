@@ -12,7 +12,7 @@ import { notFound }      from "next/navigation";
 import { ArrowLeft, CalendarDays, MapPin, Lock, Users, Flag } from "lucide-react";
 
 import {
-  getRide, getPaymentSettings, getRideRegistrationCount, getProfile,
+  getRide, getPaymentSettings, getRideRegistrationCount, getProfile, getMembershipSettings, getMembershipTiers, resolveTier,
 } from "@/lib/supabase/queries";
 import {
   resolvePaymentDetails, seatsRemaining, registrationClosedReason,
@@ -63,14 +63,21 @@ export default async function RideRegisterPage({ params }: PageProps) {
   const ride = await getRide(id);
   if (!ride) notFound();
 
-  const [paymentSettings, taken, profile] = await Promise.all([
+  const [paymentSettings, taken, profile, membership, tiers] = await Promise.all([
     getPaymentSettings(),
     getRideRegistrationCount(ride.id),
     getProfile(),          // null when signed out
+    getMembershipSettings(),
+    getMembershipTiers(),
   ]);
 
   const closed  = registrationClosedReason(ride, taken);
-  const payment = resolvePaymentDetails(ride, paymentSettings);
+  // A signed-out visitor has no tier and sees the standard price. Nobody, at
+  // any point, is shown what somebody else would pay.
+  const myTier  = membership.tiersEnabled
+    ? resolveTier(tiers, profile?.tierId ?? null)
+    : null;
+  const payment = resolvePaymentDetails(ride, paymentSettings, myTier, membership);
   const left    = seatsRemaining(ride, taken);
 
   const prefill: RegistrationPrefill | null = profile && {

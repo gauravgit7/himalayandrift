@@ -930,6 +930,120 @@ create trigger shop_orders_guard_submission
   before insert on shop_orders
   for each row execute function public.guard_shop_order_submission();
 
+
+-- ---------------------------------------------------------------------------
+-- Membership programme — tiers and loyalty points
+--
+-- Two switches, not one. Tiers price rides; points reward taking part. Either
+-- is useful without the other: points with tiers off simply means everybody
+-- earns at 1x, and tiers with points off is a discount scheme.
+-- ---------------------------------------------------------------------------
+
+create table if not exists membership_settings (
+  id               integer primary key default 1 check (id = 1),
+  -- Off means one price for everybody and no tier badge anywhere.
+  tiers_enabled    boolean not null default false,
+  -- Off means no points are awarded and none are shown.
+  loyalty_enabled  boolean not null default false,
+  -- What the club calls them. "points", "drift miles", whatever.
+  points_label     text not null default 'points',
+  updated_at       timestamptz not null default now()
+);
+
+insert into membership_settings (id) values (1) on conflict do nothing;
+
+drop trigger if exists membership_settings_updated_at on membership_settings;
+create trigger membership_settings_updated_at
+  before update on membership_settings
+  for each row execute function set_updated_at();
+
+-- A tier is ASSIGNED by the committee, never computed. There is deliberately no
+-- engine that promotes people: who counts as a veteran is a judgement about a
+-- person, and pretending a rule can make it turns a compliment into a formula.
+create table if not exists membership_tiers (
+  id                uuid primary key default gen_random_uuid(),
+  name              text not null,
+  slug              text not null unique,
+  description       text,
+  -- Percentage off ride registration. A percentage rather than a price per
+  -- ride: one number to maintain on the tier instead of every tier priced by
+  -- hand on every ride.
+  discount_percent  integer not null default 0
+                    check (discount_percent >= 0 and discount_percent <= 90),
+  -- Multiplier on points earned. numeric, so 1.5x is expressible - the useful
+  -- range in a real programme is 1 to 2, not 5.
+  reward_factor     numeric(4,2) not null default 1 check (reward_factor >= 0),
+  -- Hex, for the badge. Falls back to the ember accent when unset.
+  colour            text,
+  -- Where a new member lands. Exactly one, enforced below.
+  is_default        boolean not null default false,
+  is_active         boolean not null default true,
+  sort_order        integer not null default 0,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+create unique index if not exists idx_membership_tiers_one_default
+  on membership_tiers(is_default) where is_default;
+
+create index if not exists idx_membership_tiers_order
+  on membership_tiers(is_active, sort_order);
+
+drop trigger if exists membership_tiers_updated_at on membership_tiers;
+create trigger membership_tiers_updated_at
+  before update on membership_tiers
+  for each row execute function set_updated_at();
+
+-- Deleting a tier leaves its members without one rather than deleting them;
+-- they fall back to the default tier at read time.
+alter table profiles add column if not exists tier_id uuid
+  references membership_tiers(id) on delete set null;
+
+create index if not exists idx_profiles_tier on profiles(tier_id);
+
+-- ---------------------------------------------------------------------------
+-- Loyalty ledger
+--
+-- Append-only, and every row is SIGNED: positive to earn, negative to spend.
+-- A balance is sum(points) and is never stored anywhere, because a stored
+-- counter can only ever drift and cannot answer "where did my 3,400 come
+-- from". Vouchers, when they arrive, write negative rows here and need no
+-- schema change at all.
+--
+-- base_points and factor are recorded alongside the total on purpose. Promoting
+-- a rider from 1x to 2x must NOT rewrite what they earned as a member last
+-- season, and keeping both makes each row explain itself.
+-- ---------------------------------------------------------------------------
+
+create table if not exists loyalty_ledger (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null references auth.users(id) on delete cascade,
+  points       integer not null,
+  base_points  integer not null default 0,
+  factor       numeric(4,2) not null default 1,
+  -- Shown to the rider in their history, so write it for them, not for a log.
+  reason       text not null,
+  source_type  text not null
+               check (source_type in ('ride', 'order', 'manual', 'voucher')),
+  source_id    uuid,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_loyalty_ledger_user
+  on loyalty_ledger(user_id, created_at desc);
+
+-- One award per thing. Approving a registration, un-approving it and approving
+-- it again must not pay three times. Reversals are negative rows, which this
+-- index deliberately does not constrain.
+create unique index if not exists idx_loyalty_ledger_once
+  on loyalty_ledger(source_type, source_id, user_id)
+  where source_id is not null and points > 0;
+
+-- Points on the things that award them. 0 means this ride or product earns
+-- nothing, which is the sane default for everything that already exists.
+alter table rides    add column if not exists loyalty_points integer not null default 0;
+alter table products add column if not exists loyalty_points integer not null default 0;
+
 -- ---------------------------------------------------------------------------
 -- Web push
 -- ---------------------------------------------------------------------------
@@ -1002,6 +1116,9 @@ alter table product_variants   enable row level security;
 alter table shop_settings      enable row level security;
 alter table shop_orders        enable row level security;
 alter table shop_order_items   enable row level security;
+alter table membership_settings enable row level security;
+alter table membership_tiers    enable row level security;
+alter table loyalty_ledger      enable row level security;
 alter table ride_registrations enable row level security;
 
 -- ── Public read ────────────────────────────────────────────────────────────
@@ -1039,6 +1156,12 @@ drop policy if exists "public_read_shop_settings"    on shop_settings;
 create policy "public_read_products"         on products         for select using (true);
 create policy "public_read_product_variants" on product_variants for select using (true);
 create policy "public_read_shop_settings"    on shop_settings    for select using (true);
+-- Tiers and the switches are public: a rider has to be able to see what tier
+-- they are on and what it is worth. The LEDGER is not - see below.
+drop policy if exists "public_read_membership_settings" on membership_settings;
+drop policy if exists "public_read_membership_tiers"    on membership_tiers;
+create policy "public_read_membership_settings" on membership_settings for select using (true);
+create policy "public_read_membership_tiers"    on membership_tiers    for select using (true);
 
 -- ── Authenticated write ────────────────────────────────────────────────────
 drop policy if exists "auth_write_marshals"         on marshals;
@@ -1069,6 +1192,10 @@ drop policy if exists "auth_write_shop_settings"    on shop_settings;
 create policy "auth_write_products"         on products         for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "auth_write_product_variants" on product_variants for all to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "auth_write_shop_settings"    on shop_settings    for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "auth_write_membership_settings" on membership_settings;
+drop policy if exists "auth_write_membership_tiers"    on membership_tiers;
+create policy "auth_write_membership_settings" on membership_settings for all to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "auth_write_membership_tiers"    on membership_tiers    for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- These four had public read and NO write policy at all, while their admin
 -- forms write through the anon client - so every save was silently refused by
@@ -1145,6 +1272,14 @@ create policy "read_own_shop_orders"           on shop_orders      for select
   to authenticated using (auth.uid() = user_id);
 create policy "public_insert_shop_order_items" on shop_order_items for insert
   to anon, authenticated with check (true);
+
+-- ── Loyalty ledger ─────────────────────────────────────────────
+-- Read your own rows and nothing else. There is deliberately NO insert policy:
+-- points are awarded by the service role on approval, and a table anyone can
+-- write to is a table anyone can pay themselves from.
+drop policy if exists "read_own_loyalty_ledger" on loyalty_ledger;
+create policy "read_own_loyalty_ledger" on loyalty_ledger for select
+  to authenticated using (auth.uid() = user_id);
 
 -- ── Push subscriptions: write-only for the public ──────────────────────────
 -- Anyone may subscribe or unsubscribe; nobody may read the endpoint list back,

@@ -4,15 +4,18 @@ import { useState, useMemo } from "react";
 import {
   CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp,
   Shield, Phone, MapPin, Bike, Calendar, FileText, Home,
-  Edit2, Save, X, AlertCircle, Search, User,
+  Edit2, Save, X, AlertCircle, Search, User, Award,
 } from "lucide-react";
 import { cn }                         from "@/utils/cn";
 import {
   approveRegistration,
   rejectRegistration,
   updateRegistrationByAdmin,
+  assignMemberTier,
 } from "@/lib/supabase/actions";
-import type { UserProfile, MemberRegistrationStatus } from "@/types";
+import type {
+  UserProfile, MemberRegistrationStatus, MembershipTier,
+} from "@/types";
 
 type FilterStatus = MemberRegistrationStatus | "all";
 
@@ -24,10 +27,15 @@ const STATUS_LABELS: Record<MemberRegistrationStatus, string> = {
 
 interface RegistrationCardProps {
   member: UserProfile;
+  tiers:  MembershipTier[];
+  tiersEnabled: boolean;
   onStatusChange: (id: string, status: MemberRegistrationStatus, notes?: string) => void;
+  onTierChange: (id: string, tierId: string | null) => void;
 }
 
-function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
+function RegistrationCard({
+  member, tiers, tiersEnabled, onStatusChange, onTierChange,
+}: RegistrationCardProps) {
   const [expanded,      setExpanded]      = useState(false);
   const [editing,       setEditing]       = useState(false);
   const [rejecting,     setRejecting]     = useState(false);
@@ -43,6 +51,23 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
   const [editDob,      setEditDob]      = useState(member.dateOfBirth ?? "");
   const [editLicense,  setEditLicense]  = useState(member.licenseNumber ?? "");
   const [editNotes,    setEditNotes]    = useState(member.adminNotes ?? "");
+
+  // The tier as it stands, falling back to the default so a member is never
+  // shown as tierless when the club has a default set.
+  const myTier = tiersEnabled
+    ? (tiers.find((t) => t.id === member.tierId)
+       ?? tiers.find((t) => t.isDefault && t.isActive)
+       ?? null)
+    : null;
+
+  const [savingTier, setSavingTier] = useState(false);
+  const assign = async (tierId: string | null) => {
+    setSavingTier(true); setError(null);
+    const res = await assignMemberTier(member.id, tierId);
+    setSavingTier(false);
+    if (res.error) { setError(res.error); return; }
+    onTierChange(member.id, tierId);
+  };
 
   const initials = member.fullName
     ? member.fullName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
@@ -123,7 +148,21 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-hd-ink-100 truncate">{member.fullName}</p>
+          <p className="flex items-center gap-2">
+            <span className="font-semibold text-hd-ink-100 truncate">{member.fullName}</span>
+            {myTier && (
+              <span
+                className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border shrink-0"
+                style={{
+                  color:       myTier.colour || "#f09020",
+                  borderColor: `${myTier.colour || "#f09020"}66`,
+                  background:  `${myTier.colour || "#f09020"}1a`,
+                }}
+              >
+                <Award className="size-2" /> {myTier.name}
+              </span>
+            )}
+          </p>
           <p className="text-xs text-hd-ink-500 truncate">{member.email}</p>
         </div>
 
@@ -146,6 +185,36 @@ function RegistrationCard({ member, onStatusChange }: RegistrationCardProps) {
       {/* Expanded details */}
       {expanded && (
         <div className="border-t border-hd-ink-800 px-4 pb-4 pt-3 space-y-4">
+          {/* Tier — assigned by hand, always. There is deliberately no rule
+              that promotes anybody: who counts as a veteran is a judgement,
+              and a formula would turn it into an entitlement. */}
+          {tiersEnabled && tiers.length > 0 && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-hd-ink-900/60 border border-hd-ink-800">
+              <Award className="size-4 text-hd-ember-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-hd-ink-300 uppercase tracking-wide">
+                  Membership tier
+                </p>
+                <p className="text-[11px] text-hd-ink-500 mt-0.5">
+                  Sets what they pay for a ride and how fast they earn points.
+                </p>
+              </div>
+              <select
+                value={member.tierId ?? ""}
+                disabled={savingTier}
+                onChange={(e) => assign(e.target.value || null)}
+                onClick={(e) => e.stopPropagation()}
+                className={cn(inputClass, "w-40 cursor-pointer")}
+              >
+                <option value="" className="bg-hd-ink-900">Default</option>
+                {tiers.filter((t) => t.isActive).map((t) => (
+                  <option key={t.id} value={t.id} className="bg-hd-ink-900">
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           {error && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40">
               <AlertCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
@@ -311,10 +380,16 @@ function Detail({ icon, label, value }: { icon: React.ReactNode; label: string; 
 
 interface Props {
   initialMembers: UserProfile[];
+  tiers:          MembershipTier[];
+  /** Off means the tier control is hidden rather than shown doing nothing. */
+  tiersEnabled:   boolean;
 }
 
-export function UserRegistrationsAdmin({ initialMembers }: Props) {
+export function UserRegistrationsAdmin({ initialMembers, tiers, tiersEnabled }: Props) {
   const [members,  setMembers]  = useState(initialMembers);
+
+  const handleTierChange = (id: string, tierId: string | null) =>
+    setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, tierId } : m)));
   const [filter,   setFilter]   = useState<FilterStatus>("all");
   const [search,   setSearch]   = useState("");
 
@@ -403,7 +478,10 @@ export function UserRegistrationsAdmin({ initialMembers }: Props) {
             <RegistrationCard
               key={m.id}
               member={m}
+              tiers={tiers}
+              tiersEnabled={tiersEnabled}
               onStatusChange={handleStatusChange}
+              onTierChange={handleTierChange}
             />
           ))}
         </div>

@@ -6,15 +6,13 @@ import type { Metadata } from "next";
 import Link              from "next/link";
 import { ArrowLeft }     from "lucide-react";
 import { ROUTES }        from "@/lib/constants";
-import { getMarshals, getSeries, getPaymentSettings } from "@/lib/supabase/queries";
+import { getMarshals, getSeries } from "@/lib/supabase/queries";
 import { RideForm }      from "@/features/admin/RideForm";
 
 export const metadata: Metadata = { title: "New Ride | Admin" };
 
 export default async function NewRidePage() {
-  const [marshals, series, payment] = await Promise.all([
-    getMarshals(), getSeries(), getPaymentSettings(),
-  ]);
+  const [marshals, series] = await Promise.all([getMarshals(), getSeries()]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-3xl">
@@ -35,8 +33,7 @@ export default async function NewRidePage() {
           Add a new ride to the calendar
         </p>
       </div>
-      <RideForm mode="create" marshals={marshals} series={series}
-        defaultTiers={payment.defaultTiers} />
+      <RideForm mode="create" marshals={marshals} series={series} />
     </div>
   );
 }

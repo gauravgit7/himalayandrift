@@ -13,7 +13,7 @@ import { useState, useCallback } from "react";
 import { useRouter }             from "next/navigation";
 import Image                     from "next/image";
 import {
-  AlertCircle, Users, Wallet, ShieldAlert, Loader2, ArrowRight, BadgeCheck,
+  AlertCircle, Users, Wallet, ShieldAlert, Loader2, ArrowRight, BadgeCheck, Sparkles,
 } from "lucide-react";
 
 import { cn }                       from "@/utils/cn";
@@ -50,67 +50,6 @@ export interface RegistrationPrefill {
   phone:     string;
   email:     string;
   bikeModel: string;
-}
-
-/** One selectable rate. A radio, not a select: four rates with a line of
- *  explanation each read as a list of choices, and hide inside a dropdown. */
-function TierOption({
-  selected, onSelect, label, note, priceLabel, strikeLabel, requiresCard, disabled,
-}: {
-  selected:     boolean;
-  onSelect:     () => void;
-  label:        string;
-  note:         string | null;
-  priceLabel:   string;
-  strikeLabel:  string | null;
-  requiresCard?: boolean;
-  disabled?:    boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      disabled={disabled}
-      aria-pressed={selected}
-      className={cn(
-        "flex w-full items-start gap-3 p-3.5 rounded-xl border text-left transition-colors",
-        selected
-          ? "border-hd-ember-600 bg-hd-ember-950/25"
-          : "border-hd-ink-700 hover:border-hd-ink-500",
-        disabled && "opacity-60 cursor-not-allowed",
-      )}
-    >
-      <span className={cn(
-        "mt-0.5 size-4 rounded-full border-2 shrink-0 flex items-center justify-center",
-        selected ? "border-hd-ember-500" : "border-hd-ink-600",
-      )}>
-        {selected && <span className="size-2 rounded-full bg-hd-ember-500" />}
-      </span>
-
-      <span className="flex-1 min-w-0">
-        <span className="block text-sm font-semibold text-hd-ink-100">{label}</span>
-        {note && (
-          <span className="block text-xs text-hd-ink-500 mt-0.5 leading-relaxed">{note}</span>
-        )}
-        {requiresCard && (
-          <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-hd-ember-400/90">
-            <BadgeCheck className="size-3" /> Checked against your membership card
-          </span>
-        )}
-      </span>
-
-      <span className="shrink-0 text-right">
-        <span className="block text-sm font-black text-hd-ember-400 tabular-nums">
-          {priceLabel}
-        </span>
-        {strikeLabel && (
-          <span className="block text-[11px] text-hd-ink-600 line-through tabular-nums">
-            {strikeLabel}
-          </span>
-        )}
-      </span>
-    </button>
-  );
 }
 
 interface Props {
@@ -150,10 +89,6 @@ export function RegistrationForm({
     paymentReference: "",
   });
 
-  // Which rider class the registrant says applies. Only the id is ever sent;
-  // the price behind it is resolved on the server from the ride itself.
-  const [tierId, setTierId] = useState<string | null>(null);
-
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [submitting,    setSubmitting]    = useState(false);
   const [error,         setError]         = useState<string | null>(null);
@@ -163,14 +98,12 @@ export function RegistrationForm({
 
   const money = (n: number) => `${payment.currencyLabel} ${n.toLocaleString("en-IN")}`;
 
-  // The claimed class sets what is owed. Displayed only - re-derived server-side
-  // at submission, so a tampered radio cannot buy a cheaper place.
-  const claimed = payment.tiers.find((t) => t.id === tierId) ?? null;
-  const payable = claimed ? claimed.price : payment.fee;
-  const feeLabel = payable !== null ? money(payable) : null;
-  // A class priced at nothing skips the payment step, even on a paid ride -
-  // which is exactly the point of a marshal or a life-member rate of zero.
-  const needsPayment = payable !== null && payable > 0;
+  // Resolved on the server from the rider's own tier and handed down. There is
+  // no choice to make here and no other rider's price on screen - that was the
+  // whole problem with the rate picker this replaced.
+  const payable      = payment.fee;
+  const feeLabel     = payable !== null ? money(payable) : null;
+  const needsPayment = payment.isPaid;
 
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -198,7 +131,6 @@ export function RegistrationForm({
       notes:          form.notes          || null,
       paymentReference:     form.paymentReference || null,
       paymentScreenshotUrl: screenshotUrl,
-      tierId,
     });
 
     if (result.error || !result.accessCode) {
@@ -208,7 +140,7 @@ export function RegistrationForm({
     }
 
     router.push(ROUTES.registrationConfirmed(result.accessCode));
-  }, [form, screenshotUrl, needsPayment, rideId, router, tierId]);
+  }, [form, screenshotUrl, needsPayment, rideId, router]);
 
 
   return (
@@ -228,6 +160,35 @@ export function RegistrationForm({
         <div className="flex items-start gap-2.5 p-3 rounded-xl bg-hd-ember-950/60 border border-hd-ember-800/40">
           <AlertCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
           <p className="text-sm text-hd-ember-300">{error}</p>
+        </div>
+      )}
+
+      {/* ── What your membership is doing for you ──
+           Only ever your own rate, never a table. A rider who gets nothing off
+           sees nothing here rather than a list of what other people get. */}
+      {(payment.tier || payment.loyaltyPoints > 0) && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3.5 rounded-xl bg-hd-ember-950/20 border border-hd-ember-800/30">
+          {payment.tier && (
+            <span className="flex items-center gap-2 text-sm">
+              <BadgeCheck className="size-4 text-hd-ember-400 shrink-0" />
+              <span className="text-hd-ink-200">
+                <span className="font-semibold text-hd-ember-300">{payment.tier.name}</span>
+                {payment.tier.discountPercent > 0
+                  ? ` — ${payment.tier.discountPercent}% off this ride`
+                  : " member"}
+              </span>
+            </span>
+          )}
+          {payment.loyaltyPoints > 0 && (
+            <span className="flex items-center gap-2 text-sm text-hd-ink-300">
+              <Sparkles className="size-4 text-hd-ember-400 shrink-0" />
+              Earn{" "}
+              <span className="font-semibold text-hd-ink-100">
+                {Math.round(payment.loyaltyPoints * (payment.tier?.rewardFactor ?? 1)).toLocaleString("en-IN")}
+              </span>{" "}
+              {payment.pointsLabel} once approved
+            </span>
+          )}
         </div>
       )}
 
@@ -329,58 +290,6 @@ export function RegistrationForm({
         </div>
       </section>
 
-      {/* ── Which rate applies ──
-           Only when the ride offers more than one. A single price needs no
-           question, and a question with one answer is a worse form. */}
-      {payment.isPaid && payment.tiers.length > 0 && (
-        <section className="gradient-card rounded-2xl border border-hd-ink-700 p-5 sm:p-6 space-y-4">
-          <div className="flex items-start gap-2.5">
-            <BadgeCheck className="size-4 text-hd-ember-400 shrink-0 mt-0.5" />
-            <div>
-              <h2 className="text-sm font-bold text-hd-ink-300 uppercase tracking-widest">
-                Which of these are you?
-              </h2>
-              <p className="text-xs text-hd-ink-500 mt-1 leading-relaxed">
-                Pick the one that applies. The committee checks it against the
-                roster, so claiming a rate you are not entitled to only holds
-                your place up.
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            {/* The standard rate, as an option rather than a fallback: a rider
-                should be able to see what they would pay claiming nothing. */}
-            <TierOption
-              selected={tierId === null}
-              onSelect={() => setTierId(null)}
-              label="None of these — standard rate"
-              note={null}
-              priceLabel={payment.fee !== null ? money(payment.fee) : "Free"}
-              strikeLabel={payment.listFee !== null ? money(payment.listFee) : null}
-              disabled={submitting}
-            />
-
-            {payment.tiers.map((tier) => (
-              <TierOption
-                key={tier.id}
-                selected={tierId === tier.id}
-                onSelect={() => setTierId(tier.id)}
-                label={tier.label}
-                note={tier.note}
-                priceLabel={tier.price > 0 ? money(tier.price) : "Free"}
-                strikeLabel={
-                  payment.fee !== null && tier.price < payment.fee
-                    ? money(payment.fee) : null
-                }
-                requiresCard={tier.requiresMemberCard}
-                disabled={submitting}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* ── Payment ── */}
       {needsPayment && (
         <section className="gradient-card rounded-2xl border border-hd-ember-800/40 p-5 sm:p-6 space-y-5">
@@ -391,8 +300,16 @@ export function RegistrationForm({
                 Payment
               </h2>
             </div>
-            <span className="px-3 py-1 rounded-full bg-hd-ember-600/15 border border-hd-ember-800/40 text-hd-ember-300 font-bold text-sm">
-              {feeLabel}
+            <span className="flex items-center gap-2">
+              {/* The "was" price, only when something actually moved it. */}
+              {(payment.beforeTier ?? payment.listFee) !== null && (
+                <span className="text-xs text-hd-ink-600 line-through tabular-nums">
+                  {money(payment.beforeTier ?? payment.listFee!)}
+                </span>
+              )}
+              <span className="px-3 py-1 rounded-full bg-hd-ember-600/15 border border-hd-ember-800/40 text-hd-ember-300 font-bold text-sm">
+                {feeLabel}
+              </span>
             </span>
           </div>
 

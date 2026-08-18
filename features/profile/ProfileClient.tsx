@@ -15,6 +15,7 @@ import {
   User, Phone, Save, AlertCircle, CheckCircle2, Clock, XCircle,
   Bike, Calendar, FileText, Home, Droplet, ShieldAlert, CreditCard,
   Flag, ChevronRight, Loader2, Mail, Route, Trophy, Printer, Camera,
+  Award, Sparkles,
 } from "lucide-react";
 
 import { cn }              from "@/utils/cn";
@@ -28,6 +29,7 @@ import {
 import type {
   UserProfileWithEmail, MemberRegistrationStatus, MemberCard, CardSettings,
   BrandLogos, RideRegistrationWithRide, CardRequirement,
+  MembershipTier, MembershipSettings, LoyaltyEntry,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -127,6 +129,92 @@ function RideRow({ reg }: { reg: RideRegistrationWithRide }) {
   return reg.ride
     ? <Link href={ROUTES.ride(reg.ride.slug || reg.ride.id)}>{inner}</Link>
     : inner;
+}
+
+// ---------------------------------------------------------------------------
+// Loyalty panel
+//
+// The balance is the sum of the rows shown beneath it, which is the point of
+// keeping a ledger rather than a counter: the number can always be checked
+// against its own history, and a rider asking "where did this come from" has
+// the answer on screen rather than in a support conversation.
+// ---------------------------------------------------------------------------
+
+function LoyaltyPanel({
+  balance, entries, label, tier,
+}: {
+  balance:  number;
+  entries:  LoyaltyEntry[];
+  label:    string;
+  tier:     MembershipTier | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const shown = open ? entries : entries.slice(0, 4);
+
+  return (
+    <div className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-4">
+      <SectionTitle>{label}</SectionTitle>
+
+      <div className="text-center py-2">
+        <p className="text-3xl font-black text-hd-ember-400 tabular-nums">
+          {balance.toLocaleString("en-IN")}
+        </p>
+        <p className="text-[10px] uppercase tracking-widest text-hd-ink-500 mt-1">
+          {label}
+        </p>
+        {tier && tier.rewardFactor !== 1 && (
+          <p className="text-[11px] text-hd-ink-400 mt-2 inline-flex items-center gap-1">
+            <Sparkles className="size-3 text-hd-ember-500" />
+            Earning at {tier.rewardFactor}× as {tier.name}
+          </p>
+        )}
+      </div>
+
+      {entries.length === 0 ? (
+        <p className="text-xs text-hd-ink-500 text-center leading-relaxed">
+          Ride with us or buy something from the shop and they start adding up.
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {shown.map((e) => (
+            <div
+              key={e.id}
+              className="flex items-baseline gap-3 py-1.5 border-b border-hd-ink-800/60 last:border-0"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-hd-ink-200 truncate">{e.reason}</p>
+                <p className="text-[10px] text-hd-ink-600">
+                  {new Date(e.createdAt).toLocaleDateString("en-GB", {
+                    day: "2-digit", month: "short", year: "numeric",
+                  })}
+                  {/* How the number was reached, when a multiplier moved it. */}
+                  {e.factor !== 1 && e.basePoints > 0 && (
+                    <span> · {e.basePoints} × {e.factor}</span>
+                  )}
+                </p>
+              </div>
+              <span className={cn(
+                "text-sm font-bold tabular-nums shrink-0",
+                e.points >= 0 ? "text-emerald-400" : "text-hd-ember-400",
+              )}>
+                {e.points >= 0 ? "+" : ""}{e.points.toLocaleString("en-IN")}
+              </span>
+            </div>
+          ))}
+
+          {entries.length > 4 && (
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="w-full pt-2 text-[11px] font-semibold text-hd-ink-400 hover:text-hd-ink-100 transition-colors"
+            >
+              {open ? "Show less" : `Show all ${entries.length}`}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -274,10 +362,15 @@ interface Props {
   card:          MemberCard | null;
   cardSettings:  CardSettings;
   brandLogos:    BrandLogos;
+  /** Null when tiers are switched off, or when the club has no default. */
+  tier:          MembershipTier | null;
+  membership:    MembershipSettings;
+  loyalty:       { balance: number; entries: LoyaltyEntry[] };
 }
 
 export function ProfileClient({
   profile, registrations, card, cardSettings, brandLogos,
+  tier, membership, loyalty,
 }: Props) {
   const initial = useMemo(() => ({
     fullName:       profile.fullName,
@@ -383,9 +476,23 @@ export function ProfileClient({
 
           <div className="flex-1 min-w-0 w-full space-y-3 text-center sm:text-left">
             <div>
-              <h1 className="text-2xl font-black text-hd-ink-50 truncate">
-                {form.fullName || "Your profile"}
-              </h1>
+              <span className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                <h1 className="text-2xl font-black text-hd-ink-50 truncate">
+                  {form.fullName || "Your profile"}
+                </h1>
+                {tier && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0"
+                    style={{
+                      color:       tier.colour || "#f09020",
+                      borderColor: `${tier.colour || "#f09020"}66`,
+                      background:  `${tier.colour || "#f09020"}1a`,
+                    }}
+                  >
+                    <Award className="size-2.5" /> {tier.name}
+                  </span>
+                )}
+              </span>
               <p className="text-sm text-hd-ink-500 mt-0.5 inline-flex items-center gap-1.5">
                 <Mail className="size-3.5 shrink-0" />
                 <span className="truncate">{profile.email}</span>
@@ -400,12 +507,20 @@ export function ProfileClient({
 
         {/* Always shown, zeros and all. A row that appears only once you have
             ridden something leaves a hole in the layout until you have. */}
-        <div className="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-hd-ink-800">
+        <div className={cn(
+          "grid gap-3 mt-5 pt-5 border-t border-hd-ink-800",
+          membership.loyaltyEnabled ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3",
+        )}>
           {[
             { icon: Trophy, label: "Rides ridden", value: String(stats.rides) },
             { icon: Route,  label: "Distance",
               value: stats.km > 0 ? `${Math.round(stats.km).toLocaleString()} km` : "—" },
             { icon: Calendar, label: "This year", value: String(stats.thisYear) },
+            ...(membership.loyaltyEnabled ? [{
+              icon: Sparkles,
+              label: membership.pointsLabel,
+              value: loyalty.balance.toLocaleString("en-IN"),
+            }] : []),
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="text-center">
               <Icon className="size-4 text-hd-ember-500 mx-auto mb-2" />
@@ -590,7 +705,7 @@ export function ProfileClient({
         </div>
 
         {/* ── Sidebar ── */}
-        <div className="lg:sticky lg:top-24 min-w-0">
+        <div className="lg:sticky lg:top-24 min-w-0 space-y-5">
           <CardPanel
             card={card}
             settings={cardSettings}
@@ -598,6 +713,15 @@ export function ProfileClient({
             isAdmin={profile.isAdmin}
             onRequested={() => window.location.reload()}
           />
+
+          {membership.loyaltyEnabled && (
+            <LoyaltyPanel
+              balance={loyalty.balance}
+              entries={loyalty.entries}
+              label={membership.pointsLabel}
+              tier={tier}
+            />
+          )}
         </div>
       </div>
     </div>

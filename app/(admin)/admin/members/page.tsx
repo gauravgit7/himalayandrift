@@ -1,7 +1,11 @@
 import type { Metadata }  from "next";
-import { getMemberCards, getCardSettings, getBrandLogos, getAllProfiles } from "@/lib/supabase/queries";
+import {
+  getMemberCards, getCardSettings, getBrandLogos, getAllProfiles,
+  getMembershipTiers, getMembershipSettings,
+} from "@/lib/supabase/queries";
 import { MembersAdmin }              from "@/features/admin/MembersAdmin";
 import { UserRegistrationsAdmin }    from "@/features/admin/UserRegistrationsAdmin";
+import { TiersAdmin }                from "@/features/admin/TiersAdmin";
 
 export const metadata: Metadata = { title: "Members | Admin" };
 
@@ -11,13 +15,17 @@ interface Props {
 
 export default async function AdminMembersPage({ searchParams }: Props) {
   const { tab } = await searchParams;
-  const activeTab = tab === "registrations" ? "registrations" : "cards";
+  const activeTab = tab === "registrations" ? "registrations"
+    : tab === "tiers"       ? "tiers"
+    : "cards";
 
-  const [cards, settings, brandLogos, profiles] = await Promise.all([
+  const [cards, settings, brandLogos, profiles, tiers, membership] = await Promise.all([
     getMemberCards(),
     getCardSettings(),
     getBrandLogos(),
     getAllProfiles(),
+    getMembershipTiers(),
+    getMembershipSettings(),
   ]);
 
   return (
@@ -61,12 +69,28 @@ export default async function AdminMembersPage({ searchParams }: Props) {
             </span>
           )}
         </a>
+        <a
+          href="/admin/members?tab=tiers"
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            activeTab === "tiers"
+              ? "bg-hd-ember-600 text-white"
+              : "text-hd-ink-400 hover:text-hd-ink-200"
+          }`}
+        >
+          Tiers &amp; Points
+        </a>
       </div>
 
       {activeTab === "cards" ? (
         <MembersAdmin initialCards={cards} settings={settings} brandLogos={brandLogos} />
+      ) : activeTab === "tiers" ? (
+        <TiersAdmin initialTiers={tiers} initialSettings={membership} />
       ) : (
-        <UserRegistrationsAdmin initialMembers={profiles} />
+        <UserRegistrationsAdmin
+          initialMembers={profiles}
+          tiers={tiers}
+          tiersEnabled={membership.tiersEnabled}
+        />
       )}
     </div>
   );

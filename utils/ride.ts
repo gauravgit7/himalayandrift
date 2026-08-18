@@ -4,13 +4,11 @@
 
 import type {
   Ride, CalendarFilters, RideStatus, RidePriority, RideType,
-  PaymentSettings, ResolvedPaymentDetails,
+  PaymentSettings, ResolvedPaymentDetails, MembershipTier, MembershipSettings,
 } from "@/types";
 import { RIDE_STATUSES, RIDE_PRIORITIES } from "@/lib/constants";
 import { rideIsActive, rideIsUpcoming, rideIsPast } from "@/utils/date";
-import {
-  standardPrice, listPrice, usableTiers, isPaidRide,
-} from "@/lib/rides/pricing";
+import { listPrice, priceForRider } from "@/lib/rides/pricing";
 
 // ---------------------------------------------------------------------------
 // Status helpers
@@ -152,26 +150,36 @@ export function computeRideStats(rides: Ride[]): RideStats {
  */
 export function resolvePaymentDetails(
   ride: Pick<Ride,
-    "registrationFee" | "registrationDiscount" | "registrationTiers" |
+    "registrationFee" | "registrationDiscount" | "loyaltyPoints" |
     "paymentQrUrl" | "paymentInstructions">,
   settings: PaymentSettings,
+  /** The tier of the rider actually looking at this. Null when tiers are off,
+   *  or when nobody is signed in. */
+  tier: MembershipTier | null,
+  membership: MembershipSettings,
 ): ResolvedPaymentDetails {
   const pricing = {
     registrationFee:      ride.registrationFee,
     registrationDiscount: ride.registrationDiscount,
-    registrationTiers:    ride.registrationTiers,
   };
+
+  // One number, theirs. The rider is never shown the table of what other
+  // people pay, which is the entire reason the rate picker was taken out.
+  const mine = priceForRider(pricing, tier, membership.tiersEnabled);
+
   return {
     qrUrl:               ride.paymentQrUrl       ?? settings.qrUrl,
     paymentInstructions: ride.paymentInstructions ?? settings.paymentInstructions,
     currencyLabel:       settings.currencyLabel,
-    // What a rider claiming no class pays: the list fee less any discount.
-    fee:                 standardPrice(pricing),
+    fee:                 mine.price,
     listFee:             listPrice(pricing),
     // A fee of 0 is a free ride, not a paid ride costing nothing - the form
     // skips the payment step and the screenshot requirement entirely.
-    isPaid:              isPaidRide(pricing),
-    tiers:               usableTiers(pricing),
+    isPaid:              mine.isPaid,
+    tier:                mine.tier,
+    beforeTier:          mine.before,
+    loyaltyPoints:       membership.loyaltyEnabled ? (ride.loyaltyPoints ?? 0) : 0,
+    pointsLabel:         membership.pointsLabel,
   };
 }
 

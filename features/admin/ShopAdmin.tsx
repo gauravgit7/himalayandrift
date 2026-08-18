@@ -70,6 +70,7 @@ function ProductForm({
   );
   const [active,   setActive]   = useState(product?.isActive ?? true);
   const [featured, setFeatured] = useState(product?.isFeatured ?? false);
+  const [points,   setPoints]   = useState(product?.loyaltyPoints ? String(product.loyaltyPoints) : "");
   const [variants, setVariants] = useState<DraftVariant[]>(
     product?.variants.map((v) => ({
       id: v.id, label: v.label, priceDelta: v.priceDelta, stock: v.stock, isActive: v.isActive,
@@ -89,6 +90,7 @@ function ProductForm({
       discountPercent: Number(discount) || 0,
       imageUrls: images,
       stock: variants.length ? null : (stock === "" ? null : Number(stock)),
+      loyaltyPoints: Number(points) || 0,
       isActive: active, isFeatured: featured,
       variants: variants.filter((v) => v.label.trim()),
     });
@@ -179,6 +181,16 @@ function ProductForm({
               : "Up to 90"}
           </p>
         </div>
+      </div>
+
+      <div className="sm:w-48">
+        <Label>Loyalty points</Label>
+        <input className={inputCls} value={points} inputMode="numeric"
+          onChange={(e) => setPoints(e.target.value)} placeholder="0" />
+        <p className="text-[11px] text-hd-ink-600 mt-1">
+          Per item, awarded when an order is approved and multiplied by the
+          buyer&rsquo;s tier factor.
+        </p>
       </div>
 
       {/* Photos */}
