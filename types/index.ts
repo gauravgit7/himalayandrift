@@ -221,7 +221,10 @@ export interface HomepageContent {
 // Membership cards
 // ---------------------------------------------------------------------------
 
-export type MemberCardStatus = "pending" | "approved" | "rejected";
+/** `rejected` means the application was turned down and no card ever existed.
+ *  `revoked` means one was issued and later withdrawn — a different fact, and
+ *  one that stays true about a card already sitting in somebody's wallet. */
+export type MemberCardStatus = "pending" | "approved" | "rejected" | "revoked";
 
 export interface MemberCard {
   id:                 string;
@@ -248,6 +251,7 @@ export interface MemberCard {
   // Workflow
   status:             MemberCardStatus;
   rejectionReason:    string | null;
+  revokedReason:      string | null;
   adminNotes:         string | null;
   resubmissionCount:  number;
 
@@ -255,6 +259,7 @@ export interface MemberCard {
   createdAt:          string;
   updatedAt:          string;
   approvedAt:         string | null;
+  revokedAt:          string | null;
   validUntil:         string | null;  // ISO date
 }
 

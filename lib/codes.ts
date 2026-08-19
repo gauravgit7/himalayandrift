@@ -30,8 +30,32 @@ export const CODE_KIND_LABEL: Record<CodeKind, string> = {
   order:  "Shop order",
 };
 
-/** The six random characters every code ends in. No 0/O or 1/I/L. */
+/** The six random characters every code ends in. */
 const BODY = 6;
+
+/** No 0, 1, I or O. These codes get read aloud at a roadside and copied off a
+ *  phone screen, where those four are two characters rather than four. L stays
+ *  in — it has been in every code the club has issued, and narrowing the
+ *  alphabet now would buy nothing that reprinting those codes would not cost. */
+const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/** The canonical, dashed prefix each kind wears. Generating and parsing both
+ *  read this map, so the two cannot drift into disagreeing about a code they
+ *  are each certain is a ride registration. */
+const PREFIX: Record<CodeKind, string> = {
+  member: "HD-",
+  ride:   "HD-R-",
+  order:  "HDS-",
+};
+
+/** Mint a fresh code of the given kind. */
+export function generateCode(kind: CodeKind): string {
+  let body = "";
+  for (let i = 0; i < BODY; i++) {
+    body += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+  }
+  return `${PREFIX[kind]}${body}`;
+}
 
 /**
  * Work out what a code is from its shape.
@@ -46,13 +70,13 @@ export function parseCode(raw: string): ParsedCode | null {
   const flat = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
   if (flat.length === 3 + BODY && flat.startsWith("HDR")) {
-    return { kind: "ride", code: `HD-R-${flat.slice(3)}` };
+    return { kind: "ride", code: `${PREFIX.ride}${flat.slice(3)}` };
   }
   if (flat.length === 3 + BODY && flat.startsWith("HDS")) {
-    return { kind: "order", code: `HDS-${flat.slice(3)}` };
+    return { kind: "order", code: `${PREFIX.order}${flat.slice(3)}` };
   }
   if (flat.length === 2 + BODY && flat.startsWith("HD")) {
-    return { kind: "member", code: `HD-${flat.slice(2)}` };
+    return { kind: "member", code: `${PREFIX.member}${flat.slice(2)}` };
   }
   return null;
 }

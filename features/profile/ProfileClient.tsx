@@ -297,6 +297,22 @@ function CardPanel({
         </div>
       )}
 
+      {card?.status === "revoked" && (
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-hd-ember-950/40 border border-hd-ember-800/40">
+          <XCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
+          <div>
+            <p className="text-sm font-semibold text-hd-ember-300">Card withdrawn</p>
+            {card.revokedReason && (
+              <p className="text-xs text-hd-ember-400 mt-0.5">{card.revokedReason}</p>
+            )}
+            <p className="text-xs text-hd-ember-600 mt-1">
+              {card.cardNumber} is no longer valid. Speak to the committee if
+              you think this is wrong.
+            </p>
+          </div>
+        </div>
+      )}
+
       {!card && (
         <p className="text-sm text-hd-ink-400 leading-relaxed">
           Your card is built from the details already on this page — nothing else

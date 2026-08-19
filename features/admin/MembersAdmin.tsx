@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, XCircle,
          Clock, Eye, X, Save,
          AlertCircle, Users, Link2, Link2Off,
-         Search, UserPlus, Sparkles,
+         Search, UserPlus, Sparkles, User,
          ChevronDown, ChevronUp }   from "lucide-react";
 import { cn }                       from "@/utils/cn";
 import {
@@ -375,7 +375,7 @@ function ApplicationModal({
     const { error: err, cardNumber } = await approveMemberCard(card.id);
     setSaving(false);
     if (err) { setError(err); return; }
-    onAction(card.id, "approved", { cardNumber });
+    onAction(card.id, "approved", { cardNumber: cardNumber ?? undefined });
     onClose();
   }, [card.id, onAction, onClose]);
 
@@ -497,8 +497,27 @@ function ApplicationModal({
           )}
         </div>
 
-        {/* Actions */}
-        {card.status === "pending" && (
+        {/* Actions.
+            An application attached to an account is not approved here. That
+            person has a row in the register, and approving them there is what
+            issues this card — the whole point of merging the two queues. Two
+            buttons that both say Approve, on two screens, is how you end up
+            with an approved card belonging to an unapproved member. */}
+        {card.status === "pending" && card.userId ? (
+          <div className="flex items-center gap-3 p-5 border-t border-hd-ink-800">
+            <User className="size-4 text-hd-ink-500 shrink-0" />
+            <p className="text-sm text-hd-ink-400 flex-1">
+              Linked to an account. Approve them in the register and this card
+              is issued with them.
+            </p>
+            <a
+              href="/admin/members"
+              className="px-3 py-2 rounded-lg bg-hd-ink-700 hover:bg-hd-ink-600 text-hd-ink-100 text-xs font-semibold transition-colors shrink-0"
+            >
+              Open register
+            </a>
+          </div>
+        ) : card.status === "pending" && (
           <div className="flex items-center gap-2 p-5 border-t border-hd-ink-800">
             {!showReject ? (
               <>
@@ -558,7 +577,7 @@ function ApplicationModal({
 // Main component
 // ---------------------------------------------------------------------------
 
-type Filter = "all" | "pending" | "approved" | "rejected" | "unlinked";
+type Filter = "all" | "pending" | "approved" | "rejected" | "revoked" | "unlinked";
 
 export function MembersAdmin({
   initialCards, settings, brandLogos,
@@ -573,13 +592,15 @@ export function MembersAdmin({
 
   // An unlinked card is not a status — it is an application with nobody behind
   // it. Worth its own tab: these are the ones that need a human.
-  const isUnlinked = (c: MemberCard) => !c.userId && c.status !== "rejected";
+  const isUnlinked = (c: MemberCard) =>
+    !c.userId && c.status !== "rejected" && c.status !== "revoked";
 
   const counts = {
     all:      cards.length,
     pending:  cards.filter((c) => c.status === "pending").length,
     approved: cards.filter((c) => c.status === "approved").length,
     rejected: cards.filter((c) => c.status === "rejected").length,
+    revoked:  cards.filter((c) => c.status === "revoked").length,
     unlinked: cards.filter(isUnlinked).length,
   };
 
@@ -613,7 +634,7 @@ export function MembersAdmin({
     <>
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-        {(["all", "pending", "approved", "rejected", "unlinked"] as Filter[]).map((f) => (
+        {(["all", "pending", "approved", "rejected", "revoked", "unlinked"] as Filter[]).map((f) => (
           <button
             key={f}
             type="button"

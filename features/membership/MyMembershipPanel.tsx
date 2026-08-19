@@ -115,6 +115,36 @@ export function MyMembershipPanel({
     );
   }
 
+  // ── Withdrawn ────────────────────────────────────────────────────────────
+  // Not the same as declined, and it does not put the request button back.
+  // A card the committee took back is theirs to reissue; letting the holder
+  // mint a replacement with one tap would make revoking it pointless.
+  if (card?.status === "revoked") {
+    return (
+      <div className="max-w-md mx-auto space-y-4">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-hd-ember-950/40 border border-hd-ember-800/40">
+          <XCircle className="size-5 text-hd-ember-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-hd-ember-300">Your card was withdrawn</p>
+            {card.revokedReason && (
+              <p className="text-xs text-hd-ember-400 mt-1">{card.revokedReason}</p>
+            )}
+            <p className="text-xs text-hd-ember-600 mt-1.5">
+              {card.cardNumber ? `${card.cardNumber} no longer verifies. ` : ""}
+              Speak to the committee if you think this is a mistake.
+            </p>
+          </div>
+        </div>
+        <Link
+          href={ROUTES.profile}
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-hd-ink-700 hover:border-hd-ink-500 text-sm font-semibold text-hd-ink-300 hover:text-hd-ink-100 transition-colors"
+        >
+          <UserCog className="size-4" /> Go to your profile
+        </Link>
+      </div>
+    );
+  }
+
   // ── No card yet — everything needed is already on file ───────────────────
   return (
     <div className="max-w-md mx-auto space-y-4">

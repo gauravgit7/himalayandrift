@@ -149,12 +149,50 @@ titles without a migration, with an optional `role_icon_url` badge.
 
 ### Profiles and membership
 
-Two separate things that are easy to confuse:
+Two tables, but **one decision**:
 
 - **`profiles`** — rider accounts (Supabase Auth). Has a `member_status` of
-  `pending | approved | rejected` that an admin moves in `/admin/members?tab=registrations`.
-- **`member_cards`** — physical/digital ID card applications. Open to signed-out
-  visitors. Card numbers are `HD-<YY>-<00001>`, assigned at approval.
+  `pending | approved | rejected` that an admin moves in the register at `/admin/members`.
+- **`member_cards`** — the card itself. Card numbers are `HD-<YY>-<00001>`.
+
+#### One approval, not two
+
+These were two independent queues, and they produced states nobody could explain to a
+rider: approved member with a card still pending, approved card on an account still
+waiting. **Approving the person is the decision; the card is a consequence.**
+
+`approveRegistration` sets `member_status` and then calls `issueCardForUser`, which:
+
+- approves the card request they already made, if there is one; or
+- prints one straight from the profile, if it has the six fields a card needs; or
+- reports which fields are missing — **and the member stays approved either way.**
+  An incomplete profile is an errand, and an errand does not get to veto a decision
+  about a person. Those members show under the register's **No card** filter with an
+  *Issue card* button, pressed deliberately, one at a time. Nothing is swept up by a
+  migration.
+
+Everything that mints a card goes through `lib/membership/issue.ts` — the admin
+approving, the *Issue card* button, and a rider's own *Request card*. Card numbers come
+from the **highest number already issued**, not from a row count, because a count and
+reality part company the first time a row is deleted, and reissuing a number that is
+already printed is not undoable. Allocation retries on `23505`: two admins approving in
+the same second is normal, and `card_number` is unique.
+
+`rejectRegistration` also rejects a *pending* card request. It never touches an issued
+card — that is a revoke, and it is deliberate.
+
+**`revoked` is not `rejected`.** Rejected means the application was turned down and no
+card ever existed. Revoked means one was issued, printed, and is possibly in a wallet.
+The QR validator at `/validate/[cardNumber]` filters on `status = 'approved'`, so
+revoking stops verification immediately. A revoked card does **not** restore the rider's
+*Request card* button — the committee reissues it, or one tap would make revoking
+pointless.
+
+The walk-in tab still approves cards directly, because those applications have no
+account behind them and so there is no member to approve. A pending card that **is**
+linked shows *"Approve them in the register"* instead of an Approve button: two buttons
+saying Approve on two screens is exactly how you get an approved card belonging to an
+unapproved member.
 
 **The approval columns are protected at the database level.** `profiles_update_own` grants
 a rider UPDATE on their own row, which would otherwise let them PATCH

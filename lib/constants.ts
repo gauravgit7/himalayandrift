@@ -23,6 +23,19 @@ export const CARD_REQUIREMENT_LABELS: Record<
   licenseNumber:  "Licence number",
 };
 
+/** The same list, said about somebody else. The committee reads "no photo",
+ *  the rider reads "your photo", and neither should have to read the other. */
+export const CARD_REQUIREMENT_LABELS_ADMIN: Record<
+  import("@/types").CardRequirement, string
+> = {
+  photo:          "photo",
+  fullName:       "name",
+  dateOfBirth:    "date of birth",
+  bloodGroup:     "blood group",
+  emergencyPhone: "emergency number",
+  licenseNumber:  "licence number",
+};
+
 export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] as const;
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 

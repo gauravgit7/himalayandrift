@@ -22,7 +22,7 @@ import type {
 } from "@/types";
 import type { PushOptInSettings }          from "@/components/shared/PushOptIn";
 import type { PwaSettings }               from "@/features/admin/PwaSettingsAdmin";
-import { MEMBER_CARD_PREFIX }             from "@/lib/constants";
+import { generateCode }                   from "@/lib/codes";
 
 // ---------------------------------------------------------------------------
 // Auth - Sign Out
@@ -443,16 +443,6 @@ export async function savePwaSettings(
 // Membership card actions
 // =============================================================================
 
-/** Generate a random 6-char access code: HD-XXXXXX */
-function generateAccessCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I/L
-  let suffix = "";
-  for (let i = 0; i < 6; i++) {
-    suffix += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return `HD-${suffix}`;
-}
-
 export interface MemberCardPayload {
   fullName:        string;
   photoUrl:        string;
@@ -491,7 +481,7 @@ export async function submitMemberCard(
   }
 
   for (let attempt = 0; attempt < 5; attempt++) {
-    const accessCode = generateAccessCode();
+    const accessCode = generateCode("member");
     const { error } = await supabase.from("member_cards").insert({
       user_id:          ownerId,
       linked_by:        ownerId ? "self" : null,
@@ -554,62 +544,28 @@ export async function resubmitMemberCard(
   return { error: null };
 }
 
-/** Admin — approve a card application and assign its card number. */
+/**
+ * Admin — approve a walk-in card application.
+ *
+ * The only remaining path that issues a card without approving a member,
+ * because these applications have no account behind them. Anything attached to
+ * an account goes through approveRegistration instead, where the person is the
+ * decision and the card merely follows.
+ */
 export async function approveMemberCard(
   id: string,
-): Promise<{ error: string | null; cardNumber?: string }> {
-  const { createAdminClient } = await import("@/lib/supabase/admin");
-  const supabase = createAdminClient();
+): Promise<{ error: string | null; cardNumber?: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
 
-  // Fetch card to build the card number
-  const { data: card, error: fetchError } = await supabase
-    .from("member_cards")
-    .select("id")
-    .eq("id", id)
-    .single();
+  const { issueCardById } = await import("@/lib/membership/issue");
+  const res = await issueCardById(id);
 
-  if (fetchError || !card) return { error: fetchError?.message ?? "Card not found" };
+  if (res.error) return { error: res.error };
 
-  // Get validity_years from settings
-  const { data: settings } = await supabase
-    .from("card_settings")
-    .select("validity_years")
-    .eq("id", 1)
-    .single();
-  const validityYears = settings?.validity_years ?? 2;
-
-  // Compute the sequential card number for this year, e.g. HD-26-00001
-  const yearShort = String(new Date().getFullYear()).slice(2); // "26"
-  const prefix    = `${MEMBER_CARD_PREFIX}-${yearShort}-`;
-
-  const { count } = await supabase
-    .from("member_cards")
-    .select("id", { count: "exact", head: true })
-    .like("card_number", `${prefix}%`);
-
-  const seq = String((count ?? 0) + 1).padStart(5, "0");
-  const cardNumber = `${prefix}${seq}`;
-
-  // Compute valid_until
-  const validUntil = new Date();
-  validUntil.setFullYear(validUntil.getFullYear() + validityYears);
-  const validUntilStr = validUntil.toISOString().slice(0, 10);
-
-  const { error } = await supabase
-    .from("member_cards")
-    .update({
-      status:      "approved",
-      card_number: cardNumber,
-      approved_at: new Date().toISOString(),
-      valid_until: validUntilStr,
-      updated_at:  new Date().toISOString(),
-    })
-    .eq("id", id);
-
-  if (error) return { error: error.message };
-
-  revalidatePath("/admin/members");
-  return { error: null, cardNumber };
+  revalidatePath(ROUTES.adminMembers);
+  revalidatePath(ROUTES.profile);
+  return { error: null, cardNumber: res.cardNumber };
 }
 
 /** Admin — reject a card application with a reason. */
@@ -617,6 +573,9 @@ export async function rejectMemberCard(
   id:     string,
   reason: string,
 ): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
@@ -892,10 +851,25 @@ async function claimCardsQuietly(userId: string, caller: string): Promise<void> 
 // Admin — member registration management
 // =============================================================================
 
-/** Admin: approve a member registration. */
+/**
+ * Admin: approve a member — and issue their card in the same movement.
+ *
+ * There used to be two decisions here and they were the same decision twice.
+ * Somebody had to be approved as a member, and then approved again as a
+ * cardholder, which produced states nobody could explain to a rider: approved
+ * member, card still pending; approved card, account still waiting.
+ *
+ * So the card is no longer a judgement, it is a consequence. If their profile
+ * has the six things a card is printed from, they leave this call holding one.
+ * If it does not, they are still approved and the caller is told exactly what
+ * is missing — an errand does not get to veto a decision about a person.
+ */
 export async function approveRegistration(
   id: string,
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null; cardNumber?: string | null; missing?: CardRequirement[] }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
@@ -910,15 +884,37 @@ export async function approveRegistration(
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  const { issueCardForUser } = await import("@/lib/membership/issue");
+  const issued = await issueCardForUser(id);
+
   revalidatePath(ROUTES.adminMembers);
-  return { error: null };
+  revalidatePath(ROUTES.profile);
+
+  // The member IS approved at this point. A card that could not be printed is
+  // reported, never raised as an error, because reporting it as one would make
+  // the admin think the approval failed and press the button again.
+  return {
+    error:      null,
+    cardNumber: issued.cardNumber,
+    missing:    issued.missing,
+  };
 }
 
-/** Admin: reject a member registration with an optional reason. */
+/**
+ * Admin: reject a member registration with an optional reason.
+ *
+ * Takes their pending card request down with it. Leaving it standing would
+ * mean a rejected applicant still sitting in a queue waiting to be handed the
+ * membership they were just refused.
+ */
 export async function rejectRegistration(
   id:     string,
   reason: string,
 ): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
@@ -934,8 +930,64 @@ export async function rejectRegistration(
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  // Only the request. An already-issued card is revoked deliberately, with its
+  // own reason, and never as a side effect of something else.
+  await supabase
+    .from("member_cards")
+    .update({
+      status:           "rejected",
+      rejection_reason: reason.trim() || "Membership application was not approved.",
+      updated_at:       new Date().toISOString(),
+    })
+    .eq("user_id", id)
+    .eq("status", "pending");
+
   revalidatePath(ROUTES.adminMembers);
+  revalidatePath(ROUTES.profile);
   return { error: null };
+}
+
+/**
+ * Admin: issue a card to a member who has none.
+ *
+ * The deliberate button behind the approval flow. Members approved before the
+ * two queues were merged, and members whose profile was incomplete on the day
+ * they were approved, both land here — and both are pressed one at a time by
+ * somebody who has looked at the row, rather than swept up by a migration.
+ */
+export async function issueCardForMember(
+  userId: string,
+): Promise<{ error: string | null; cardNumber?: string | null; missing?: CardRequirement[] }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { issueCardForUser } = await import("@/lib/membership/issue");
+  const res = await issueCardForUser(userId);
+
+  if (!res.error) {
+    revalidatePath(ROUTES.adminMembers);
+    revalidatePath(ROUTES.profile);
+  }
+  return { error: res.error, cardNumber: res.cardNumber, missing: res.missing };
+}
+
+/** Admin: withdraw a card that was issued. Keeps the row, and the reason. */
+export async function revokeMemberCard(
+  cardId: string,
+  reason: string,
+): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
+  const { revokeCardById } = await import("@/lib/membership/issue");
+  const res = await revokeCardById(cardId, reason);
+
+  if (!res.error) {
+    revalidatePath(ROUTES.adminMembers);
+    revalidatePath(ROUTES.profile);
+  }
+  return res;
 }
 
 /** Admin: update a member's registration details and/or add notes. */
@@ -985,16 +1037,6 @@ export async function sendPasswordReset(
 // =============================================================================
 // Ride registrations
 // =============================================================================
-
-/** Generate a random registration code: HD-R-XXXXXX */
-function generateRegistrationCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I/L
-  let suffix = "";
-  for (let i = 0; i < 6; i++) {
-    suffix += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return `HD-R-${suffix}`;
-}
 
 export interface RideRegistrationPayload {
   rideId:          string;
@@ -1141,7 +1183,7 @@ export async function submitRideRegistration(
 
   // Retry on the (very unlikely) access-code collision.
   for (let attempt = 0; attempt < 5; attempt++) {
-    const accessCode = generateRegistrationCode();
+    const accessCode = generateCode("ride");
     const { error } = await admin
       .from("ride_registrations")
       .insert({ ...base, access_code: accessCode });
@@ -1938,13 +1980,6 @@ export async function saveShopSettings(
 
 // ── Orders ─────────────────────────────────────────────────────────────────
 
-function generateOrderCode(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O, 1/I/L
-  let suffix = "";
-  for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
-  return `HDS-${suffix}`;
-}
-
 export interface ShopOrderPayload {
   lines: { productId: string; variantId: string | null; quantity: number }[];
   fullName:        string;
@@ -2055,7 +2090,7 @@ export async function submitShopOrder(
   const { data: { user } } = await session.auth.getUser();
 
   for (let attempt = 0; attempt < 5; attempt++) {
-    const accessCode = generateOrderCode();
+    const accessCode = generateCode("order");
     const { data: order, error } = await admin.from("shop_orders").insert({
       user_id:                user?.id ?? null,
       access_code:            accessCode,
@@ -2357,9 +2392,12 @@ export async function requestMemberCard(): Promise<{
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const admin = createAdminClient();
 
+  const { CARD_SOURCE_COLUMNS, missingCardFields } =
+    await import("@/lib/membership/issue");
+
   const { data: row, error: profileError } = await admin
     .from("profiles")
-    .select("full_name, avatar_url, date_of_birth, blood_group, emergency_phone, license_number, is_admin")
+    .select(CARD_SOURCE_COLUMNS)
     .eq("id", user.id)
     .maybeSingle();
 
@@ -2374,25 +2412,19 @@ export async function requestMemberCard(): Promise<{
     is_admin: boolean | null;
   };
 
-  const missing: CardRequirement[] = [];
-  if (!p.avatar_url)              missing.push("photo");
-  if (!p.full_name?.trim())       missing.push("fullName");
-  if (!p.date_of_birth)           missing.push("dateOfBirth");
-  if (!p.blood_group?.trim())     missing.push("bloodGroup");
-  if (!p.emergency_phone?.trim()) missing.push("emergencyPhone");
-  if (!p.license_number?.trim())  missing.push("licenseNumber");
-
+  const missing = missingCardFields(p);
   if (missing.length) {
     return { accessCode: null, missing, error: null };
   }
 
-  // One live card per account. A rejected one does not block a fresh attempt,
-  // which is the whole point of rejecting rather than deleting.
+  // One live card per account. Neither a rejected application nor a revoked
+  // card blocks a fresh attempt — which is the whole point of keeping those
+  // rows rather than deleting them.
   const { data: existing } = await admin
     .from("member_cards")
     .select("id, status, access_code")
     .eq("user_id", user.id)
-    .neq("status", "rejected")
+    .not("status", "in", "(rejected,revoked)")
     .maybeSingle();
 
   if (existing) {
@@ -2406,34 +2438,8 @@ export async function requestMemberCard(): Promise<{
     };
   }
 
-  // A committee member is the person who would approve this. Queuing their own
-  // card for their own approval is a loop with one participant, so theirs is
-  // issued on the spot, card number and all.
-  const selfIssue = !!p.is_admin;
-
-  let cardNumber: string | null = null;
-  let validUntil: string | null = null;
-
-  if (selfIssue) {
-    const { data: settings } = await admin
-      .from("card_settings").select("validity_years").eq("id", 1).single();
-
-    const yearShort = String(new Date().getFullYear()).slice(2);
-    const prefix    = `${MEMBER_CARD_PREFIX}-${yearShort}-`;
-    const { count } = await admin
-      .from("member_cards")
-      .select("id", { count: "exact", head: true })
-      .like("card_number", `${prefix}%`);
-
-    cardNumber = `${prefix}${String((count ?? 0) + 1).padStart(5, "0")}`;
-
-    const until = new Date();
-    until.setFullYear(until.getFullYear() + (settings?.validity_years ?? 2));
-    validUntil = until.toISOString().slice(0, 10);
-  }
-
   for (let attempt = 0; attempt < 5; attempt++) {
-    const accessCode = generateAccessCode();
+    const accessCode = generateCode("member");
     const { error } = await admin.from("member_cards").insert({
       user_id:          user.id,
       access_code:      accessCode,
@@ -2449,13 +2455,16 @@ export async function requestMemberCard(): Promise<{
       // No inference involved — the rider was signed in when they asked.
       linked_by:        "self",
       linked_at:        new Date().toISOString(),
-      status:           selfIssue ? "approved" : "pending",
-      card_number:      cardNumber,
-      valid_until:      validUntil,
-      approved_at:      selfIssue ? new Date().toISOString() : null,
+      status:           "pending",
     });
 
     if (!error) {
+      // A committee member is the person who would approve this. Queuing their
+      // own card for their own approval is a loop with one participant, so
+      // theirs is issued on the spot — through the same issuer as everyone
+      // else's, so it gets its number from the same place.
+      if (p.is_admin) await (await import("@/lib/membership/issue")).issueCardForUser(user.id);
+
       revalidatePath(ROUTES.profile);
       revalidatePath(ROUTES.adminMembers);
       return { accessCode, missing: [], error: null };

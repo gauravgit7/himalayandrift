@@ -223,11 +223,13 @@ export interface DbMemberCard {
   consent_accepted:    boolean;
   status:              string;
   rejection_reason:    string | null;
+  revoked_reason:      string | null;
   admin_notes:         string | null;
   resubmission_count:  number;
   created_at:          string;
   updated_at:          string;
   approved_at:         string | null;
+  revoked_at:          string | null;
   valid_until:         string | null;
   linked_by:           string | null;
   linked_at:           string | null;
@@ -251,13 +253,15 @@ export function mapMemberCard(row: DbMemberCard): MemberCard {
     emergencyPhone:    row.emergency_phone,
     licenseNumber:     row.license_number,
     consentAccepted:   row.consent_accepted,
-    status:            row.status             as "pending" | "approved" | "rejected",
+    status:            row.status             as MemberCard["status"],
     rejectionReason:   row.rejection_reason   ?? null,
+    revokedReason:     row.revoked_reason     ?? null,
     adminNotes:        row.admin_notes        ?? null,
     resubmissionCount: row.resubmission_count ?? 0,
     createdAt:         row.created_at,
     updatedAt:         row.updated_at,
     approvedAt:        row.approved_at        ?? null,
+    revokedAt:         row.revoked_at         ?? null,
     validUntil:        row.valid_until        ?? null,
   };
 }

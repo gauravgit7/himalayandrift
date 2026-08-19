@@ -140,6 +140,24 @@ export function StatusChecker({ settings, brandLogos, initialCode }: StatusCheck
             </div>
           )}
 
+          {card.status === "revoked" && (
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-hd-ember-950/40 border border-hd-ember-800/40">
+              <XCircle className="size-5 text-hd-ember-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-hd-ember-300">Card Withdrawn</p>
+                {card.revokedReason && (
+                  <p className="text-xs text-hd-ember-400 mt-1 leading-relaxed">
+                    Reason: {card.revokedReason}
+                  </p>
+                )}
+                <p className="text-xs text-hd-ink-500 mt-2">
+                  {card.cardNumber ? `${card.cardNumber} no longer verifies. ` : ""}
+                  Contact the Himalayan Drift team if you believe this is a mistake.
+                </p>
+              </div>
+            </div>
+          )}
+
           {card.status === "approved" && (
             <>
               <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/40">

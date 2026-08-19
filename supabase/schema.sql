@@ -473,11 +473,41 @@ alter table member_cards add column if not exists link_score numeric;
 create index if not exists idx_member_cards_unlinked
   on member_cards(created_at desc) where user_id is null;
 
--- One live card per account. A rejected application does not count, so a rider
--- can fix what was wrong and ask again; nulls are distinct, so signed-out
--- applicants are unconstrained.
+-- Revoking is not rejecting, and the record has to keep saying which happened.
+-- A rejected application was never a card; a revoked one was issued, printed,
+-- and is quite possibly still in somebody's wallet. Folding the two into one
+-- status would save a word today and lose the difference forever.
+-- Dropped by lookup rather than by name. The inline `check (status in (...))`
+-- above gets whatever name Postgres decides to give it, and guessing wrong
+-- here would leave the old, narrower constraint in place while the new one is
+-- added beside it — a migration that reports success and still rejects every
+-- revoke.
+do $$
+declare con text;
+begin
+  for con in
+    select conname from pg_constraint
+     where conrelid = 'public.member_cards'::regclass
+       and contype  = 'c'
+       and pg_get_constraintdef(oid) ilike '%status%'
+  loop
+    execute format('alter table member_cards drop constraint %I', con);
+  end loop;
+end $$;
+
+alter table member_cards add constraint member_cards_status_check
+  check (status in ('pending', 'approved', 'rejected', 'revoked'));
+
+alter table member_cards add column if not exists revoked_at     timestamptz;
+alter table member_cards add column if not exists revoked_reason text;
+
+-- One live card per account. Neither a rejected application nor a revoked card
+-- counts, so a rider can be issued a replacement without the old row blocking
+-- it; nulls are distinct, so signed-out applicants are unconstrained.
+drop index if exists idx_member_cards_one_per_user;
 create unique index if not exists idx_member_cards_one_per_user
-  on member_cards(user_id) where user_id is not null and status <> 'rejected';
+  on member_cards(user_id)
+  where user_id is not null and status not in ('rejected', 'revoked');
 
 drop trigger if exists member_cards_updated_at on member_cards;
 create trigger member_cards_updated_at
@@ -523,6 +553,8 @@ begin
   new.rejection_reason   := null;
   new.admin_notes        := null;
   new.resubmission_count := 0;
+  new.revoked_at         := null;
+  new.revoked_reason     := null;
   return new;
 end;
 $$;

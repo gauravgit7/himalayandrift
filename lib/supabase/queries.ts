@@ -338,7 +338,7 @@ export async function getMemberCardByCardNumber(
 
 /** Admin: fetch all cards with optional status filter. Uses service role. */
 export async function getMemberCards(
-  status?: "pending" | "approved" | "rejected",
+  status?: MemberCard["status"],
 ): Promise<MemberCard[]> {
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();

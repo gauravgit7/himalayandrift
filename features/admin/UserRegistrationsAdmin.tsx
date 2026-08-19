@@ -4,20 +4,26 @@ import { useState, useMemo } from "react";
 import {
   CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp,
   Shield, Phone, MapPin, Bike, Calendar, FileText, Home,
-  Edit2, Save, X, AlertCircle, Search, User, Award,
+  Edit2, Save, X, AlertCircle, Search, User, Award, CreditCard, Ban,
 } from "lucide-react";
 import { cn }                         from "@/utils/cn";
+import { CARD_REQUIREMENT_LABELS_ADMIN } from "@/lib/constants";
 import {
   approveRegistration,
   rejectRegistration,
   updateRegistrationByAdmin,
   assignMemberTier,
+  issueCardForMember,
+  revokeMemberCard,
 } from "@/lib/supabase/actions";
 import type {
-  UserProfile, MemberRegistrationStatus, MembershipTier,
+  UserProfile, MemberRegistrationStatus, MembershipTier, MemberCard,
+  CardRequirement,
 } from "@/types";
 
-type FilterStatus = MemberRegistrationStatus | "all";
+/** "No card" is not a member status — it is the question this register exists
+ *  to answer, so it sits beside the statuses rather than inside them. */
+type FilterStatus = MemberRegistrationStatus | "all" | "uncarded";
 
 const STATUS_LABELS: Record<MemberRegistrationStatus, string> = {
   pending:  "Pending",
@@ -25,16 +31,31 @@ const STATUS_LABELS: Record<MemberRegistrationStatus, string> = {
   rejected: "Rejected",
 };
 
+/** What the card row should say, in one place, because the header chip and the
+ *  expanded panel must never disagree about whether somebody holds a card. */
+function cardState(card: MemberCard | null) {
+  if (!card)                        return { key: "none",     label: "No card"      } as const;
+  if (card.status === "approved")   return { key: "issued",   label: card.cardNumber ?? "Issued" } as const;
+  if (card.status === "pending")    return { key: "pending",  label: "Card pending" } as const;
+  if (card.status === "revoked")    return { key: "revoked",  label: "Revoked"      } as const;
+  return { key: "rejected", label: "Card rejected" } as const;
+}
+
+const listMissing = (missing: CardRequirement[]) =>
+  missing.map((m) => CARD_REQUIREMENT_LABELS_ADMIN[m]).join(", ");
+
 interface RegistrationCardProps {
   member: UserProfile;
+  card:   MemberCard | null;
   tiers:  MembershipTier[];
   tiersEnabled: boolean;
   onStatusChange: (id: string, status: MemberRegistrationStatus, notes?: string) => void;
   onTierChange: (id: string, tierId: string | null) => void;
+  onCardChange: (userId: string, card: MemberCard | null) => void;
 }
 
 function RegistrationCard({
-  member, tiers, tiersEnabled, onStatusChange, onTierChange,
+  member, card, tiers, tiersEnabled, onStatusChange, onTierChange, onCardChange,
 }: RegistrationCardProps) {
   const [expanded,      setExpanded]      = useState(false);
   const [editing,       setEditing]       = useState(false);
@@ -78,12 +99,60 @@ function RegistrationCard({
     return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   };
 
+  // What the last approve/issue actually produced. Shown rather than swallowed,
+  // because "approved, but no card yet, because there is no photo on file" is
+  // the whole reason this screen stopped being two queues.
+  const [outcome, setOutcome] = useState<string | null>(null);
+
+  /** Fold an issue result into the row without a round trip. The server has
+   *  already revalidated; this only stops the panel from lying until it lands. */
+  const applyIssue = (res: { cardNumber?: string | null; missing?: CardRequirement[] }) => {
+    if (res.cardNumber) {
+      onCardChange(member.id, {
+        ...(card ?? ({} as MemberCard)),
+        status:     "approved",
+        cardNumber: res.cardNumber,
+        userId:     member.id,
+      } as MemberCard);
+      setOutcome(`Card ${res.cardNumber} issued.`);
+      return;
+    }
+    if (res.missing?.length) {
+      setOutcome(`Approved. No card yet — their profile has no ${listMissing(res.missing)}.`);
+    }
+  };
+
   const handleApprove = async () => {
-    setLoading(true); setError(null);
+    setLoading(true); setError(null); setOutcome(null);
     const res = await approveRegistration(member.id);
     setLoading(false);
     if (res.error) { setError(res.error); return; }
     onStatusChange(member.id, "approved");
+    applyIssue(res);
+  };
+
+  const handleIssue = async () => {
+    setLoading(true); setError(null); setOutcome(null);
+    const res = await issueCardForMember(member.id);
+    setLoading(false);
+    if (res.error) { setError(res.error); return; }
+    if (!res.cardNumber && !res.missing?.length) { setOutcome("Card issued."); return; }
+    applyIssue(res);
+  };
+
+  const [revoking,     setRevoking]     = useState(false);
+  const [revokeReason, setRevokeReason] = useState("");
+
+  const handleRevoke = async () => {
+    if (!card) return;
+    if (!revokeReason.trim()) { setError("Please say why the card is being withdrawn."); return; }
+    setLoading(true); setError(null); setOutcome(null);
+    const res = await revokeMemberCard(card.id, revokeReason);
+    setLoading(false);
+    if (res.error) { setError(res.error); return; }
+    onCardChange(member.id, { ...card, status: "revoked", revokedReason: revokeReason });
+    setRevoking(false); setRevokeReason("");
+    setOutcome("Card withdrawn. They can be issued a replacement.");
   };
 
   const handleReject = async () => {
@@ -116,6 +185,15 @@ function RegistrationCard({
   const statusColor: Record<MemberRegistrationStatus, string> = {
     pending:  "text-amber-400  bg-amber-950/40  border-amber-800/40",
     approved: "text-emerald-400 bg-emerald-950/40 border-emerald-800/40",
+    rejected: "text-hd-ember-400 bg-hd-ember-950/40 border-hd-ember-800/40",
+  };
+
+  const state = cardState(card);
+  const cardBadge: Record<ReturnType<typeof cardState>["key"], string> = {
+    issued:   "text-sky-300     bg-sky-950/40     border-sky-800/40",
+    pending:  "text-amber-400   bg-amber-950/40   border-amber-800/40",
+    none:     "text-hd-ink-500  bg-hd-ink-900     border-hd-ink-700",
+    revoked:  "text-hd-ember-400 bg-hd-ember-950/40 border-hd-ember-800/40",
     rejected: "text-hd-ember-400 bg-hd-ember-950/40 border-hd-ember-800/40",
   };
 
@@ -168,6 +246,16 @@ function RegistrationCard({
 
         {/* Status + expand */}
         <div className="flex items-center gap-3 shrink-0">
+          {/* Card state, on the row itself. The question an admin opens this
+              screen to answer is "who has not got their card", and answering it
+              should not require expanding thirty rows one at a time. */}
+          <span className={cn(
+            "hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold border font-mono",
+            cardBadge[state.key],
+          )}>
+            <CreditCard className="size-3" />
+            {state.label}
+          </span>
           <span className={cn(
             "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border",
             statusColor[member.memberStatus],
@@ -215,6 +303,89 @@ function RegistrationCard({
               </select>
             </div>
           )}
+          {/* Membership card — an issuance, not a second approval. Approving
+              the member above already tried to produce one; this is where it
+              is issued deliberately when their profile was short of something
+              on the day, or withdrawn when it should no longer be honoured. */}
+          <div className="p-3 rounded-lg bg-hd-ink-900/60 border border-hd-ink-800 space-y-3">
+            <div className="flex items-center gap-3">
+              <CreditCard className="size-4 text-hd-ink-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-hd-ink-300 uppercase tracking-wide">
+                  Membership card
+                </p>
+                <p className="text-[11px] text-hd-ink-500 mt-0.5 font-mono">
+                  {state.key === "issued"
+                    ? `${card!.cardNumber ?? "—"}${card!.validUntil ? ` · valid until ${fmtDate(card!.validUntil)}` : ""}`
+                    : state.key === "revoked"
+                      ? `Withdrawn${card?.revokedReason ? ` — ${card.revokedReason}` : ""}`
+                      : state.key === "pending"
+                        ? "Requested, waiting on approval above"
+                        : state.key === "rejected"
+                          ? "Application was turned down"
+                          : "None issued"}
+                </p>
+              </div>
+
+              {state.key === "issued" ? (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setRevoking(true); setError(null); }}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-hd-ember-800/40 bg-hd-ember-950/40 hover:bg-hd-ember-900/50 text-hd-ember-300 text-xs font-semibold disabled:opacity-50 transition-colors shrink-0"
+                >
+                  <Ban className="size-3" /> Revoke
+                </button>
+              ) : member.memberStatus === "approved" ? (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleIssue(); }}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hd-ink-700 hover:bg-hd-ink-600 text-hd-ink-100 text-xs font-semibold disabled:opacity-50 transition-colors shrink-0"
+                >
+                  <CreditCard className="size-3" />
+                  {loading ? "Issuing…" : "Issue card"}
+                </button>
+              ) : (
+                <span className="text-[11px] text-hd-ink-600 shrink-0">Approve them first</span>
+              )}
+            </div>
+
+            {revoking && (
+              <div className="space-y-2 pt-1">
+                <input
+                  type="text"
+                  value={revokeReason}
+                  onChange={(e) => setRevokeReason(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  placeholder="Why is this card being withdrawn?"
+                  className={inputClass}
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button" onClick={handleRevoke} disabled={loading}
+                    className="px-3 py-1.5 rounded-lg bg-hd-ember-700 hover:bg-hd-ember-600 text-white text-xs font-semibold disabled:opacity-50 transition-colors"
+                  >
+                    {loading ? "Withdrawing…" : "Confirm revoke"}
+                  </button>
+                  <button
+                    type="button" onClick={() => { setRevoking(false); setError(null); }} disabled={loading}
+                    className="px-3 py-1.5 rounded-lg border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-300 text-xs transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {outcome && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/40">
+              <CheckCircle2 className="size-4 text-emerald-400 shrink-0 mt-px" />
+              <p className="text-sm text-emerald-200">{outcome}</p>
+            </div>
+          )}
+
           {error && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40">
               <AlertCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
@@ -337,7 +508,7 @@ function RegistrationCard({
                     className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-semibold disabled:opacity-50 transition-colors"
                   >
                     <CheckCircle2 className="size-3.5" />
-                    {loading ? "Approving…" : "Approve"}
+                    {loading ? "Approving…" : "Approve & issue card"}
                   </button>
                 )}
                 {member.memberStatus !== "rejected" && (
@@ -380,28 +551,66 @@ function Detail({ icon, label, value }: { icon: React.ReactNode; label: string; 
 
 interface Props {
   initialMembers: UserProfile[];
+  /** Every card that belongs to an account, so a row can say whether the
+   *  person in front of you is actually carrying one. */
+  initialCards:   MemberCard[];
   tiers:          MembershipTier[];
   /** Off means the tier control is hidden rather than shown doing nothing. */
   tiersEnabled:   boolean;
 }
 
-export function UserRegistrationsAdmin({ initialMembers, tiers, tiersEnabled }: Props) {
+export function UserRegistrationsAdmin({
+  initialMembers, initialCards, tiers, tiersEnabled,
+}: Props) {
   const [members,  setMembers]  = useState(initialMembers);
+  const [cards,    setCards]    = useState(initialCards);
 
   const handleTierChange = (id: string, tierId: string | null) =>
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, tierId } : m)));
   const [filter,   setFilter]   = useState<FilterStatus>("all");
   const [search,   setSearch]   = useState("");
 
+  /** One live card per account, guaranteed by a partial unique index, so this
+   *  can be a plain lookup rather than a list per member. */
+  const cardFor = useMemo(() => {
+    const byUser = new Map<string, MemberCard>();
+    for (const c of cards) {
+      if (!c.userId) continue;
+      if (c.status === "rejected" || c.status === "revoked") {
+        // Keep it only if nothing live has been recorded for them, so a
+        // withdrawn card still shows as withdrawn rather than vanishing.
+        if (!byUser.has(c.userId)) byUser.set(c.userId, c);
+        continue;
+      }
+      byUser.set(c.userId, c);
+    }
+    return byUser;
+  }, [cards]);
+
+  const handleCardChange = (userId: string, card: MemberCard | null) =>
+    setCards((prev) => {
+      const rest = prev.filter((c) => c.userId !== userId);
+      return card ? [...rest, { ...card, userId }] : rest;
+    });
+
   const counts = useMemo(() => ({
     all:      members.length,
     pending:  members.filter((m) => m.memberStatus === "pending").length,
     approved: members.filter((m) => m.memberStatus === "approved").length,
     rejected: members.filter((m) => m.memberStatus === "rejected").length,
-  }), [members]);
+    // Approved members holding nothing. The backlog this screen exists to
+    // work through, and it should be one click away, not a manual scan.
+    uncarded: members.filter((m) =>
+      m.memberStatus === "approved" && cardFor.get(m.id)?.status !== "approved").length,
+  }), [members, cardFor]);
 
   const displayed = useMemo(() => {
-    let list = filter === "all" ? members : members.filter((m) => m.memberStatus === filter);
+    let list =
+      filter === "all"      ? members
+    : filter === "uncarded" ? members.filter((m) =>
+        m.memberStatus === "approved" && cardFor.get(m.id)?.status !== "approved")
+    : members.filter((m) => m.memberStatus === filter);
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((m) =>
@@ -410,7 +619,7 @@ export function UserRegistrationsAdmin({ initialMembers, tiers, tiersEnabled }: 
       );
     }
     return list;
-  }, [members, filter, search]);
+  }, [members, filter, search, cardFor]);
 
   const handleStatusChange = (id: string, status: MemberRegistrationStatus, notes?: string) => {
     setMembers((prev) =>
@@ -427,6 +636,7 @@ export function UserRegistrationsAdmin({ initialMembers, tiers, tiersEnabled }: 
     { key: "all",      label: `All (${counts.all})` },
     { key: "pending",  label: `Pending (${counts.pending})` },
     { key: "approved", label: `Approved (${counts.approved})` },
+    { key: "uncarded", label: `No card (${counts.uncarded})` },
     { key: "rejected", label: `Rejected (${counts.rejected})` },
   ];
 
@@ -478,10 +688,12 @@ export function UserRegistrationsAdmin({ initialMembers, tiers, tiersEnabled }: 
             <RegistrationCard
               key={m.id}
               member={m}
+              card={cardFor.get(m.id) ?? null}
               tiers={tiers}
               tiersEnabled={tiersEnabled}
               onStatusChange={handleStatusChange}
               onTierChange={handleTierChange}
+              onCardChange={handleCardChange}
             />
           ))}
         </div>
