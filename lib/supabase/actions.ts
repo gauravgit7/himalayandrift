@@ -598,6 +598,9 @@ export async function rejectMemberCard(
 export async function saveCardSettings(
   settings: CardSettings,
 ): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
@@ -1003,6 +1006,9 @@ export async function updateRegistrationByAdmin(
     adminNotes?:   string | null;
   },
 ): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
@@ -1234,6 +1240,9 @@ async function revalidateRideForRegistration(registrationId: string) {
 export async function approveRideRegistration(
   id: string,
 ): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
@@ -1309,6 +1318,9 @@ export async function rejectRideRegistration(
   id:     string,
   reason: string,
 ): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
@@ -1348,6 +1360,9 @@ export async function updateRideRegistrationNotes(
   id:    string,
   notes: string,
 ): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
@@ -1366,6 +1381,9 @@ export async function updateRideRegistrationNotes(
 export async function deleteRideRegistration(
   id: string,
 ): Promise<{ error: string | null }> {
+  const denied = await requireAdmin();
+  if (denied) return { error: denied };
+
   const { createAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createAdminClient();
 
