@@ -1030,7 +1030,10 @@ async function claimCardsQuietly(userId: string, caller: string): Promise<string
  */
 export async function approveRegistration(
   id: string,
-): Promise<{ error: string | null; cardNumber?: string | null; missing?: CardRequirement[] }> {
+): Promise<{
+  error: string | null; cardNumber?: string | null;
+  accessCode?: string | null; missing?: CardRequirement[];
+}> {
   const denied = await requireAdmin();
   if (denied) return { error: denied };
 
@@ -1061,6 +1064,7 @@ export async function approveRegistration(
   return {
     error:      null,
     cardNumber: issued.cardNumber,
+    accessCode: issued.accessCode,
     missing:    issued.missing,
   };
 }
@@ -1122,7 +1126,10 @@ export async function rejectRegistration(
  */
 export async function issueCardForMember(
   userId: string,
-): Promise<{ error: string | null; cardNumber?: string | null; missing?: CardRequirement[] }> {
+): Promise<{
+  error: string | null; cardNumber?: string | null;
+  accessCode?: string | null; missing?: CardRequirement[];
+}> {
   const denied = await requireAdmin();
   if (denied) return { error: denied };
 
@@ -1133,7 +1140,10 @@ export async function issueCardForMember(
     revalidatePath(ROUTES.adminMembers);
     revalidatePath(ROUTES.profile);
   }
-  return { error: res.error, cardNumber: res.cardNumber, missing: res.missing };
+  return {
+    error: res.error, cardNumber: res.cardNumber,
+    accessCode: res.accessCode, missing: res.missing,
+  };
 }
 
 /** Admin: withdraw a card that was issued. Keeps the row, and the reason. */

@@ -15,12 +15,12 @@ interface Props {
 
 export default async function AdminMembersPage({ searchParams }: Props) {
   const { tab } = await searchParams;
-  // The register is the default now. Approving a member issues their card, so
-  // the walk-in applications tab is the exception it always should have been:
-  // paper that has not yet found a person.
-  const activeTab = tab === "applications" ? "applications"
-    : tab === "tiers"                      ? "tiers"
-    : "register";
+  // Two tabs. There is no card queue any more: approving a member issues their
+  // card, so a separate list of card applications would be a second place to
+  // make one decision. What survives is the one case a register of accounts
+  // cannot show - a walk-in application with no account behind it - and that
+  // belongs under the register, not beside it.
+  const activeTab = tab === "tiers" ? "tiers" : "register";
 
   const [cards, settings, brandLogos, profiles, tiers, membership] = await Promise.all([
     getMemberCards(),
@@ -37,10 +37,14 @@ export default async function AdminMembersPage({ searchParams }: Props) {
     !cards.some((c) => c.userId === p.id && c.status === "approved")).length;
 
   const tabs: { key: string; href: string; label: string; badge?: number }[] = [
-    { key: "register",     href: "/admin/members",                    label: "Register",       badge: profiles.filter((p) => p.memberStatus === "pending").length },
-    { key: "applications", href: "/admin/members?tab=applications",   label: "Card applications", badge: walkIns.filter((c) => c.status === "pending").length },
-    { key: "tiers",        href: "/admin/members?tab=tiers",          label: "Tiers & Points" },
+    { key: "register", href: "/admin/members",            label: "Register",
+      badge: profiles.filter((p) => p.memberStatus === "pending").length },
+    { key: "tiers",    href: "/admin/members?tab=tiers",  label: "Tiers & Points" },
   ];
+
+  // Legacy paper. Once everyone joins through the one form there will be none
+  // of these, and this whole block renders nothing.
+  const orphans = walkIns.filter((c) => c.status !== "rejected" && c.status !== "revoked");
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -73,9 +77,7 @@ export default async function AdminMembersPage({ searchParams }: Props) {
         ))}
       </div>
 
-      {activeTab === "applications" ? (
-        <MembersAdmin initialCards={cards} settings={settings} brandLogos={brandLogos} />
-      ) : activeTab === "tiers" ? (
+      {activeTab === "tiers" ? (
         <TiersAdmin initialTiers={tiers} initialSettings={membership} />
       ) : (
         <>
@@ -92,6 +94,31 @@ export default async function AdminMembersPage({ searchParams }: Props) {
             tiers={tiers}
             tiersEnabled={membership.tiersEnabled}
           />
+
+          {orphans.length > 0 && (
+            <section className="pt-8 mt-8 border-t border-hd-ink-800 space-y-4">
+              <div>
+                <h2 className="text-lg font-black text-hd-ink-50">
+                  Applications with no account
+                  <span className="ml-2 px-2 py-0.5 rounded-full text-[11px] align-middle bg-hd-ink-800 text-hd-ink-400">
+                    {orphans.length}
+                  </span>
+                </h2>
+                <p className="text-sm text-hd-ink-400 mt-1 max-w-2xl">
+                  Cards applied for before the join form existed, by people the
+                  matcher could not confidently attach to an account. Link one
+                  to its owner and it joins the register above; approve it as it
+                  stands and it becomes a card with no login behind it.
+                </p>
+              </div>
+              <MembersAdmin
+                initialCards={cards}
+                settings={settings}
+                brandLogos={brandLogos}
+                onlyUnlinked
+              />
+            </section>
+          )}
         </>
       )}
     </div>

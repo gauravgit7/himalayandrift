@@ -1,20 +1,21 @@
 // =============================================================================
-// GET /api/export/excel?year=YYYY
-// Streams a branded .xlsx workbook for the requested calendar year.
-// Requires an authenticated admin session (reads from Supabase via service key).
+// GET /api/export/payments?year=YYYY
+// Streams the year's payment ledger as .xlsx — ride fees and shop orders in
+// one sheet, with each payer's membership standing and contact details.
+//
+// Guarded. This one carries names, phone numbers and amounts together, which
+// is a different thing from a public ride calendar.
 // =============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin }              from "@/lib/supabase/guards";
-import { getRidesForYear }           from "@/lib/supabase/queries";
-import { buildRidesExcel }           from "@/lib/exports/excel";
+import { getPaymentsForYear }        from "@/lib/supabase/queries";
+import { buildPaymentsExcel }        from "@/lib/exports/payments";
 
-export const dynamic    = "force-dynamic";
-export const maxDuration = 30; // Excel generation for a full year can be slow
+export const dynamic     = "force-dynamic";
+export const maxDuration = 30;
 
 export async function GET(request: NextRequest) {
-  // The comment above claimed this needed an admin session; it did not
-  // check for one. /api is outside the middleware's admin matcher.
   const denied = await requireAdmin();
   if (denied) return NextResponse.json({ error: denied }, { status: 403 });
 
@@ -26,22 +27,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const rides  = await getRidesForYear(year);
-    const buffer = await buildRidesExcel(rides, year);
+    const rows   = await getPaymentsForYear(year);
+    const buffer = await buildPaymentsExcel(rows, year);
 
-    // Node.js Buffer is always backed by a real ArrayBuffer (never SharedArrayBuffer).
-    // The TS generic mismatch (ArrayBufferLike vs ArrayBuffer) is a false positive here.
     const body = buffer as unknown as ArrayBuffer;
     return new NextResponse(body, {
       status: 200,
       headers: {
         "Content-Type":        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="HimalayanDrift-rides-${year}.xlsx"`,
+        "Content-Disposition": `attachment; filename="HimalayanDrift-payments-${year}.xlsx"`,
         "Cache-Control":       "no-store",
       },
     });
   } catch (err) {
-    console.error("[export/excel]", err);
+    console.error("[export/payments]", err);
     return NextResponse.json({ error: "Export failed" }, { status: 500 });
   }
 }

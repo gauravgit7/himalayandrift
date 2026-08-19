@@ -907,3 +907,132 @@ export async function getMyMemberCard(): Promise<MemberCard | null> {
   if (error) { console.error("[getMyMemberCard]", error.message); return null; }
   return data ? mapMemberCard(data as DbMemberCard) : null;
 }
+
+// ---------------------------------------------------------------------------
+// Payments export
+//
+// Ride fees and shop orders live in two tables but they are one ledger. This
+// flattens them into the rows the export writes, and answers the question the
+// export exists for on every line: was this person a member at the time.
+// ---------------------------------------------------------------------------
+
+/**
+ * Every payment recorded in the given calendar year.
+ *
+ * Dated by when the payment was taken, not by when the ride happens — money
+ * received in December for a January ride belongs in December's books, which
+ * is the only reason anyone downloads this.
+ *
+ * Free rides are excluded rather than listed at zero: a ledger of nothings is
+ * a roster, and there is already a roster.
+ */
+export async function getPaymentsForYear(
+  year: number,
+): Promise<import("@/lib/exports/payments").PaymentRow[]> {
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const supabase = createAdminClient();
+
+  const from = `${year}-01-01T00:00:00.000Z`;
+  const to   = `${year + 1}-01-01T00:00:00.000Z`;
+
+  const [regsRes, ordersRes, profilesRes, tiersRes] = await Promise.all([
+    supabase
+      .from("ride_registrations")
+      .select("*, rides(title)")
+      .gte("created_at", from).lt("created_at", to),
+    supabase
+      .from("shop_orders")
+      .select(ORDER_SELECT)
+      .gte("created_at", from).lt("created_at", to),
+    supabase.from("profiles").select("id, member_status, tier_id"),
+    supabase.from("membership_tiers").select("id, name"),
+  ]);
+
+  if (regsRes.error)   console.error("[getPaymentsForYear] rides:", regsRes.error.message);
+  if (ordersRes.error) console.error("[getPaymentsForYear] shop:",  ordersRes.error.message);
+
+  const tierName = new Map<string, string>(
+    ((tiersRes.data ?? []) as { id: string; name: string }[]).map((t) => [t.id, t.name]),
+  );
+  const profiles = new Map<string, { status: string; tier: string | null }>(
+    ((profilesRes.data ?? []) as { id: string; member_status: string; tier_id: string | null }[])
+      .map((p) => [p.id, {
+        status: p.member_status,
+        tier:   p.tier_id ? tierName.get(p.tier_id) ?? null : null,
+      }]),
+  );
+
+  type Standing = import("@/lib/exports/payments").MembershipStanding;
+
+  /** No account is a guest, not a rejection. The three-way answer is the point. */
+  const standingFor = (userId: string | null): { standing: Standing; tier: string | null } => {
+    if (!userId) return { standing: "Guest", tier: null };
+    const p = profiles.get(userId);
+    if (!p)     return { standing: "Guest", tier: null };
+    return {
+      standing: p.status === "approved" ? "Member"
+              : p.status === "rejected" ? "Rejected"
+              : "Pending",
+      tier: p.tier,
+    };
+  };
+
+  const rows: import("@/lib/exports/payments").PaymentRow[] = [];
+
+  for (const raw of (regsRes.data ?? [])) {
+    const r = raw as DbRideRegistration & { rides?: { title?: string } | null };
+    const reg = mapRideRegistration(r);
+    // A free ride has nothing to reconcile.
+    if (!reg.amountPaid) continue;
+
+    const who = standingFor(reg.userId);
+    rows.push({
+      date:       reg.createdAt,
+      type:       "Ride",
+      reference:  reg.accessCode,
+      what:       r.rides?.title ?? "Ride",
+      fullName:   reg.fullName,
+      standing:   who.standing,
+      // What they were on when they paid, if it was recorded then; their
+      // current tier otherwise. The stored label is the more truthful of the
+      // two, because a promotion since does not change what they were charged.
+      tier:       reg.tierLabel ?? who.tier,
+      phone:      reg.phone,
+      email:      reg.email,
+      amount:     reg.amountPaid,
+      paymentRef: reg.paymentReference,
+      hasProof:   !!reg.paymentScreenshotUrl,
+      status:     reg.status,
+      approvedAt: reg.approvedAt,
+    });
+  }
+
+  for (const raw of (ordersRes.data ?? [])) {
+    const order = mapShopOrder(raw as DbShopOrder);
+    if (!order.total) continue;
+
+    const who = standingFor(order.userId);
+    const what = order.items.length === 1
+      ? `${order.items[0].productName}${order.items[0].quantity > 1 ? ` ×${order.items[0].quantity}` : ""}`
+      : `${order.items.length} items`;
+
+    rows.push({
+      date:       order.createdAt,
+      type:       "Shop",
+      reference:  order.accessCode,
+      what,
+      fullName:   order.fullName,
+      standing:   who.standing,
+      tier:       who.tier,
+      phone:      order.phone,
+      email:      order.email,
+      amount:     order.total,
+      paymentRef: order.paymentReference,
+      hasProof:   !!order.paymentScreenshotUrl,
+      status:     order.status,
+      approvedAt: order.approvedAt,
+    });
+  }
+
+  return rows;
+}

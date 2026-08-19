@@ -4,6 +4,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin }              from "@/lib/supabase/guards";
 import { getRidesForYear, getHomepageContent } from "@/lib/supabase/queries";
 import { buildCalendarPdf }          from "@/lib/exports/pdf";
 
@@ -11,6 +12,11 @@ export const dynamic    = "force-dynamic";
 export const maxDuration = 30; // PDF generation for a full year can be slow
 
 export async function GET(request: NextRequest) {
+  // The comment above claimed this needed an admin session; it did not
+  // check for one. /api is outside the middleware's admin matcher.
+  const denied = await requireAdmin();
+  if (denied) return NextResponse.json({ error: denied }, { status: 403 });
+
   const yearParam = request.nextUrl.searchParams.get("year");
   const year      = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
 

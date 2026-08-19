@@ -580,14 +580,21 @@ function ApplicationModal({
 type Filter = "all" | "pending" | "approved" | "rejected" | "revoked" | "unlinked";
 
 export function MembersAdmin({
-  initialCards, settings, brandLogos,
+  initialCards, settings, brandLogos, onlyUnlinked = false,
 }: {
   initialCards: MemberCard[];
   settings:     CardSettings;
   brandLogos?:  BrandLogos | null;
+  /** Show only walk-in applications with nobody behind them, without the
+   *  filter tiles. Everything else on this screen now belongs to the register:
+   *  approving a member issues their card, so a separate queue of cards would
+   *  be a second place to make the same decision. What is left here is the one
+   *  case the register cannot show — an application with no account to be a
+   *  row of. */
+  onlyUnlinked?: boolean;
 }) {
   const [cards,    setCards]    = useState(initialCards);
-  const [filter,   setFilter]   = useState<Filter>("pending");
+  const [filter,   setFilter]   = useState<Filter>(onlyUnlinked ? "unlinked" : "pending");
   const [viewing,  setViewing]  = useState<MemberCard | null>(null);
 
   // An unlinked card is not a status — it is an application with nobody behind
@@ -633,6 +640,7 @@ export function MembersAdmin({
   return (
     <>
       {/* Stats row */}
+      {!onlyUnlinked && (
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         {(["all", "pending", "approved", "rejected", "revoked", "unlinked"] as Filter[]).map((f) => (
           <button
@@ -660,13 +668,16 @@ export function MembersAdmin({
           </button>
         ))}
       </div>
+      )}
 
       {/* Table */}
       {displayed.length === 0 ? (
-        <div className="py-20 text-center">
-          <Users className="size-12 mx-auto mb-4 text-hd-ink-700" />
-          <p className="text-sm text-hd-ink-500">No {filter !== "all" ? filter : ""} applications.</p>
-        </div>
+        onlyUnlinked ? null : (
+          <div className="py-20 text-center">
+            <Users className="size-12 mx-auto mb-4 text-hd-ink-700" />
+            <p className="text-sm text-hd-ink-500">No {filter !== "all" ? filter : ""} applications.</p>
+          </div>
+        )
       ) : (
         <div className="space-y-2">
           {displayed.map((card) => (

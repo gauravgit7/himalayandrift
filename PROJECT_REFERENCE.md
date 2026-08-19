@@ -188,11 +188,13 @@ revoking stops verification immediately. A revoked card does **not** restore the
 *Request card* button — the committee reissues it, or one tap would make revoking
 pointless.
 
-The walk-in tab still approves cards directly, because those applications have no
-account behind them and so there is no member to approve. A pending card that **is**
-linked shows *"Approve them in the register"* instead of an Approve button: two buttons
-saying Approve on two screens is exactly how you get an approved card belonging to an
-unapproved member.
+`/admin/members` has **two tabs**: the register and Tiers & Points. There is no card
+queue, because there is no card decision. What a register of accounts cannot show — a
+walk-in application with nobody behind it — sits in a section beneath it, and renders
+nothing at all once there are none. Those are still approved directly, because there is
+no member to approve; a pending card that **is** linked shows *"Approve them in the
+register"* instead of an Approve button, since two buttons saying Approve on two screens
+is exactly how you get an approved card belonging to an unapproved member.
 
 **The approval columns are protected at the database level.** `profiles_update_own` grants
 a rider UPDATE on their own row, which would otherwise let them PATCH
@@ -256,7 +258,8 @@ of birth — name and blood group agreeing is not evidence in a club where names
 
 Two applications clearing the bar for one account is **not** broken by picking the higher
 score: that is the case where guessing hands one rider's card to another. Both are left
-alone and surface under the *Unlinked* tab in the members admin, where a human can look at
+alone and surface under **Applications with no account**, at the foot of the register, where a
+human can look at
 the photos. `lib/membership/link.ts` is the plumbing around that decision — claim,
 backfill (empty profile fields only, never overwriting the rider's own answer), rank
 candidates, link, unlink.
@@ -390,6 +393,35 @@ carrying the service-role key.
   signed out) and is publicly readable (QR validation is public by design).
 
 ---
+
+### Exports
+
+`/admin/exports` builds workbooks with ExcelJS at download time — nothing is cached, so
+a sheet is always current as of the click.
+
+| Route | What |
+| --- | --- |
+| `/api/export/pdf` | Branded ride calendar for a year |
+| `/api/export/excel` | Ride operations, 3 sheets |
+| `/api/export/payments` | The money ledger |
+
+**All three now require an admin.** `/api` is outside the middleware's `/admin` matcher,
+so these were open to anyone who knew the URL — the payments one carries names, phone
+numbers and amounts together, which is a different thing from a public ride calendar.
+
+The payments export puts ride fees and shop orders in **one sheet** with a Type column.
+They are two tables but one ledger, and splitting them would mean adding two numbers to
+answer "what did we take in March". It is dated by **when the payment was recorded**, not
+by ride date: a fee taken in December for a January ride belongs in December's books.
+
+Membership standing is a **three-way answer** — Member / Pending / Rejected / Guest.
+"Member: no" would lump together somebody the club turned down, somebody still waiting,
+and a guest who never asked, and those are three different conversations to have about a
+payment.
+
+The total counts **approved and fulfilled only**. Pending rows stay visible above it —
+they are the chase list — but adding them in would report income the club has not
+received.
 
 ## 6. Storage
 

@@ -4,10 +4,10 @@ import { useState, useMemo } from "react";
 import {
   CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp,
   Shield, Phone, MapPin, Bike, Calendar, FileText, Home,
-  Edit2, Save, X, AlertCircle, Search, User, Award, CreditCard, Ban,
+  Edit2, Save, X, AlertCircle, Search, User, Award, CreditCard, Ban, Printer,
 } from "lucide-react";
 import { cn }                         from "@/utils/cn";
-import { CARD_REQUIREMENT_LABELS_ADMIN } from "@/lib/constants";
+import { CARD_REQUIREMENT_LABELS_ADMIN, ROUTES } from "@/lib/constants";
 import {
   approveRegistration,
   rejectRegistration,
@@ -106,12 +106,17 @@ function RegistrationCard({
 
   /** Fold an issue result into the row without a round trip. The server has
    *  already revalidated; this only stops the panel from lying until it lands. */
-  const applyIssue = (res: { cardNumber?: string | null; missing?: CardRequirement[] }) => {
+  const applyIssue = (res: {
+    cardNumber?: string | null; accessCode?: string | null; missing?: CardRequirement[];
+  }) => {
     if (res.cardNumber) {
       onCardChange(member.id, {
         ...(card ?? ({} as MemberCard)),
         status:     "approved",
         cardNumber: res.cardNumber,
+        // Freshly printed cards have no row here to inherit a code from, which
+        // is why the server hands it back rather than making us re-read it.
+        accessCode: res.accessCode ?? card?.accessCode ?? "",
         userId:     member.id,
       } as MemberCard);
       setOutcome(`Card ${res.cardNumber} issued.`);
@@ -328,14 +333,29 @@ function RegistrationCard({
               </div>
 
               {state.key === "issued" ? (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setRevoking(true); setError(null); }}
-                  disabled={loading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-hd-ember-800/40 bg-hd-ember-950/40 hover:bg-hd-ember-900/50 text-hd-ember-300 text-xs font-semibold disabled:opacity-50 transition-colors shrink-0"
-                >
-                  <Ban className="size-3" /> Revoke
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Viewing and printing a card used to live on its own tab.
+                      It is one link from the row that owns the card instead. */}
+                  {card?.accessCode && (
+                  <a
+                    href={ROUTES.memberCard(card.accessCode)}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-hd-ink-700 hover:border-hd-ink-500 text-hd-ink-300 hover:text-hd-ink-100 text-xs font-semibold transition-colors"
+                  >
+                    <Printer className="size-3" /> View / print
+                  </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setRevoking(true); setError(null); }}
+                    disabled={loading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-hd-ember-800/40 bg-hd-ember-950/40 hover:bg-hd-ember-900/50 text-hd-ember-300 text-xs font-semibold disabled:opacity-50 transition-colors"
+                  >
+                    <Ban className="size-3" /> Revoke
+                  </button>
+                </div>
               ) : member.memberStatus === "approved" ? (
                 <button
                   type="button"

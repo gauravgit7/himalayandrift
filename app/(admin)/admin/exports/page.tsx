@@ -13,6 +13,7 @@ import {
   Check,
   Loader2,
   ChevronDown,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 
@@ -238,7 +239,33 @@ export default function ExportsPage() {
           filename={(y) => `HimalayanDrift-rides-${y}.xlsx`}
           buttonLabel={`Download ${year} Rides Spreadsheet`}
         />
+
+        <ExportCard
+          year={year}
+          icon={<Wallet className="size-6" />}
+          title="Payments Ledger"
+          badge="XLSX"
+          badgeColor="#0284C7"
+          accentColor="#0284C7"
+          description={`Every payment recorded in ${year} — ride fees and shop orders in one sheet.`}
+          bullets={[
+            "Name, phone and email for every payer",
+            "Member, Pending, Rejected or Guest — and their tier",
+            "Amount, transaction reference, and whether proof was attached",
+            "Totals count approved payments only; pending stays visible as the chase list",
+            "Summary sheet: by month, and by who the money came from",
+          ]}
+          apiPath="/api/export/payments"
+          filename={(y) => `HimalayanDrift-payments-${y}.xlsx`}
+          buttonLabel={`Download ${year} Payments`}
+        />
       </div>
+
+      <p className="text-xs text-hd-ink-500 -mt-3">
+        The payments ledger is dated by when each payment was recorded, not by
+        when the ride runs — a fee taken in December for a January ride belongs
+        in December.
+      </p>
 
       {/* Info note */}
       <p className="text-xs text-hd-ink-600 text-center">

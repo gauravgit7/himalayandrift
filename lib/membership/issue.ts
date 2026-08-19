@@ -131,6 +131,9 @@ export interface IssueResult {
   /** Set when a card now exists and is approved — whether this call made it so
    *  or found it already done. */
   cardNumber: string | null;
+  /** The private code the card is looked up and printed by. Returned so a
+   *  caller can link straight to it without re-reading the row. */
+  accessCode: string | null;
   /** Non-empty when the profile cannot yet be printed from. The member is
    *  approved regardless; only the card waits. */
   missing:    CardRequirement[];
@@ -156,8 +159,8 @@ export async function issueCardForUser(userId: string): Promise<IssueResult> {
     .eq("id", userId)
     .maybeSingle();
 
-  if (profileError) return { cardNumber: null, missing: [], existing: false, error: profileError.message };
-  if (!profile)     return { cardNumber: null, missing: [], existing: false, error: "No profile for that account." };
+  if (profileError) return { cardNumber: null, accessCode: null, missing: [], existing: false, error: profileError.message };
+  if (!profile)     return { cardNumber: null, accessCode: null, missing: [], existing: false, error: "No profile for that account." };
 
   const p = profile as unknown as CardSource;
 
@@ -166,15 +169,18 @@ export async function issueCardForUser(userId: string): Promise<IssueResult> {
   // the rider can be issued a replacement.
   const { data: live } = await admin
     .from("member_cards")
-    .select("id, status, card_number")
+    .select("id, status, card_number, access_code")
     .eq("user_id", userId)
     .not("status", "in", "(rejected,revoked)")
     .maybeSingle();
 
-  const card = live as { id: string; status: string; card_number: string | null } | null;
+  const card = live as { id: string; status: string; card_number: string | null; access_code: string } | null;
 
   if (card?.status === "approved") {
-    return { cardNumber: card.card_number, missing: [], existing: true, error: null };
+    return {
+      cardNumber: card.card_number, accessCode: card.access_code,
+      missing: [], existing: true, error: null,
+    };
   }
 
   // Approving a request they already made. Their details came off the form,
@@ -189,19 +195,23 @@ export async function issueCardForUser(userId: string): Promise<IssueResult> {
         updated_at:  new Date().toISOString(),
       }).eq("id", card.id).eq("status", "pending"),
     );
-    return { cardNumber: res.cardNumber, missing: [], existing: false, error: res.error };
+    return {
+      cardNumber: res.cardNumber, accessCode: card.access_code,
+      missing: [], existing: false, error: res.error,
+    };
   }
 
   // Nothing to approve, so print one from the profile — if it is printable.
   const missing = missingCardFields(p);
   if (missing.length) {
-    return { cardNumber: null, missing, existing: false, error: null };
+    return { cardNumber: null, accessCode: null, missing, existing: false, error: null };
   }
 
+  const accessCode = generateCode("member");
   const res = await withCardNumber(admin, (cardNumber, until) =>
     admin.from("member_cards").insert({
       user_id:          userId,
-      access_code:      generateCode("member"),
+      access_code:      accessCode,
       full_name:        p.full_name!.trim(),
       photo_url:        p.avatar_url!,
       date_of_birth:    p.date_of_birth!,
@@ -220,7 +230,11 @@ export async function issueCardForUser(userId: string): Promise<IssueResult> {
     }),
   );
 
-  return { cardNumber: res.cardNumber, missing: [], existing: false, error: res.error };
+  return {
+    cardNumber: res.cardNumber,
+    accessCode: res.error ? null : accessCode,
+    missing: [], existing: false, error: res.error,
+  };
 }
 
 /**
@@ -233,16 +247,19 @@ export async function issueCardById(cardId: string): Promise<IssueResult> {
 
   const { data, error } = await admin
     .from("member_cards")
-    .select("id, status, card_number")
+    .select("id, status, card_number, access_code")
     .eq("id", cardId)
     .maybeSingle();
 
-  if (error)  return { cardNumber: null, missing: [], existing: false, error: error.message };
-  if (!data)  return { cardNumber: null, missing: [], existing: false, error: "Card not found." };
+  if (error)  return { cardNumber: null, accessCode: null, missing: [], existing: false, error: error.message };
+  if (!data)  return { cardNumber: null, accessCode: null, missing: [], existing: false, error: "Card not found." };
 
-  const card = data as { id: string; status: string; card_number: string | null };
+  const card = data as { id: string; status: string; card_number: string | null; access_code: string };
   if (card.status === "approved") {
-    return { cardNumber: card.card_number, missing: [], existing: true, error: null };
+    return {
+      cardNumber: card.card_number, accessCode: card.access_code,
+      missing: [], existing: true, error: null,
+    };
   }
 
   const res = await withCardNumber(admin, (cardNumber, until) =>
@@ -258,7 +275,10 @@ export async function issueCardById(cardId: string): Promise<IssueResult> {
     }).eq("id", cardId),
   );
 
-  return { cardNumber: res.cardNumber, missing: [], existing: false, error: res.error };
+  return {
+    cardNumber: res.cardNumber, accessCode: card.access_code,
+    missing: [], existing: false, error: res.error,
+  };
 }
 
 /**
