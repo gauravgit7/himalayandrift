@@ -474,7 +474,9 @@ export async function submitMemberCard(
   if (user) {
     const { data: live } = await supabase
       .from("member_cards").select("id")
-      .eq("user_id", user.id).neq("status", "rejected").maybeSingle();
+      .eq("user_id", user.id)
+      .not("status", "in", "(rejected,revoked)")
+      .maybeSingle();
     // Already holds one: leave this application unowned rather than trip the
     // one-live-card index and lose the submission entirely.
     if (!live) ownerId = user.id;
@@ -634,6 +636,10 @@ export interface SignUpPayload {
   fullName:      string;
   email:         string;
   password:      string;
+  /** The card photo, asked for here so that approving this member issues
+   *  their card without a second errand. Optional: a rider in a hurry gets an
+   *  account now and turns up under the register's "No card" filter. */
+  avatarUrl?:    string | null;
   phone?:        string | null;
   address?:      string | null;
   bikeModel?:    string | null;
@@ -649,7 +655,7 @@ export interface SignUpPayload {
 /** Register a new community member. Creates auth user + profile row. */
 export async function signUpPublic(
   payload: SignUpPayload,
-): Promise<{ error: string | null; needsConfirmation?: boolean }> {
+): Promise<{ error: string | null; needsConfirmation?: boolean; emailInUse?: boolean }> {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signUp({
@@ -661,8 +667,19 @@ export async function signUpPublic(
       emailRedirectTo:  `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/callback`,
     },
   });
-  if (error) return { error: error.message };
+  if (error) {
+    if (isEmailTaken(error.message)) return { error: null, emailInUse: true };
+    return { error: error.message };
+  }
   if (!data.user) return { error: "Sign up failed. Please try again." };
+
+  // Supabase can answer with a user carrying no identities instead of an
+  // error when the address is already registered — deliberate, so the form
+  // cannot be used to enumerate who has an account. It looks like success
+  // from here, so it has to be checked for.
+  if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    return { error: null, emailInUse: true };
+  }
 
   // Insert profile via service role so it works regardless of email-confirm setting
   const { createAdminClient } = await import("@/lib/supabase/admin");
@@ -671,6 +688,7 @@ export async function signUpPublic(
     id:             data.user.id,
     full_name:      payload.fullName.trim(),
     email:          payload.email.trim(),
+    avatar_url:     payload.avatarUrl ?? null,
     phone:          payload.phone?.trim()  ?? null,
     address:        payload.address?.trim() ?? null,
     bike_model:     payload.bikeModel?.trim() ?? null,
@@ -702,6 +720,147 @@ export async function signUpPublic(
 
   revalidatePath(ROUTES.profile);
   redirect(ROUTES.profile);
+}
+
+// =============================================================================
+// Joining
+//
+// Membership used to be two errands. A rider filled in the card form, waited,
+// then discovered they also needed an account, filled in a second form with
+// most of the same answers, and waited again — two submissions, two queues,
+// two chances for the club to lose track of which was which.
+//
+// One form now. The card fields ARE the profile fields; the only things the
+// card form was missing were an email address and a password.
+// =============================================================================
+
+export interface JoinPayload extends MemberCardPayload {
+  email:           string;
+  password:        string;
+  phone?:          string | null;
+  address?:        string | null;
+  bikeModel?:      string | null;
+  emergencyName?:  string | null;
+}
+
+/**
+ * Create the account, the profile and the card request in one submit.
+ *
+ * The auth user is created first and everything else hangs off it, so the
+ * failure modes are ordered deliberately: a failed sign-up gives up and tells
+ * the rider, while a profile or card write that fails afterwards is logged and
+ * swallowed. Once the auth user exists, returning an error would strand a real
+ * account behind a form that says it failed — and the rider would sign up
+ * again with the same address and be told it is taken.
+ */
+export async function joinClub(payload: JoinPayload): Promise<{
+  error:             string | null;
+  /** The address already has an account. Not an error — an invitation to sign
+   *  in, which is what the caller should offer instead of a red box. */
+  emailInUse?:       boolean;
+  needsConfirmation?: boolean;
+  accessCode?:       string;
+}> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.signUp({
+    email:    payload.email.trim(),
+    password: payload.password,
+    options:  {
+      data:            { full_name: payload.fullName.trim() },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    if (isEmailTaken(error.message)) return { error: null, emailInUse: true };
+    return { error: error.message };
+  }
+  if (!data.user) return { error: "Could not create your account. Please try again." };
+
+  // Supabase can return a user with no identities rather than an error when
+  // the address is already registered — a deliberate anti-enumeration measure.
+  // It looks exactly like success from here, so it has to be checked for.
+  if (Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    return { error: null, emailInUse: true };
+  }
+
+  const userId = data.user.id;
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
+
+  const { error: profileError } = await admin.from("profiles").upsert({
+    id:              userId,
+    full_name:       payload.fullName.trim(),
+    email:           payload.email.trim(),
+    // The photo is the card photo. Asking for it twice, once for the card and
+    // once for the avatar, would be asking the same question twice.
+    avatar_url:      payload.photoUrl,
+    phone:           payload.phone?.trim()          ?? null,
+    address:         payload.address?.trim()        ?? null,
+    bike_model:      payload.bikeModel?.trim()      ?? null,
+    date_of_birth:   payload.dateOfBirth,
+    license_number:  payload.licenseNumber.trim(),
+    blood_group:     payload.bloodGroup.trim(),
+    emergency_name:  payload.emergencyName?.trim()  ?? null,
+    emergency_phone: payload.emergencyPhone.trim(),
+    member_status:   "pending",
+  });
+
+  if (profileError) {
+    console.error("[joinClub] profile row not created:", profileError.message);
+  }
+
+  // Before writing a new request, see whether they already made one on paper
+  // at a ride. This has to run FIRST: the one-live-card index would block the
+  // claim if a fresh request were sitting there, and the rider would end up
+  // occupying two rows — the new one live, the old one orphaned in the merge
+  // tool — which is the exact duplication the matcher exists to prevent.
+  let accessCode = await claimCardsQuietly(userId, "joinClub") ?? undefined;
+
+  // Nothing to claim, so record the request they just made. Attached to the
+  // account from birth: nothing to infer later.
+  for (let attempt = 0; !accessCode && attempt < 5; attempt++) {
+    const code = generateCode("member");
+    const { error: cardError } = await admin.from("member_cards").insert({
+      user_id:          userId,
+      linked_by:        "self",
+      linked_at:        new Date().toISOString(),
+      access_code:      code,
+      full_name:        payload.fullName.trim(),
+      photo_url:        payload.photoUrl,
+      date_of_birth:    payload.dateOfBirth,
+      blood_group:      payload.bloodGroup,
+      emergency_phone:  payload.emergencyPhone.trim(),
+      license_number:   payload.licenseNumber.trim(),
+      consent_accepted: payload.consentAccepted,
+      status:           "pending",
+    });
+
+    if (!cardError) { accessCode = code; break; }
+    if ((cardError as { code?: string }).code !== "23505") {
+      console.error("[joinClub] card request not created:", cardError.message);
+      break;
+    }
+    // A duplicate on the one-live-card index means they already hold a live
+    // request — nothing to retry and nothing wrong.
+    if ((cardError as { message?: string }).message?.includes("one_per_user")) break;
+  }
+
+  revalidatePath(ROUTES.adminMembers);
+
+  if (!data.session) return { error: null, needsConfirmation: true, accessCode };
+
+  revalidatePath(ROUTES.profile);
+  return { error: null, accessCode };
+}
+
+/** Supabase words this several ways depending on settings, so match loosely. */
+function isEmailTaken(message: string): boolean {
+  const m = message.toLowerCase();
+  return m.includes("already registered")
+      || m.includes("already been registered")
+      || m.includes("user already exists");
 }
 
 /** Sign in an existing community member (or admin via rider form — redirects to /admin). */
@@ -834,7 +993,7 @@ export async function updateProfile(data: {
  * be able to fail one. A rider who cannot sign in because a background match
  * threw is worse off than one whose card stays unlinked for another day.
  */
-async function claimCardsQuietly(userId: string, caller: string): Promise<void> {
+async function claimCardsQuietly(userId: string, caller: string): Promise<string | null> {
   try {
     const { claimOrphanCardsForUser } = await import("@/lib/membership/link");
     const res = await claimOrphanCardsForUser(userId);
@@ -844,10 +1003,12 @@ async function claimCardsQuietly(userId: string, caller: string): Promise<void> 
         `[${caller}] claimed card ${res.linked.accessCode} for ${userId} ` +
         `at ${Math.round(res.linked.score * 100)}% confidence`,
       );
+      return res.linked.accessCode;
     }
   } catch (e) {
     console.error(`[${caller}] card claim threw:`, e);
   }
+  return null;
 }
 
 // =============================================================================

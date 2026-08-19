@@ -2,8 +2,9 @@
 
 import { useState }     from "react";
 import Link             from "next/link";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, LogIn } from "lucide-react";
 import { cn }           from "@/utils/cn";
+import { ImageUpload }  from "@/components/ui/ImageUpload";
 import { signUpPublic } from "@/lib/supabase/actions";
 import { ROUTES, APP_META, BLOOD_GROUPS } from "@/lib/constants";
 
@@ -20,20 +21,23 @@ export function SignUpForm() {
   const [bloodGroup,     setBloodGroup]     = useState("");
   const [emergencyName,  setEmergencyName]  = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
+  const [avatarUrl,      setAvatarUrl]      = useState("");
   const [loading,        setLoading]        = useState(false);
   const [error,          setError]          = useState<string | null>(null);
+  const [emailInUse,     setEmailInUse]     = useState(false);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) { setError("Passwords do not match."); return; }
     if (password.length < 8)  { setError("Password must be at least 8 characters."); return; }
-    setLoading(true); setError(null);
+    setLoading(true); setError(null); setEmailInUse(false);
 
     const result = await signUpPublic({
       fullName,
       email,
       password,
+      avatarUrl:     avatarUrl     || null,
       phone:         phone         || null,
       address:       address       || null,
       bikeModel:     bikeModel     || null,
@@ -44,6 +48,7 @@ export function SignUpForm() {
       emergencyPhone: emergencyPhone || null,
     });
 
+    if (result?.emailInUse) { setEmailInUse(true); setLoading(false); return; }
     if (result?.error) { setError(result.error); setLoading(false); return; }
     if (result?.needsConfirmation) { setNeedsConfirmation(true); setLoading(false); }
     // On success with session: server redirects to /profile automatically
@@ -68,9 +73,12 @@ export function SignUpForm() {
           <strong className="text-hd-ink-200">{email}</strong>.
           Click it to activate your account, then sign in.
         </p>
-        <p className="text-xs text-hd-ink-500">
-          After sign-in, upload your photo on the profile page to help us verify your account faster.
-        </p>
+        {!avatarUrl && (
+          <p className="text-xs text-hd-ink-500">
+            Add a photo on your profile page once you are in — it is the one
+            thing your membership card cannot be printed without.
+          </p>
+        )}
         <Link
           href={ROUTES.signin}
           className="inline-block mt-2 px-5 py-2.5 rounded-xl bg-hd-ember-600 hover:bg-hd-ember-500 text-white text-sm font-semibold transition-colors"
@@ -86,6 +94,13 @@ export function SignUpForm() {
       <div className="text-center">
         <h1 className="text-2xl font-black text-white">Join {APP_META.name}</h1>
         <p className="text-sm text-hd-ink-400 mt-1">Create your community account</p>
+        <p className="text-xs text-hd-ink-500 mt-2">
+          Want the membership card too?{" "}
+          <Link href={ROUTES.membership} className="text-hd-ember-400 hover:text-hd-ember-300 font-semibold">
+            Join through the membership page
+          </Link>{" "}
+          — same details, one submission.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="gradient-card rounded-2xl border border-hd-ink-700 p-6 space-y-4">
@@ -93,6 +108,25 @@ export function SignUpForm() {
           <div className="flex items-start gap-2.5 p-3 rounded-lg bg-hd-ember-950/60 border border-hd-ember-800/40">
             <AlertCircle className="size-4 text-hd-ember-400 shrink-0 mt-px" />
             <p className="text-sm text-hd-ember-300">{error}</p>
+          </div>
+        )}
+
+        {emailInUse && (
+          <div className="flex items-start gap-2.5 p-3 rounded-lg bg-hd-ink-800/60 border border-hd-ink-700">
+            <LogIn className="size-4 text-hd-ember-400 shrink-0 mt-px" />
+            <div>
+              <p className="text-sm font-semibold text-hd-ink-100">
+                That email already has an account
+              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <Link href={ROUTES.signin} className="text-xs font-semibold text-hd-ember-400 hover:text-hd-ember-300">
+                  Sign in
+                </Link>
+                <Link href="/forgot-password" className="text-xs font-semibold text-hd-ink-400 hover:text-hd-ink-200">
+                  Forgot password
+                </Link>
+              </div>
+            </div>
           </div>
         )}
 
@@ -104,6 +138,25 @@ export function SignUpForm() {
           <input id="fullName" type="text" value={fullName} required
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Ramesh Shrestha" disabled={loading} className={inputClass} />
+        </div>
+
+        {/* Photo. Optional here on purpose — /membership is the thorough route
+            and this is the quick one — but collecting it means approving this
+            member issues their card with no second errand. */}
+        <div className="space-y-1">
+          <label className={labelClass}>Profile Photo</label>
+          <p className="text-[11px] text-hd-ink-500">
+            Goes on your membership card. You can add it later, but your card
+            waits until you do.
+          </p>
+          <ImageUpload
+            bucket="member-photos"
+            currentUrl={avatarUrl || null}
+            onUpload={(url) => setAvatarUrl(url ?? "")}
+            cropAspect={1}
+            compressMaxPx={800}
+            compressThresholdMb={0.2}
+          />
         </div>
 
         {/* Email */}

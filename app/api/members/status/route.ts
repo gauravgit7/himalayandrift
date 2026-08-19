@@ -31,7 +31,9 @@ export async function GET(request: NextRequest) {
 
   const card = mapMemberCard(data as DbMemberCard);
 
-  // Strip fields that should never leave the server
-  const { licenseNumber: _lic, adminNotes: _notes, ...safe } = card;
-  return NextResponse.json({ card: safe });
+  // Strip fields that should never leave the server. userId goes too: whether
+  // an account exists is worth telling the holder, but which account it is
+  // helps nobody holding only an access code.
+  const { licenseNumber: _lic, adminNotes: _notes, userId, ...safe } = card;
+  return NextResponse.json({ card: { ...safe, hasAccount: !!userId } });
 }

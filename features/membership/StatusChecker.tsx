@@ -23,7 +23,9 @@ interface StatusCheckerProps {
 
 export function StatusChecker({ settings, brandLogos, initialCode }: StatusCheckerProps) {
   const [code,    setCode]    = useState(initialCode ?? "");
-  const [card,    setCard]    = useState<MemberCard | null>(null);
+  // The API sends hasAccount in place of userId — enough to say what to do
+  // next without handing out somebody's account id.
+  const [card,    setCard]    = useState<(Omit<MemberCard, "userId"> & { hasAccount: boolean }) | null>(null);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
@@ -128,13 +130,15 @@ export function StatusChecker({ settings, brandLogos, initialCode }: StatusCheck
                   </p>
                 )}
                 <p className="text-xs text-hd-ink-500 mt-2">
-                  Please correct the issue and resubmit using the button below.
+                  {card.hasAccount
+                    ? "Put that right on your profile, then ask for the card again from there — nothing to retype."
+                    : "Correct it and apply again below. Joining also gives you an account, so this is the last time you fill this in."}
                 </p>
                 <Link
-                  href={`/membership?code=${encodeURIComponent(code.trim())}&resubmit=1`}
+                  href={card.hasAccount ? ROUTES.signin : ROUTES.membership}
                   className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hd-ember-600 hover:bg-hd-ember-500 text-white text-xs font-semibold transition-colors"
                 >
-                  Edit &amp; Resubmit →
+                  {card.hasAccount ? "Sign in →" : "Apply again →"}
                 </Link>
               </div>
             </div>
@@ -172,7 +176,13 @@ export function StatusChecker({ settings, brandLogos, initialCode }: StatusCheck
 
               {/* Card preview */}
               <div className="overflow-x-auto pb-2">
-                <CardRenderer card={card} settings={settings} brandLogos={brandLogos} />
+                {/* The renderer prints name, photo and number; it has no use
+                    for the owner's account id, which is why the API omits it. */}
+                <CardRenderer
+                  card={{ ...card, userId: null }}
+                  settings={settings}
+                  brandLogos={brandLogos}
+                />
               </div>
 
               {/* Print button */}

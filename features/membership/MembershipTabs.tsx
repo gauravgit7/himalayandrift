@@ -40,7 +40,7 @@ export function MembershipTabs({ settings, brandLogos, initialCode }: Membership
             )}
           >
             {t === "apply"
-              ? <><CreditCard className="size-4" /> Apply for Card</>
+              ? <><CreditCard className="size-4" /> Join the club</>
               : <><Search className="size-4" /> Check Status</>}
           </button>
         ))}

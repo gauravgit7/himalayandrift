@@ -213,6 +213,30 @@ service-role JWT, and pins `user_id` to `auth.uid()`. Without it, anyone holding
 public anon key could POST themselves an approved card, number and all, and attach it to
 someone else's account.
 
+#### Joining — one form
+
+`/membership` **is** the join form. It creates the auth user, the profile and the card
+request in one submit (`joinClub`), and the consent line says so in as many words —
+"apply for a card" quietly creating an account would be a worse trade than asking. The
+card photo doubles as the profile avatar, because asking twice for one photograph is
+asking twice.
+
+`/signup` stays as the short path and now collects an **optional** photo. That single
+field is what makes *"sign up and your card follows"* true: everything else a card needs
+was already asked for at sign-up, so approving the member issues it. No photo means no
+card yet, and they surface under the register's **No card** filter.
+
+**Order matters inside `joinClub`.** The identity matcher runs *before* the new card row
+is written. Reversed, the one-live-card index blocks the claim and the rider ends up in
+two rows — a live request plus an orphaned walk-in application — which is the exact
+duplication the matcher exists to prevent.
+
+**An email that already has an account is not an error.** Both forms return
+`emailInUse` and offer *Sign in* / *Forgot password* instead of a red box. Supabase
+answers this two ways — an explicit message, or a user with an **empty `identities`
+array** (deliberate, so the form cannot be used to enumerate accounts) — and the second
+looks exactly like success, so both are checked.
+
 #### Linking a card to an account
 
 A card can be applied for before an account exists, so the two arrive in either order:

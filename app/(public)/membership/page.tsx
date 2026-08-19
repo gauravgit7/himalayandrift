@@ -47,12 +47,14 @@ export default async function MembershipPage({
           <span className="block w-8 h-px bg-hd-ember-600 rounded-full" />
         </div>
         <h1 className="text-4xl sm:text-5xl font-black text-hd-ink-50 mb-3">
-          {hasCard ? "Your Membership Card" : "Membership Card"}
+          {hasCard ? "Your Membership Card" : user ? "Membership Card" : "Become a Member"}
         </h1>
         <p className="text-sm sm:text-base text-hd-ink-400 max-w-lg mx-auto leading-relaxed">
           {hasCard
             ? "Carry it on your phone, or print it for your wallet."
-            : "Official digital ID for Himalayan Drift members. Free to apply — approved by the Himalayan Drift team."}
+            : user
+              ? "Official digital ID for Himalayan Drift members. Free to apply — approved by the Himalayan Drift team."
+              : "One form gets you an account and your membership card. Free to join — the committee reviews every application."}
         </p>
       </AnimateIn>
 
